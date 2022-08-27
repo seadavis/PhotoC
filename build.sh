@@ -1,0 +1,1 @@
+gcc  -Wall -o photoc main.c context.c -L/usr/local/lib -Wl,-rpath /usr/local/lib/  -lgphoto2 -lgphoto2_port
