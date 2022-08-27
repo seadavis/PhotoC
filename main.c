@@ -43,6 +43,7 @@ camera_eosviewfinder(Camera *camera, GPContext *context, int onoff) {
 		fprintf (stderr, "camera_get_config failed: %d\n", ret);
 		return ret;
 	}
+	
 	ret = _lookup_widget (widget, "LiveViewMovieMode", &child);
 	if (ret < GP_OK) {
 		fprintf (stderr, "lookup 'LiveViewMode' failed: %d\n", ret);
