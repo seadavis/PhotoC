@@ -1,1 +1,1 @@
-g++ -I/usr/local/include/opencv -I/usr/local/include/opencv2 -Wall -o photoc main.cpp context.c -L/usr/local/lib -Wl,-rpath /usr/local/lib/  -lgphoto2 -lgphoto2_port `pkg-config --libs opencv`
+g++ -I/usr/local/include/opencv -I/usr/local/include/opencv2 -w -Wall -Wunused-function -Wunused-variable -o photoc main.cpp context.c -L/usr/local/lib -Wl,-rpath /usr/local/lib/  -lgphoto2 -lgphoto2_port `pkg-config --libs opencv`

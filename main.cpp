@@ -28,6 +28,7 @@
 #include "samples.h"
 
 using namespace cv;
+using namespace std;
 
 static int
 _lookup_widget(CameraWidget*widget, const char *key, CameraWidget **child) {
@@ -92,6 +93,40 @@ capture_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned
 	CameraFile *file;
 	CameraFilePath camera_file_path;
 
+	printf("Capturing.\n");
+
+	/* NOP: This gets overridden in the library to /capt0000.jpg */
+	strcpy(camera_file_path.folder, "/");
+	strcpy(camera_file_path.name, "foo.jpg");
+
+	retval = gp_camera_capture(camera, GP_CAPTURE_IMAGE, &camera_file_path, context);
+	printf("  Retval: %d\n", retval);
+
+	printf("Pathname on the camera: %s/%s\n", camera_file_path.folder, camera_file_path.name);
+
+	retval = gp_file_new(&file);
+	printf("  Retval: %d\n", retval);
+	retval = gp_camera_file_get(camera, camera_file_path.folder, camera_file_path.name,
+		     GP_FILE_TYPE_NORMAL, file, context);
+	printf("  Retval: %d\n", retval);
+
+	gp_file_get_data_and_size (file, ptr, size);
+
+	printf("Deleting.\n");
+    // I wonder would it work without this?
+	retval = gp_camera_file_delete(camera, camera_file_path.folder, camera_file_path.name,
+			context);
+	printf("  Retval: %d\n", retval);
+	/*gp_file_free(file); */
+}
+
+
+static void
+capture_preview_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned long int *size) {
+	int retval;
+	CameraFile *file;
+	CameraFilePath camera_file_path;
+
 	printf("Capturing Preview.\n");
 
     camera_eosviewfinder(camera, context, 1);
@@ -130,64 +165,95 @@ capture_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned
  This kind of works I do need to add a wait for 2 seconds.
  And we do know the data works just a like a jpg
 */
+
+string type2str(int type) {
+  string r;
+
+  uchar depth = type & CV_MAT_DEPTH_MASK;
+  uchar chans = 1 + (type >> CV_CN_SHIFT);
+
+  switch ( depth ) {
+    case CV_8U:  r = "8U"; break;
+    case CV_8S:  r = "8S"; break;
+    case CV_16U: r = "16U"; break;
+    case CV_16S: r = "16S"; break;
+    case CV_32S: r = "32S"; break;
+    case CV_32F: r = "32F"; break;
+    case CV_64F: r = "64F"; break;
+    default:     r = "User"; break;
+  }
+
+  r += "C";
+  r += (chans+'0');
+
+  return r;
+}
+
 int
 main(int argc, char **argv) {
 
-    std::string image_path = "foo2.jpg";
-    Mat img = imread(image_path, IMREAD_COLOR);
-    if(img.empty())
-    {
-        std::cout << "Could not read the image: " << image_path << std::endl;
-        return 1;
-    }
-
-    Mat img_dst;    
-    resize(img, img_dst, Size(640, 480), 0, 0, INTER_AREA);
-    imshow("Display window", img_dst);
-    int k = waitKey(0); // Wait for a keystroke in the window
-    if(k == 's')
-    {
-        imwrite("starry_night.png", img);
-    }
-
-	/*Camera	*camera;
-	int	retval;
+	Camera	*camera;
 	GPContext *context = sample_create_context();
-	//FILE 	*f;
-	char	*data;
+    FILE 	*f;
+    char	*data_from_camera;
+
+    char *data_to_open_cv;
 	unsigned long size;
+    int retval;
+	
 
 	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
-	gp_camera_new(&camera);*/
-
+	gp_camera_new(&camera); 
 	/* When I set GP_LOG_DEBUG instead of GP_LOG_ERROR above, I noticed that the
 	 * init function seems to traverse the entire filesystem on the camera.  This
 	 * is partly why it takes so long.
 	 * (Marcus: the ptp2 driver does this by default currently.)
 	 */
-	/*printf("Camera init.  Takes about 10 seconds.\n");
+	printf("Camera init.  Takes about 10 seconds.\n");
 	retval = gp_camera_init(camera, context);
 	if (retval != GP_OK) {
 		printf("  Retval of capture_to_file: %d\n", retval);
 		exit (1);
-	}*/
-	//capture_to_file(camera, context, "foo.jpg");
+	}
+
+    printf("Capturing To Memory\n");
+    capture_to_memory(camera, context, (const char**)&data_from_camera, &size);
+    printf("Captured To memory Writing to OpenCV Mat\n");
+
+    Mat img_real = imread("foo2.jpg");
+    
+    cout << "Image Width: " << img_real.size().width << 
+            ", Height" << img_real.size().height << 
+            ", Type : " <<  type2str(img_real.type()) <<"\n";
+  
+    cout << "Displaying OpenCV image, size: " <<  size <<"\n";
+
+    // latest theory was invalidated pointer with just data by the time it gets to
+    // imshow, especially since it was largely nonsense.
+    // so now I'm copying to something don on the heap
+    // or else it's because the pointer died
+    // but I actually don't think that's it....
+    data_to_open_cv = (char*)malloc(size);
+
+    for(int i = 0; i < size; i++)
+    {
+        data_to_open_cv[i] = data_from_camera[i];
+    }
+
+    // I'm starting to suspect that the "data" is the issue
+    Mat img = Mat(Size(6000, 4000), CV_8UC3, data_to_open_cv, Mat::AUTO_STEP);
+    if(img.empty())
+    {
+        std::cout << "Could not read the image From the camera: ";
+        return 1;
+    }
 
 
+    cout << "Displaying Window\n";
+    imshow("Display window", img); 
+    waitKey(0);
 
-
-	//capture_to_memory(camera, context, (const char**)&data, &size);
-    //print_char_array(data, size);
-
-	/*f = fopen("foo2.jpg", "wb");
-	if (f) {
-		retval = fwrite (data, size, 1, f);
-		if (retval != (int)size) {
-			printf("  fwrite size %ld, written %d\n", size, retval);
-		}
-		fclose(f);
-	} else
-		printf("  fopen foo2.jpg failed.\n");*/
-	//gp_camera_exit(camera, context);
+	gp_camera_exit(camera, context);
+    free(data_to_open_cv);
 	return 0;
 }
