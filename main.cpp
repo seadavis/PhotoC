@@ -20,9 +20,14 @@
 #include <stdarg.h>
 #include <string.h>
 #include <gphoto2/gphoto2.h>
-
-
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <iostream>
 #include "samples.h"
+
+using namespace cv;
 
 static int
 _lookup_widget(CameraWidget*widget, const char *key, CameraWidget **child) {
@@ -127,7 +132,25 @@ capture_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned
 */
 int
 main(int argc, char **argv) {
-	Camera	*camera;
+
+    std::string image_path = "foo2.jpg";
+    Mat img = imread(image_path, IMREAD_COLOR);
+    if(img.empty())
+    {
+        std::cout << "Could not read the image: " << image_path << std::endl;
+        return 1;
+    }
+
+    Mat img_dst;    
+    resize(img, img_dst, Size(640, 480), 0, 0, INTER_AREA);
+    imshow("Display window", img_dst);
+    int k = waitKey(0); // Wait for a keystroke in the window
+    if(k == 's')
+    {
+        imwrite("starry_night.png", img);
+    }
+
+	/*Camera	*camera;
 	int	retval;
 	GPContext *context = sample_create_context();
 	//FILE 	*f;
@@ -135,25 +158,25 @@ main(int argc, char **argv) {
 	unsigned long size;
 
 	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
-	gp_camera_new(&camera);
+	gp_camera_new(&camera);*/
 
 	/* When I set GP_LOG_DEBUG instead of GP_LOG_ERROR above, I noticed that the
 	 * init function seems to traverse the entire filesystem on the camera.  This
 	 * is partly why it takes so long.
 	 * (Marcus: the ptp2 driver does this by default currently.)
 	 */
-	printf("Camera init.  Takes about 10 seconds.\n");
+	/*printf("Camera init.  Takes about 10 seconds.\n");
 	retval = gp_camera_init(camera, context);
 	if (retval != GP_OK) {
 		printf("  Retval of capture_to_file: %d\n", retval);
 		exit (1);
-	}
+	}*/
 	//capture_to_file(camera, context, "foo.jpg");
 
 
 
 
-	capture_to_memory(camera, context, (const char**)&data, &size);
+	//capture_to_memory(camera, context, (const char**)&data, &size);
     //print_char_array(data, size);
 
 	/*f = fopen("foo2.jpg", "wb");
@@ -165,6 +188,6 @@ main(int argc, char **argv) {
 		fclose(f);
 	} else
 		printf("  fopen foo2.jpg failed.\n");*/
-	gp_camera_exit(camera, context);
+	//gp_camera_exit(camera, context);
 	return 0;
 }
