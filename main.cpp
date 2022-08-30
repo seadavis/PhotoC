@@ -25,6 +25,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <iostream>
+#include <memory>
 #include "samples.h"
 
 using namespace cv;
@@ -193,7 +194,7 @@ main(int argc, char **argv) {
     CameraFilePath camera_file_path;
 	GPContext *context = sample_create_context();
     FILE 	*f;
-    char	*data;
+    char* data;
 	unsigned long size;
     int retval;
 	
@@ -217,43 +218,23 @@ main(int argc, char **argv) {
     capture_to_memory(camera, context, &camera_file_path, cameraFile, (const char**)&data, &size);
     printf("Captured To memory Writing to OpenCV Mat\n");
 
-    Mat img_real = imread("foo2.jpg");
-    
-    f = fopen("foo_test.jpg", "wb");
-	if (f) {
-		retval = fwrite (data, size, 1, f);
-		if (retval != (int)size) {
-			printf("  fwrite size %ld, written %d\n", size, retval);
-		}
-		fclose(f);
-	} else
-		printf("  fopen foo2.jpg failed.\n");
+    cout << "Displaying OpenCV image, size: " <<  size << "\n";
 
-    cout << "Image Width: " << img_real.size().width << 
-            ", Height" << img_real.size().height << 
-            ", Type : " <<  type2str(img_real.type()) <<"\n";
-  
-    cout << "Displaying OpenCV image, size: " <<  size <<"\n";
 
-    char *data_to_open_cv = (char*)malloc(size);
-
-    for(int i = 0; i < size; i++)
-    {
-        data_to_open_cv[i] = data[i];
-    }
-
-    Mat img = Mat(Size(6000, 4000), CV_8UC3, data_to_open_cv, Mat::AUTO_STEP);
+	// I have ruled out that it needs to be on the heap even with a malloc and a copy,
+	// it does not do the trick.... where is the segmentation fault
+	// I think I have to conver this into a 2d array....
+    Mat img = imdecode(Mat(1, size, CV_8UC1, data), CV_LOAD_IMAGE_UNCHANGED);
     if(img.empty())
     {
         std::cout << "Could not read the image From the camera: ";
         return 1;
     }
 
-    Mat img_to_display;
-    resize(img, img_to_display, Size(600, 400));
-
+	Mat out;
+	resize(img, out, Size(600, 400));
     cout << "Displaying Window\n";
-    imshow("Display window", img_to_display); 
+    imshow("Display window", out); 
     waitKey(0);
 
     printf("Deleting.\n");
@@ -262,6 +243,5 @@ main(int argc, char **argv) {
 	printf("  Retval: %d\n", retval);
 
 	gp_camera_exit(camera, context);
-    free(data_to_open_cv);
 	return 0;
 }
