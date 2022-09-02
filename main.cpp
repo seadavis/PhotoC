@@ -229,7 +229,8 @@ main(int argc, char **argv) {
     {
         std::cout << "Could not read the image From the camera: ";
         return 1;
-    }
+		
+	}
 
 	Mat out;
 	resize(img, out, Size(600, 400));
