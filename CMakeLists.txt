@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package( Qt5Core REQUIRED )
 find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Gui REQUIRED )
-
+find_package(OpenCV REQUIRED )
 
 add_executable(field_of_view
     window.h
@@ -16,5 +16,5 @@ add_executable(field_of_view
     main.cpp
 )
 
-target_link_libraries(field_of_view PRIVATE Qt5::Widgets)
+target_link_libraries(field_of_view PRIVATE Qt5::Widgets ${OpenCV_LIBS})
 

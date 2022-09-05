@@ -95,8 +95,28 @@ field_of_view: CMakeFiles/field_of_view.dir/window.cpp.o
 field_of_view: CMakeFiles/field_of_view.dir/main.cpp.o
 field_of_view: CMakeFiles/field_of_view.dir/build.make
 field_of_view: /usr/lib/x86_64-linux-gnu/libQt5Widgets.so.5.12.8
+field_of_view: /usr/local/lib/libopencv_highgui.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_objdetect.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_stitching.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_superres.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_videostab.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_freetype.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_optflow.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_stereo.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_xfeatures2d.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_ximgproc.so.3.4.17
 field_of_view: /usr/lib/x86_64-linux-gnu/libQt5Gui.so.5.12.8
 field_of_view: /usr/lib/x86_64-linux-gnu/libQt5Core.so.5.12.8
+field_of_view: /usr/local/lib/libopencv_ml.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_photo.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_videoio.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_video.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_imgcodecs.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_calib3d.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_features2d.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_flann.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_imgproc.so.3.4.17
+field_of_view: /usr/local/lib/libopencv_core.so.3.4.17
 field_of_view: CMakeFiles/field_of_view.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir="/home/sdavis/Source Code/PhotoC/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable field_of_view"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/field_of_view.dir/link.txt --verbose=$(VERBOSE)
