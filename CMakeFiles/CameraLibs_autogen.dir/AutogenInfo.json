@@ -1,5 +1,5 @@
 {
-	"BUILD_DIR" : "/home/sdavis/Source Code/PhotoC/field_of_view_autogen",
+	"BUILD_DIR" : "/home/sdavis/Source Code/PhotoC/CameraLibs_autogen",
 	"CMAKE_BINARY_DIR" : "/home/sdavis/Source Code/PhotoC",
 	"CMAKE_CURRENT_BINARY_DIR" : "/home/sdavis/Source Code/PhotoC",
 	"CMAKE_CURRENT_SOURCE_DIR" : "/home/sdavis/Source Code/PhotoC",
@@ -13,15 +13,15 @@
 			"EWIEGA46WW/moc_camera_util.cpp"
 		],
 		[
-			"/home/sdavis/Source Code/PhotoC/window.h",
+			"/home/sdavis/Source Code/PhotoC/samples.h",
 			"Mu",
-			"EWIEGA46WW/moc_window.cpp"
+			"EWIEGA46WW/moc_samples.cpp"
 		]
 	],
 	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
-	"INCLUDE_DIR" : "/home/sdavis/Source Code/PhotoC/field_of_view_autogen/include",
-	"MOC_COMPILATION_FILE" : "/home/sdavis/Source Code/PhotoC/field_of_view_autogen/mocs_compilation.cpp",
-	"MOC_DEFINITIONS" : [ "QT_CORE_LIB", "QT_GUI_LIB", "QT_NO_DEBUG", "QT_WIDGETS_LIB" ],
+	"INCLUDE_DIR" : "/home/sdavis/Source Code/PhotoC/CameraLibs_autogen/include",
+	"MOC_COMPILATION_FILE" : "/home/sdavis/Source Code/PhotoC/CameraLibs_autogen/mocs_compilation.cpp",
+	"MOC_DEFINITIONS" : [],
 	"MOC_DEPEND_FILTERS" : 
 	[
 		[
@@ -31,17 +31,11 @@
 	],
 	"MOC_INCLUDES" : 
 	[
-		"/usr/include/x86_64-linux-gnu/qt5",
-		"/usr/include/x86_64-linux-gnu/qt5/QtWidgets",
-		"/usr/include/x86_64-linux-gnu/qt5/QtGui",
-		"/usr/include/x86_64-linux-gnu/qt5/QtCore",
-		"/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++",
-		"/usr/local/include/opencv",
-		"/usr/local/include",
 		"/usr/include/c++/9",
 		"/usr/include/x86_64-linux-gnu/c++/9",
 		"/usr/include/c++/9/backward",
 		"/usr/lib/gcc/x86_64-linux-gnu/9/include",
+		"/usr/local/include",
 		"/usr/include/x86_64-linux-gnu",
 		"/usr/include"
 	],
@@ -56,21 +50,23 @@
 		"-c",
 		"/usr/share/cmake-3.16/Modules/CMakeCXXCompilerABI.cpp"
 	],
-	"MOC_PREDEFS_FILE" : "/home/sdavis/Source Code/PhotoC/field_of_view_autogen/moc_predefs.h",
+	"MOC_PREDEFS_FILE" : "/home/sdavis/Source Code/PhotoC/CameraLibs_autogen/moc_predefs.h",
 	"MOC_RELAXED_MODE" : false,
-	"MOC_SKIP" : [],
+	"MOC_SKIP" : 
+	[
+		"/home/sdavis/Source Code/PhotoC/field_of_view_autogen/mocs_compilation.cpp"
+	],
 	"MULTI_CONFIG" : false,
 	"PARALLEL" : 16,
-	"PARSE_CACHE_FILE" : "/home/sdavis/Source Code/PhotoC/CMakeFiles/field_of_view_autogen.dir/ParseCache.txt",
+	"PARSE_CACHE_FILE" : "/home/sdavis/Source Code/PhotoC/CMakeFiles/CameraLibs_autogen.dir/ParseCache.txt",
 	"QT_MOC_EXECUTABLE" : "/usr/lib/qt5/bin/moc",
 	"QT_UIC_EXECUTABLE" : "",
 	"QT_VERSION_MAJOR" : 5,
-	"SETTINGS_FILE" : "/home/sdavis/Source Code/PhotoC/CMakeFiles/field_of_view_autogen.dir/AutogenUsed.txt",
+	"SETTINGS_FILE" : "/home/sdavis/Source Code/PhotoC/CMakeFiles/CameraLibs_autogen.dir/AutogenUsed.txt",
 	"SOURCES" : 
 	[
 		[ "/home/sdavis/Source Code/PhotoC/camera_util.cpp", "Mu" ],
-		[ "/home/sdavis/Source Code/PhotoC/main.cpp", "Mu" ],
-		[ "/home/sdavis/Source Code/PhotoC/window.cpp", "Mu" ]
+		[ "/home/sdavis/Source Code/PhotoC/context.c", "Mu" ]
 	],
 	"VERBOSITY" : 0
 }

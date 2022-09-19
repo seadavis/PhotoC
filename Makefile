@@ -136,6 +136,33 @@ field_of_view_autogen/fast:
 	$(MAKE) -f CMakeFiles/field_of_view_autogen.dir/build.make CMakeFiles/field_of_view_autogen.dir/build
 .PHONY : field_of_view_autogen/fast
 
+camera_util.o: camera_util.cpp.o
+
+.PHONY : camera_util.o
+
+# target to build an object file
+camera_util.cpp.o:
+	$(MAKE) -f CMakeFiles/field_of_view.dir/build.make CMakeFiles/field_of_view.dir/camera_util.cpp.o
+.PHONY : camera_util.cpp.o
+
+camera_util.i: camera_util.cpp.i
+
+.PHONY : camera_util.i
+
+# target to preprocess a source file
+camera_util.cpp.i:
+	$(MAKE) -f CMakeFiles/field_of_view.dir/build.make CMakeFiles/field_of_view.dir/camera_util.cpp.i
+.PHONY : camera_util.cpp.i
+
+camera_util.s: camera_util.cpp.s
+
+.PHONY : camera_util.s
+
+# target to generate assembly for a file
+camera_util.cpp.s:
+	$(MAKE) -f CMakeFiles/field_of_view.dir/build.make CMakeFiles/field_of_view.dir/camera_util.cpp.s
+.PHONY : camera_util.cpp.s
+
 field_of_view_autogen/mocs_compilation.o: field_of_view_autogen/mocs_compilation.cpp.o
 
 .PHONY : field_of_view_autogen/mocs_compilation.o
@@ -227,6 +254,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... field_of_view"
 	@echo "... field_of_view_autogen"
+	@echo "... camera_util.o"
+	@echo "... camera_util.i"
+	@echo "... camera_util.s"
 	@echo "... field_of_view_autogen/mocs_compilation.o"
 	@echo "... field_of_view_autogen/mocs_compilation.i"
 	@echo "... field_of_view_autogen/mocs_compilation.s"

@@ -70,9 +70,22 @@ CMakeFiles/field_of_view.dir/field_of_view_autogen/mocs_compilation.cpp.s: cmake
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/field_of_view.dir/field_of_view_autogen/mocs_compilation.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/sdavis/Source Code/PhotoC/field_of_view_autogen/mocs_compilation.cpp" -o CMakeFiles/field_of_view.dir/field_of_view_autogen/mocs_compilation.cpp.s
 
+CMakeFiles/field_of_view.dir/camera_util.cpp.o: CMakeFiles/field_of_view.dir/flags.make
+CMakeFiles/field_of_view.dir/camera_util.cpp.o: camera_util.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/home/sdavis/Source Code/PhotoC/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/field_of_view.dir/camera_util.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/field_of_view.dir/camera_util.cpp.o -c "/home/sdavis/Source Code/PhotoC/camera_util.cpp"
+
+CMakeFiles/field_of_view.dir/camera_util.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/field_of_view.dir/camera_util.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/home/sdavis/Source Code/PhotoC/camera_util.cpp" > CMakeFiles/field_of_view.dir/camera_util.cpp.i
+
+CMakeFiles/field_of_view.dir/camera_util.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/field_of_view.dir/camera_util.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/home/sdavis/Source Code/PhotoC/camera_util.cpp" -o CMakeFiles/field_of_view.dir/camera_util.cpp.s
+
 CMakeFiles/field_of_view.dir/window.cpp.o: CMakeFiles/field_of_view.dir/flags.make
 CMakeFiles/field_of_view.dir/window.cpp.o: window.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/home/sdavis/Source Code/PhotoC/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/field_of_view.dir/window.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/home/sdavis/Source Code/PhotoC/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/field_of_view.dir/window.cpp.o"
 	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/field_of_view.dir/window.cpp.o -c "/home/sdavis/Source Code/PhotoC/window.cpp"
 
 CMakeFiles/field_of_view.dir/window.cpp.i: cmake_force
@@ -85,7 +98,7 @@ CMakeFiles/field_of_view.dir/window.cpp.s: cmake_force
 
 CMakeFiles/field_of_view.dir/main.cpp.o: CMakeFiles/field_of_view.dir/flags.make
 CMakeFiles/field_of_view.dir/main.cpp.o: main.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/home/sdavis/Source Code/PhotoC/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/field_of_view.dir/main.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir="/home/sdavis/Source Code/PhotoC/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/field_of_view.dir/main.cpp.o"
 	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/field_of_view.dir/main.cpp.o -c "/home/sdavis/Source Code/PhotoC/main.cpp"
 
 CMakeFiles/field_of_view.dir/main.cpp.i: cmake_force
@@ -99,6 +112,7 @@ CMakeFiles/field_of_view.dir/main.cpp.s: cmake_force
 # Object files for target field_of_view
 field_of_view_OBJECTS = \
 "CMakeFiles/field_of_view.dir/field_of_view_autogen/mocs_compilation.cpp.o" \
+"CMakeFiles/field_of_view.dir/camera_util.cpp.o" \
 "CMakeFiles/field_of_view.dir/window.cpp.o" \
 "CMakeFiles/field_of_view.dir/main.cpp.o"
 
@@ -106,6 +120,7 @@ field_of_view_OBJECTS = \
 field_of_view_EXTERNAL_OBJECTS =
 
 field_of_view: CMakeFiles/field_of_view.dir/field_of_view_autogen/mocs_compilation.cpp.o
+field_of_view: CMakeFiles/field_of_view.dir/camera_util.cpp.o
 field_of_view: CMakeFiles/field_of_view.dir/window.cpp.o
 field_of_view: CMakeFiles/field_of_view.dir/main.cpp.o
 field_of_view: CMakeFiles/field_of_view.dir/build.make
@@ -133,7 +148,7 @@ field_of_view: /usr/local/lib/libopencv_flann.so.3.4.17
 field_of_view: /usr/local/lib/libopencv_imgproc.so.3.4.17
 field_of_view: /usr/local/lib/libopencv_core.so.3.4.17
 field_of_view: CMakeFiles/field_of_view.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir="/home/sdavis/Source Code/PhotoC/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable field_of_view"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir="/home/sdavis/Source Code/PhotoC/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable field_of_view"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/field_of_view.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

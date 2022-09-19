@@ -11,12 +11,15 @@ find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Gui REQUIRED )
 find_package(OpenCV REQUIRED )
 
+
 add_executable(field_of_view
+    camera_util.h 
+    camera_util.cpp 
     window.h
     window.cpp
     main.cpp
 )
 
 
-target_link_libraries(field_of_view PRIVATE Qt5::Widgets ${OpenCV_LIBS})
+target_link_libraries(field_of_view PRIVATE Qt5::Widgets ${OpenCV_LIBS} -lgphoto2 -lgphoto2_port)
 
