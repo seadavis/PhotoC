@@ -4,6 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/sdavis/Source Code/PhotoC/field_of_view_autogen/mocs_compilation.cpp" "/home/sdavis/Source Code/PhotoC/CMakeFiles/field_of_view.dir/field_of_view_autogen/mocs_compilation.cpp.o"
   "/home/sdavis/Source Code/PhotoC/main.cpp" "/home/sdavis/Source Code/PhotoC/CMakeFiles/field_of_view.dir/main.cpp.o"
   "/home/sdavis/Source Code/PhotoC/window.cpp" "/home/sdavis/Source Code/PhotoC/CMakeFiles/field_of_view.dir/window.cpp.o"
   )
@@ -19,6 +20,7 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
+  "field_of_view_autogen/include"
   "/usr/include/x86_64-linux-gnu/qt5"
   "/usr/include/x86_64-linux-gnu/qt5/QtWidgets"
   "/usr/include/x86_64-linux-gnu/qt5/QtGui"

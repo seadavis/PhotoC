@@ -29,6 +29,8 @@ QLabel
 -
 QPixmap
 -
+QPushButton
+-
 opencv2/core.hpp
 -
 opencv2/imgcodecs.hpp

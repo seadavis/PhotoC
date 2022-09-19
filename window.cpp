@@ -31,6 +31,10 @@ string type2str(int type) {
   return r;
 }
 
+void Window::handleButton(){
+  cout << "Button Clicked \n";
+}
+
 Window::Window(QWidget *parent) :
  QWidget(parent)
  {
@@ -44,9 +48,15 @@ Window::Window(QWidget *parent) :
 
     label = new QLabel(this);
     label->setGeometry(10, 10, 480, 320);
+
+    button = new QPushButton("New Button", this);
+    button->setGeometry(15, 15, 100, 50);
+
     pixmap = new QPixmap();
     image = new QImage(mat.data, mat.cols, mat.rows, QImage::Format_RGB888);
     label->setPixmap(QPixmap::fromImage(*image));
+
+    connect(button, &QPushButton::released, this, &Window::handleButton);
     
 }
 

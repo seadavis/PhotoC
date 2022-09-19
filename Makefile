@@ -123,6 +123,46 @@ field_of_view/fast:
 	$(MAKE) -f CMakeFiles/field_of_view.dir/build.make CMakeFiles/field_of_view.dir/build
 .PHONY : field_of_view/fast
 
+#=============================================================================
+# Target rules for targets named field_of_view_autogen
+
+# Build rule for target.
+field_of_view_autogen: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 field_of_view_autogen
+.PHONY : field_of_view_autogen
+
+# fast build rule for target.
+field_of_view_autogen/fast:
+	$(MAKE) -f CMakeFiles/field_of_view_autogen.dir/build.make CMakeFiles/field_of_view_autogen.dir/build
+.PHONY : field_of_view_autogen/fast
+
+field_of_view_autogen/mocs_compilation.o: field_of_view_autogen/mocs_compilation.cpp.o
+
+.PHONY : field_of_view_autogen/mocs_compilation.o
+
+# target to build an object file
+field_of_view_autogen/mocs_compilation.cpp.o:
+	$(MAKE) -f CMakeFiles/field_of_view.dir/build.make CMakeFiles/field_of_view.dir/field_of_view_autogen/mocs_compilation.cpp.o
+.PHONY : field_of_view_autogen/mocs_compilation.cpp.o
+
+field_of_view_autogen/mocs_compilation.i: field_of_view_autogen/mocs_compilation.cpp.i
+
+.PHONY : field_of_view_autogen/mocs_compilation.i
+
+# target to preprocess a source file
+field_of_view_autogen/mocs_compilation.cpp.i:
+	$(MAKE) -f CMakeFiles/field_of_view.dir/build.make CMakeFiles/field_of_view.dir/field_of_view_autogen/mocs_compilation.cpp.i
+.PHONY : field_of_view_autogen/mocs_compilation.cpp.i
+
+field_of_view_autogen/mocs_compilation.s: field_of_view_autogen/mocs_compilation.cpp.s
+
+.PHONY : field_of_view_autogen/mocs_compilation.s
+
+# target to generate assembly for a file
+field_of_view_autogen/mocs_compilation.cpp.s:
+	$(MAKE) -f CMakeFiles/field_of_view.dir/build.make CMakeFiles/field_of_view.dir/field_of_view_autogen/mocs_compilation.cpp.s
+.PHONY : field_of_view_autogen/mocs_compilation.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -186,6 +226,10 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... field_of_view"
+	@echo "... field_of_view_autogen"
+	@echo "... field_of_view_autogen/mocs_compilation.o"
+	@echo "... field_of_view_autogen/mocs_compilation.i"
+	@echo "... field_of_view_autogen/mocs_compilation.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
