@@ -98,11 +98,9 @@ Window::Window(QWidget *parent) :
     label = new QLabel(this);
     label->setGeometry(10, 10, 480, 320);
 
-    button = new QPushButton("Newer Button", this);
+    button = new QPushButton("Snap!", this);
     button->setGeometry(15, 15, 100, 50);
 
-  
     connect(button, &QPushButton::released, this, &Window::handleButton);
-    
 }
 
