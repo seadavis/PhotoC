@@ -63,7 +63,7 @@ void Window::handleButton(){
     CameraUtil::capture_to_memory(camera, context, &camera_file_path, cameraFile, (const char**)&data, &size);
     printf("Captured To memory Writing to OpenCV Mat\n");
 
-    cout << "Displaying OpenCV image, size: " <<  size << "\n";
+    cout << "Displaying OpenCV image, size:  " <<  size << "\n";
 
 
 	// I have ruled out that it needs to be on the heap even with a malloc and a copy,
@@ -98,11 +98,10 @@ Window::Window(QWidget *parent) :
     label = new QLabel(this);
     label->setGeometry(10, 10, 480, 320);
 
-    button = new QPushButton("New Button", this);
+    button = new QPushButton("Newer Button", this);
     button->setGeometry(15, 15, 100, 50);
 
-    
-
+  
     connect(button, &QPushButton::released, this, &Window::handleButton);
     
 }

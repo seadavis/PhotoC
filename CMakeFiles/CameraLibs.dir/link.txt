@@ -1,2 +1,0 @@
-/usr/bin/ar qc libCameraLibs.a  CMakeFiles/CameraLibs.dir/CameraLibs_autogen/mocs_compilation.cpp.o CMakeFiles/CameraLibs.dir/camera_util.cpp.o
-/usr/bin/ranlib libCameraLibs.a
