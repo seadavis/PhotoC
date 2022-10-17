@@ -13,6 +13,15 @@ find_package( Qt5Gui REQUIRED )
 find_package(OpenCV REQUIRED )
 
 
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG release-1.12.1
+)
+
+FetchContent_MakeAvailable(googletest)
+
 add_subdirectory(./camera/src)
 add_subdirectory(./ui/src)
 
@@ -20,11 +29,24 @@ add_executable(field_of_view
     main.cpp
 )
 
-
 target_link_libraries(field_of_view PUBLIC camera ui Qt5::Widgets ${OpenCV_LIBS} -lgphoto2 -lgphoto2_port)
+
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/ui/src/"
                           )
+
+enable_testing()
+add_executable(
+  unit_tests
+  ./processing/tests/composite_tests.cc
+)
+target_link_libraries(
+  unit_tests
+  GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(unit_tests)
 

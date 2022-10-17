@@ -1,5 +1,5 @@
 cmake -S./src/ -B./build/ 
-cd ./build
-make
+cmake --build build
+cd build && ctest
 cd ../
 ./bin/field_of_view
