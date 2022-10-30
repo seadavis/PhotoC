@@ -2,7 +2,6 @@
 #include <iostream>
 #include <algorithm>
 
-
 using namespace cv;
 
 Mat processing::composite(Mat src, Mat tgt, double ax, double ay)
