@@ -66,8 +66,6 @@ def main():
 
         for tgt_file in tgt_files:
             print(f"Compositing Pictures Naively. Source: {src_file}, Target: {tgt_file}")
-        
-        
             tgt = cv2.imread(f"{tgt_dir}/{tgt_file}")
             src_w, src_h, channels = diff.shape
             tgt_w, tgt_h, channels = tgt.shape
@@ -77,7 +75,7 @@ def main():
             start_row = math.floor(tgt_w/2) - math.floor(src_w/2)
             end_row = start_row + src_w
 
-            start_col = math.floor(tgt_h/2) - math.floor(src_w/2)
+            start_col = math.floor(tgt_h/2) - math.floor(src_h/2)
             end_col = start_col + src_h
 
             # take the roi from the target

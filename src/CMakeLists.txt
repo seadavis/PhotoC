@@ -11,7 +11,7 @@ find_package( Qt5Core REQUIRED )
 find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Gui REQUIRED )
 find_package(OpenCV REQUIRED )
-
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -24,12 +24,13 @@ FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(./camera/src)
 add_subdirectory(./ui/src)
+add_subdirectory(./processing/src)
 
 add_executable(field_of_view
     main.cpp
 )
 
-target_link_libraries(field_of_view PUBLIC camera ui Qt5::Widgets ${OpenCV_LIBS} -lgphoto2 -lgphoto2_port)
+target_link_libraries(field_of_view PUBLIC Eigen3::Eigen processing  camera ui Qt5::Widgets ${OpenCV_LIBS} -lgphoto2 -lgphoto2_port)
 
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
@@ -44,8 +45,12 @@ add_executable(
 )
 target_link_libraries(
   unit_tests
-  GTest::gtest_main
+  Eigen3::Eigen processing camera ui Qt5::Widgets GTest::gtest_main ${OpenCV_LIBS} -lgphoto2 -lgphoto2_port
 )
+
+target_include_directories(unit_tests PUBLIC
+                          "${PROJECT_SOURCE_DIR}/processing/src/"
+                          )
 
 include(GoogleTest)
 gtest_discover_tests(unit_tests)
