@@ -1,5 +1,5 @@
-cmake -S./src/ -B./build/ 
+cmake -DCMAKE_BUILD_TYPE=Debug -S./src/ -B./build/ 
 cmake --build build
-cd build && ctest
-cd ../
-./bin/field_of_view
+./bin/unit_tests
+#cd ../
+#./bin/field_of_view
