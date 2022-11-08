@@ -69,6 +69,9 @@ def main():
             tgt = cv2.imread(f"{tgt_dir}/{tgt_file}")
             src_w, src_h, channels = diff.shape
             tgt_w, tgt_h, channels = tgt.shape
+
+            print(f"Src Width: {src_w}, Src H: {src_h}\n")
+            print(f"Tgt Width: {tgt_w}, Tgt H: {tgt_h}\n")
         
             # figure out where we start and end to place
             # it in the middle

@@ -21,5 +21,8 @@
             }
         ]
     },
-    "gtest-adapter.supportLocation": true
+    "gtest-adapter.supportLocation": true,
+    "files.associations": {
+        "iostream": "cpp"
+    }
 }

@@ -5,5 +5,5 @@ using namespace cv;
 
 
 namespace processing{
-    Mat composite(Mat, Mat, double, double);
+    Mat composite(Mat, Mat, unsigned int, unsigned int);
 }

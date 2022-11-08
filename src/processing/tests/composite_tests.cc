@@ -1,21 +1,42 @@
 #include <gtest/gtest.h>
 #include "processing.h"
 #include <iostream>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 using namespace std;
 
-// Demonstrate some basic assertions.
+
 TEST(Processing, BasicComposite) {
 
-  double data[9] = {1.0,2.0,3.0,4.0,5.0,6.0, 7.0,8.0,10.0};
-  Mat m1 = Mat(3,3, CV_8UC1,&data);
 
-  Mat m2 = Mat(0,0, CV_8UC1);
-  Mat result = processing::composite(m1, m2, 0.0, 0.0);
+  // Read in m1
+  // Read in m2 (transparent) pixels
+  // place m2 in centre of m1
+  // test the resulting image (for now just place into folder)
+  // then set up regressions
+  Mat m1 = imread("./src/processing/tests/target_images/lake.png", IMREAD_UNCHANGED);
+  Mat m2 = imread("./src/processing/tests/source_images/eagle.png", IMREAD_UNCHANGED);
 
-  double expected_data[3] = {-2.0, 1.0, 1.0};
-  Mat expectedMat = Mat(3,1, CV_8UC1, &expected_data);
+  Mat tgt;
+  cvtColor(m1, tgt, CV_BGR2BGRA);
 
-  bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);
+  unsigned int tgt_height = m1.size().height;
+  unsigned int tgt_width = m1.size().width;
+
+  unsigned int tgt_cy = tgt_height/2;
+  unsigned int tgt_cx = tgt_width/2;
+
+  unsigned int src_cy = m2.size().height/2;
+  unsigned int src_cx = m2.size().width/2;
+
+  Mat result = processing::composite(m2, tgt, tgt_cx - src_cx, tgt_cy - src_cy );
+
+  Mat result_out;
+
+  imwrite("./src/processing/tests/target_composites/eagle_lake.png", result);
+
+  //bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
+  ASSERT_TRUE(false);
 }
