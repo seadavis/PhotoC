@@ -12,28 +12,6 @@ using namespace Eigen;
 typedef SparseMatrix<float> SpMat;
 typedef Eigen::Triplet<float> MatTriplet;
 
-static string type2str(int type) {
-  string r;
-
-  uchar depth = type & CV_MAT_DEPTH_MASK;
-  uchar chans = 1 + (type >> CV_CN_SHIFT);
-
-  switch ( depth ) {
-    case CV_8U:  r = "8U"; break;
-    case CV_8S:  r = "8S"; break;
-    case CV_16U: r = "16U"; break;
-    case CV_16S: r = "16S"; break;
-    case CV_32S: r = "32S"; break;
-    case CV_32F: r = "32F"; break;
-    case CV_64F: r = "64F"; break;
-    default:     r = "User"; break;
-  }
-
-  r += "C";
-  r += (chans+'0');
-
-  return r;
-}
 
 static bool is_mask_pixel(Mat& m, unsigned int x, unsigned int y)
 {   
@@ -123,6 +101,34 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
 }
 
 /**
+ * Convers the given open cv matrix to 
+ * 3 eigen matrices green, blue and red
+ **/
+static vector<Eigen::MatrixXf> cv_to_eigen_channels(Mat m)
+{
+    auto const size = m.size();
+    vector<Eigen::MatrixXf> mat_list(3);
+
+    mat_list.push_back(Eigen::MatrixXf(size.width, size.height));
+    mat_list.push_back(Eigen::MatrixXf(size.width, size.height));
+    mat_list.push_back(Eigen::MatrixXf(size.width, size.height));
+    
+    for(unsigned int y = 0; y < size.height; y++)
+    {
+        for(unsigned x = 0; x < size.width; x++)
+        {
+            auto v = m.at<Vec4b>(Point(x, y));
+
+            mat_list[0](x, y) = (float)v[0]/255.0f;
+            mat_list[1](x, y) = (float)v[1]/255.0f;
+            mat_list[2](x, y) = (float)v[2]/255.0f;
+        }
+    }
+
+    return mat_list;
+}
+
+/**
  * Forms a b vector for the given matrix 
  * and the given channel number.
  * Channel referring to BGR (due to OpenCV implementation quirk).
@@ -133,7 +139,7 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
  * @param my - the position of source into target, relative to the upper left hand corner of both
  * @param channel_number the color channel we are solving for.
  **/
-static VectorXf form_target_sln(Mat& source_image, Mat& target_image, unsigned int mx, unsigned int my, unsigned int channel_number, unsigned int num_unknowns)
+static vector<VectorXf> form_target_slns(Mat& source_image, Mat& target_image, unsigned int mx, unsigned int my, unsigned int num_unknowns)
 {
     auto size = source_image.size();
     int h = target_image.size().height;
@@ -141,46 +147,54 @@ static VectorXf form_target_sln(Mat& source_image, Mat& target_image, unsigned i
 
     unsigned int row = 0;
 
-    VectorXf b(num_unknowns);
+    auto source_channels = cv_to_eigen_channels(source_image);
+    auto target_channels = cv_to_eigen_channels(target_image);
 
-    for(unsigned int y = 0; y < size.height; y++)
+    vector<VectorXf> solution_channels(3);
+
+    for(int channel_number = 0; channel_number < 3; channel_number++)
     {
-        for(unsigned int x = 0; x < size.width; x++)
+        VectorXf b(num_unknowns);
+
+        for(unsigned int y = 0; y < size.height; y++)
         {
-            if(is_mask_pixel(source_image, x, y))
+            for(unsigned int x = 0; x < size.width; x++)
             {
-                float pixel = source_image.at<Vec3b>(y,x)[channel_number];
-                
-                float grad = 
-                    pixel -  source_image.at<Vec3f>(y - 1,x)[channel_number] + 
-                    pixel -  source_image.at<Vec3f>( y,x - 1)[channel_number]+ 
-                    pixel -  source_image.at<Vec3f>(y + 1, x)[channel_number] + 
-                    pixel -  source_image.at<Vec3f>( y,x + 1)[channel_number];
+                if(is_mask_pixel(source_image, x, y))
+                {
+                    float pixel = source_channels[channel_number](x, y);
+                    
+                    float grad = 
+                        pixel -  source_channels[channel_number](x,y - 1) + 
+                        pixel -  source_channels[channel_number](x-1, y)+ 
+                        pixel -  source_channels[channel_number](x, y+1) + 
+                        pixel - source_channels[channel_number](x+1, y);
 
 
-                b[row] = grad;
+                    b[row] = grad;
 
-                if(!is_mask_pixel(source_image, x, y - 1)){
-                    b[row] += target_image.at<Vec3f>(y + my - 1, x + mx)[channel_number];
+                    if(!is_mask_pixel(source_image, x, y - 1)){
+                        b[row] += target_channels[channel_number](x + mx, y + my - 1);
+                    }
+
+                    if(!is_mask_pixel(source_image, x - 1, y)){
+                        b[row] += target_channels[channel_number](x -1 + mx, y + my);
+                    }
+
+                    if(!is_mask_pixel(source_image, x, y + 1)){
+                        b[row] += target_channels[channel_number](x + mx, y + 1 + my);
+                    }
+
+                    if(!is_mask_pixel(source_image, x + 1, y )){
+                        b[row] += target_channels[channel_number](x + mx +1, y + my);
+                    }
+                    row++;
                 }
-
-                if(!is_mask_pixel(source_image, x - 1, y)){
-                    b[row] += target_image.at<Vec3f>(y + my, x - 1 + mx)[channel_number];
-                }
-
-                if(!is_mask_pixel(source_image, x, y + 1)){
-                    b[row] += target_image.at<Vec3f>(y + 1 + my,  x + mx)[channel_number];
-                }
-
-                if(!is_mask_pixel(source_image, x + 1, y )){
-                    b[row] += target_image.at<Vec3f>( y + my, x + mx + 1)[channel_number];
-                }
-                row++;
             }
         }
     }
 
-    return b;
+    return solution_channels;
 
 }
 
@@ -188,57 +202,48 @@ static VectorXf form_target_sln(Mat& source_image, Mat& target_image, unsigned i
 Mat processing::composite(Mat src, Mat tgt, unsigned int mx, unsigned int my)
 {
     
-    cout << "Src Type: " << type2str(src.type()) << " Tgt Type: " << type2str(tgt.type()) << "\n";
-
     Mat output_img = tgt.clone();
-    //map<unsigned int, unsigned int> variable_map;
+    map<unsigned int, unsigned int> variable_map;
 
-    //const int pre_size = variable_map.size();
-    //auto src_sz = src.size();
-    //auto matrix = form_matrix(src, variable_map);
-    //SimplicialCholesky<SpMat> solver;
-    //solver.compute(matrix);
-    //const int post_size = variable_map.size();
+    auto src_sz = src.size();
 
-    //VectorXf solution_channels[3];
-    // solve for three seperate channelsheight
-    //for(int i = 0; i < 3; i++)
-    //{   
-    //    auto b = form_target_sln(src, tgt, mx, my, i, (unsigned int)variable_map.size());
-    //   solution_channels[i] = solver.solve(b);
-    //}
+    // remains a mat
+    auto matrix = form_matrix(src, variable_map);
+    SimplicialCholesky<SpMat> solver;
+    solver.compute(matrix);
 
-
+    vector<VectorXf> solution_channels = form_target_slns(src, tgt, mx, my, (unsigned int)variable_map.size());
+    
     // put the solved channels into the output matrix
     for(int y = 0; y < src.rows; y++)
     {
         for(int x = 0; x < src.cols; x++)
         {
-            //unsigned int variable_number = variable_map[flatten(src, x, y)];
-
-            //const float b_raw = solution_channels[0][variable_number];
-            //const float g_raw = solution_channels[1][variable_number];
-            //const float r_raw = solution_channels[2][variable_number]; 
-
+           
             if(!is_mask_pixel(src, x, y))
             {
-                auto v = src.at<Vec3b>(Point(x, y));
-                auto b_raw = v[0];
-                auto g_raw = v[1];
-                auto r_raw = v[2];
+                unsigned int variable_number = variable_map[flatten(src, x, y)];
+                const float b_raw = solution_channels[0][variable_number];
+                const float g_raw = solution_channels[1][variable_number];
+                const float r_raw = solution_channels[2][variable_number]; 
+
+
+                // here we clamp between 0 and 1.0 and then multiple to 255
+                auto b = (int)(clamp(b_raw)*255.0);
+                auto g = (int)(clamp(g_raw)*255.0);
+                auto r = (int)(clamp(r_raw)*255.0);
 
                 auto p = Point(x + mx, y + my);
                 
-                output_img.at<Vec3b>(p)[0] = b_raw;
-                output_img.at<Vec3b>(p)[1] = g_raw; 
-                output_img.at<Vec3b>(p)[2] = r_raw;   
+                output_img.at<Vec4b>(p)[0] = b_raw;
+                output_img.at<Vec4b>(p)[1] = g_raw; 
+                output_img.at<Vec4b>(p)[2] = r_raw;   
             }
             
             
         }
     }
 
-    cout << "Out Type: " << type2str(output_img.type()) << " Src Type: " << type2str(src.type()) << " Tgt Type: " << type2str(tgt.type()) << "\n";
     return output_img;
 }
 
