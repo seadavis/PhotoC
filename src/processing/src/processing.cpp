@@ -207,7 +207,6 @@ Mat processing::composite(Mat src, Mat tgt, unsigned int mx, unsigned int my)
 
     auto src_sz = src.size();
 
-    // remains a mat
     auto matrix = form_matrix(src, variable_map);
     SimplicialCholesky<SpMat> solver;
     solver.compute(matrix);
