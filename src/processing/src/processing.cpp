@@ -72,7 +72,6 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
     }
 
     const unsigned int num_unknowns = (unsigned int)variable_map.size();
-    cout << "Num Unknwowns 1: " << num_unknowns << ", Variable Number: " << variable_number << "\n";
     unsigned int row = 0;
 
     // we assign the matrix into a triplet so what we can put it into a 
@@ -208,9 +207,7 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat
         solution_channels[channel_number] = solver.solve(b);
     }
 
-    cout << "Return Solutions";
     return solution_channels;
-
 }
 
 
