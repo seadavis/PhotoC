@@ -16,11 +16,15 @@ TEST(Processing, BasicComposite) {
   // place m2 in centre of m1
   // test the resulting image (for now just place into folder)
   // then set up regressions
-  Mat m1 = imread("./src/processing/tests/target_images/lake.png", IMREAD_UNCHANGED);
-  Mat m2 = imread("./src/processing/tests/source_images/eagle.png", IMREAD_UNCHANGED);
+  Mat m1 = imread("./src/processing/tests/target_images/library.png", IMREAD_UNCHANGED);
+  Mat m2 = imread("./src/processing/tests/masks/eagle.png", IMREAD_UNCHANGED);
+  Mat m3 = imread("./src/processing/tests/original_source_images/eagle.png", IMREAD_UNCHANGED);
 
   Mat tgt;
   cvtColor(m1, tgt, CV_BGR2BGRA);
+
+  Mat src;
+  cvtColor(m3, src, CV_BGR2BGRA);
 
   unsigned int tgt_height = m1.size().height;
   unsigned int tgt_width = m1.size().width;
@@ -31,7 +35,7 @@ TEST(Processing, BasicComposite) {
   unsigned int src_cy = m2.size().height/2;
   unsigned int src_cx = m2.size().width/2;
 
-  Mat result = processing::composite(m2, tgt, tgt_cx - src_cx, tgt_cy - src_cy );
+  Mat result = processing::composite(m2, src, tgt, tgt_cx - src_cx, tgt_cy - src_cy );
 
   Mat result_out;
 
