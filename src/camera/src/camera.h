@@ -34,7 +34,7 @@ class RemoteCamera : ICamera
 		int connect() override;
 
 		Mat snap_picture() override;
-
+        ~RemoteCamera();
 
     private:
         Camera	*camera;

@@ -80,21 +80,19 @@ int RemoteCamera::connect()
 	int retval = gp_camera_init(camera, context);
 	if (retval != GP_OK) {
 		printf("  Retval of gp_camera_init: %d\n", retval);
-		return 1;
+		return 0;
 	}
 
-	if(gp_log_add_func(GP_LOG_ERROR, errordumper, NULL) < 0)
-		return 1;
-
-	
-	if(gp_camera_new(&camera) < 0);
-		return 1;
-
-	return 0;
+	return 1;
 }	
 
 Mat RemoteCamera::snap_picture()
 {
+	if(buffer_size > 0)
+	{
+		buffer_size = 0;
+		delete buffer;
+	}
 
 	CameraFilePath camera_file_path;
 	printf("Capturing To Memory\n");
@@ -102,6 +100,12 @@ Mat RemoteCamera::snap_picture()
 
     return imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
 }
+
+RemoteCamera::~RemoteCamera()
+{
+	gp_camera_exit(camera, context);
+}
+
 
 /* section reserved for C code specific to the camera */
 static int

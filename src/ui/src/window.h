@@ -9,6 +9,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include "camera.h"
 
 class Window : public QWidget
 {
@@ -28,6 +29,8 @@ class Window : public QWidget
     QPixmap *pixmap;
     QImage *image;
     QPushButton *button; 
+    RemoteCamera *camera;
+
 };
 
 #endif // WINDOW_H
