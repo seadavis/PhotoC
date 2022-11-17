@@ -2,9 +2,11 @@
 #include <QPushButton>
 #include <QImageReader>
 #include <QStackedLayout>
+#include <QToolBar>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <QComboBox>
 #include "processing.h"
 
 using namespace cv;
@@ -48,12 +50,16 @@ Window::Window(QWidget *parent) :
  QWidget(parent)
  {
  
+    QToolBar* bar = new QToolBar(this);
+    QComboBox* comboBox = new QComboBox;
+
+    comboBox->
+
     // Set size of the window
     setFixedSize(1500, 1200);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
 
-   
     label = new QLabel;
     label->setGeometry(10, 10, 901, 676);
     layout->addWidget(label);

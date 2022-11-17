@@ -27,6 +27,7 @@
     },
     "files.exclude": {
         "**/*.png": true,
-        "**/build": true
+        "**/build": true,
+        "**/bin":true
     }
 }
