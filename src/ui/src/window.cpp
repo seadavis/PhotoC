@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <QComboBox>
+#include <QDockWidget>
 #include "processing.h"
 
 using namespace cv;
@@ -57,6 +58,8 @@ Window::Window(QWidget *parent) :
 
     // Set size of the window
     setFixedSize(1500, 1200);
+    
+    QDockWidget* w = new QDockWidget(this);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
 
