@@ -14,22 +14,22 @@
 class Window : public QWidget
 {
 
-  Q_OBJECT
+   Q_OBJECT
 
- public:
+   public:
   
-  explicit Window(QWidget *parent = 0);
+      explicit Window(QWidget *parent = 0);
+      void set_camera(ICamera* camera);
 
+   private slots:
+      void handleButton();
 
- private slots:
-    void handleButton();
-
- private:
-    QLabel *label;
-    QPixmap *pixmap;
-    QImage *image;
-    QPushButton *button; 
-    RemoteCamera *camera;
+   private:
+      QLabel *label;
+      QPixmap *pixmap;
+      QImage *image;
+      QPushButton *button; 
+      ICamera* camera;
 
 };
 

@@ -1,6 +1,7 @@
 #include "window.h"
 #include <QPushButton>
 #include <QImageReader>
+#include <QStackedLayout>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -14,8 +15,8 @@ void Window::handleButton(){
  
 
   Mat img =  camera->snap_picture();
-	Mat out;
-	cv::resize(img, out, cv::Size(900, 600));
+  Mat out;
+  cv::resize(img, out, cv::Size(900, 600));
 
   Mat mask = imread("./src/processing/tests/masks/eagle.png", IMREAD_UNCHANGED);
   Mat source_raw = imread("./src/processing/tests/original_source_images/eagle.png", IMREAD_UNCHANGED);
@@ -35,6 +36,14 @@ void Window::handleButton(){
   label->setPixmap(QPixmap::fromImage(*image));
 }
 
+void Window::set_camera(ICamera* camera)
+{
+  this->camera = camera;
+  cout << "Connecting Camera!\n";
+    if(!camera->connect())
+      return;
+}
+
 Window::Window(QWidget *parent) :
  QWidget(parent)
  {
@@ -42,18 +51,17 @@ Window::Window(QWidget *parent) :
     // Set size of the window
     setFixedSize(1500, 1200);
 
-    label = new QLabel(this);
-    label->setGeometry(10, 10, 901, 676);
+    QVBoxLayout* layout = new QVBoxLayout(this);
 
-    button = new QPushButton("Snap!", this);
+   
+    label = new QLabel;
+    label->setGeometry(10, 10, 901, 676);
+    layout->addWidget(label);
+
+    button = new QPushButton("Snap!");
     button->setGeometry(15, 15, 100, 50);
+    layout->addWidget(button);
 
     connect(button, &QPushButton::released, this, &Window::handleButton);
-
-  camera = new RemoteCamera();
-  cout << "Connecting Camera!\n";
-  if(!camera->connect())
-    return;
-
 }
 

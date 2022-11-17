@@ -6,6 +6,7 @@
 #include <gphoto2/gphoto2-camera.h>
 
 using namespace cv;
+using namespace std;
 
 class ICamera
 {
@@ -26,8 +27,18 @@ class ICamera
 };
 
 
+class FakeCamera : public ICamera
+{
+    public:
+        FakeCamera(string pic_path);
+		int connect() override;
+		Mat snap_picture() override;
 
-class RemoteCamera : ICamera
+    private:
+        string pic_path;
+};
+
+class RemoteCamera : public ICamera
 {
 	public:
         RemoteCamera();

@@ -17,13 +17,23 @@
 
 int main(int argc, char **argv)
 {
-
-
-
     QApplication app (argc, argv);
-
     Window window;
+    
+    ICamera* camera;
+    if(argc > 1)
+    {   
+        camera = new FakeCamera(string(argv[1]));
+    }
+    else
+    {
+        camera = new RemoteCamera();
+    }
+
+    window.set_camera(camera);
     window.show();
 
-    return app.exec();
+    int return_num = app.exec();
+
+    return return_num;
 }

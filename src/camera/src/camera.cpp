@@ -106,6 +106,22 @@ RemoteCamera::~RemoteCamera()
 	gp_camera_exit(camera, context);
 }
 
+FakeCamera::FakeCamera(string file_path)
+{
+	this->pic_path = file_path;
+}
+
+Mat FakeCamera::snap_picture()
+{
+	Mat m = imread(pic_path);
+	return m;
+}
+
+int FakeCamera::connect()
+{
+	return 1;
+}
+
 
 /* section reserved for C code specific to the camera */
 static int
