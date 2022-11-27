@@ -42,7 +42,7 @@ target_include_directories(field_of_view PUBLIC
 enable_testing()
 add_executable(
   unit_tests
-  ./processing/tests/composite_tests.cc
+  ./processing/tests/composite_tests.cpp
 )
 target_link_libraries(
   unit_tests
