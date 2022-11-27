@@ -1,22 +1,19 @@
-#include "window.h"
-#include <QPushButton>
-#include <QImageReader>
-#include <QStackedLayout>
-#include <QToolBar>
+#include "canvaswidget.h"
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-#include <QComboBox>
-#include <QDockWidget>
 #include "processing.h"
 
 using namespace cv;
 using namespace std;
 using namespace processing;
 
-void Window::handleButton(){
+void CanvasWidget::handleButton()
+{
  
-
   Mat img =  camera->snap_picture();
   Mat out;
   cv::resize(img, out, cv::Size(900, 600));
@@ -39,38 +36,19 @@ void Window::handleButton(){
   label->setPixmap(QPixmap::fromImage(*image));
 }
 
-void Window::set_camera(ICamera* camera)
+
+CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
-  this->camera = camera;
-  cout << "Connecting Camera!\n";
-    if(!camera->connect())
-      return;
-}
-
-Window::Window(QWidget *parent) :
- QWidget(parent)
- {
- 
-    QToolBar* bar = new QToolBar(this);
-    QComboBox* comboBox = new QComboBox;
-
-    comboBox->
-
-    // Set size of the window
-    setFixedSize(1500, 1200);
-    
-    QDockWidget* w = new QDockWidget(this);
-
-    QVBoxLayout* layout = new QVBoxLayout(this);
-
+    verticalLayout = new QVBoxLayout(this);
+    this->camera = camera;
     label = new QLabel;
-    label->setGeometry(10, 10, 901, 676);
-    layout->addWidget(label);
+    //label->setGeometry(10, 10, 901, 676);
 
     button = new QPushButton("Snap!");
-    button->setGeometry(15, 15, 100, 50);
-    layout->addWidget(button);
+    //button->setGeometry(15, 15, 100, 50);
 
-    connect(button, &QPushButton::released, this, &Window::handleButton);
+    verticalLayout->addWidget(label);
+    verticalLayout->addWidget(button);
+
+    connect(button, &QPushButton::released, this, &CanvasWidget::handleButton);
 }
-

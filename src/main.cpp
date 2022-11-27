@@ -13,16 +13,16 @@
  */
 
 #include <QApplication>
-#include "window.h"
+#include "mainwindow.h"
 
 int main(int argc, char **argv)
 {
     QApplication app (argc, argv);
-    Window window;
-    
+   
     ICamera* camera;
     if(argc > 1)
     {   
+        
         camera = new FakeCamera(string(argv[1]));
     }
     else
@@ -30,11 +30,17 @@ int main(int argc, char **argv)
         camera = new RemoteCamera();
     }
 
-    window.set_camera(camera);
-    window.setWindowState(Qt::WindowFullScreen);
+    MainWindow window(camera);
+    
+    window.setWindowState(Qt::WindowMaximized);
+    window.setWindowFlags(Qt::Window |
+                             Qt::WindowMinimizeButtonHint | 
+                             Qt::WindowMaximizeButtonHint | 
+                             Qt::WindowCloseButtonHint);
     window.show();
 
     int return_num = app.exec();
 
+    delete camera;
     return return_num;
 }
