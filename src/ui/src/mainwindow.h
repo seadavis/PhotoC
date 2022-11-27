@@ -1,7 +1,6 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <QWidget>
 #include <QMainWindow>
 #include "canvaswidget.h"
 

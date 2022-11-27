@@ -1,4 +1,4 @@
-#include "canvaswidget.h"
+#include <QPixmap>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include "processing.h"
+#include "canvaswidget.h"
 
 using namespace cv;
 using namespace std;
