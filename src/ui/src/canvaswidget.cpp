@@ -26,7 +26,6 @@ void CanvasWidget::handleButton()
     double image_height = img.size().height;
     int heightFactor = canvas_height/image_height;
 
-    auto size = cv::Size(label->geometry().width(), label->geometry().height());
     cv::resize(img, out, Size(), widthFactor, heightFactor, CV_INTER_LINEAR);
 
     Mat mask = imread("./src/processing/tests/masks/eagle.png", IMREAD_UNCHANGED);
