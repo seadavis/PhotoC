@@ -10,9 +10,6 @@ using namespace std;
 
 class Processing :
     public testing::TestWithParam<tuple<string, string>> {
-  // You can implement all the usual fixture class members here.
-  // To access the test parameter, call GetParam() from class
-  // TestWithParam<T>.
 };
 
 INSTANTIATE_TEST_SUITE_P(CompositeTests,
