@@ -31,7 +31,7 @@ add_executable(field_of_view
     main.cpp
 )
 
-target_link_libraries(field_of_view PUBLIC Eigen3::Eigen processing camera ui Qt5::Widgets ${OpenCV_LIBS})
+target_link_libraries(field_of_view PUBLIC processing camera ui Qt5::Widgets ${OpenCV_LIBS})
 
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
@@ -46,7 +46,7 @@ add_executable(
 )
 target_link_libraries(
   unit_tests
-  Eigen3::Eigen processing camera ui Qt5::Widgets GTest::gtest_main ${OpenCV_LIBS} -lgphoto2 -lgphoto2_port
+  processing camera ui Qt5::Widgets GTest::gtest_main ${OpenCV_LIBS}
 )
 
 target_include_directories(unit_tests PUBLIC
