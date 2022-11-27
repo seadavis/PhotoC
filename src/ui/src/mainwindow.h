@@ -3,9 +3,7 @@
 
 #include <QWidget>
 #include <QMainWindow>
-
 #include "canvaswidget.h"
-
 
 class MainWindow : public QMainWindow
 {
@@ -19,6 +17,7 @@ class MainWindow : public QMainWindow
    private:
       ICamera* camera;
       CanvasWidget* canvas;
+      QPushButton* button;   
 
 };
 

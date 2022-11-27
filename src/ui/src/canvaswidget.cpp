@@ -14,26 +14,36 @@ using namespace processing;
 void CanvasWidget::handleButton()
 {
  
-  Mat img =  camera->snap_picture();
-  Mat out;
-  cv::resize(img, out, cv::Size(900, 600));
+    Mat img =  camera->snap_picture();
+    Mat out;
 
-  Mat mask = imread("./src/processing/tests/masks/eagle.png", IMREAD_UNCHANGED);
-  Mat source_raw = imread("./src/processing/tests/original_source_images/eagle.png", IMREAD_UNCHANGED);
+    double canvas_width = label->geometry().width();
+    double image_width = img.size().width;
+    int widthFactor = canvas_width/image_width;
 
-  Mat tgt;
-  cvtColor(out, tgt, CV_BGR2BGRA);
 
-  Mat src;
-  cvtColor(source_raw, src, CV_BGR2BGRA);
+    double canvas_height = label->geometry().height();
+    double image_height = img.size().height;
+    int heightFactor = canvas_height/image_height;
 
-  Mat comp = composite(mask, src, tgt, 450, 300);
-  Mat print;
-  cout << "Image Total:  " << img.total() << " Element Size: " << img.elemSize() << "\n";
-  cvtColor(comp,print,CV_BGRA2RGB);
-  pixmap = new QPixmap();
-  image = new QImage(print.data, print.cols, print.rows, QImage::Format_RGB888);
-  label->setPixmap(QPixmap::fromImage(*image));
+    auto size = cv::Size(label->geometry().width(), label->geometry().height());
+    cv::resize(img, out, Size(), widthFactor, heightFactor, CV_INTER_LINEAR);
+
+    Mat mask = imread("./src/processing/tests/masks/eagle.png", IMREAD_UNCHANGED);
+    Mat source_raw = imread("./src/processing/tests/original_source_images/eagle.png", IMREAD_UNCHANGED);
+
+    Mat tgt;
+    cvtColor(out, tgt, CV_BGR2BGRA);
+
+    Mat src;
+    cvtColor(source_raw, src, CV_BGR2BGRA);
+
+    Mat comp = composite(mask, src, tgt, 450, 300);
+    Mat print;
+    cout << "Image Total:  " << img.total() << " Element Size: " << img.elemSize() << "\n";
+    cvtColor(comp,print,CV_BGRA2RGB);
+    image = new QImage(print.data, print.cols, print.rows, QImage::Format_RGB888);
+    label->setPixmap(QPixmap::fromImage(*image));
 }
 
 
@@ -42,10 +52,14 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     verticalLayout = new QVBoxLayout(this);
     this->camera = camera;
     label = new QLabel;
-    //label->setGeometry(10, 10, 901, 676);
+    
+    label->setStyleSheet("QLabel { background-color : black; }");
+
+    auto blackPixMap = QPixmap();
+    blackPixMap.fill(Qt::black);
+    label->setPixmap(blackPixMap);
 
     button = new QPushButton("Snap!");
-    //button->setGeometry(15, 15, 100, 50);
 
     verticalLayout->addWidget(label);
     verticalLayout->addWidget(button);

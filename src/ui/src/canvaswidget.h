@@ -16,9 +16,8 @@ class CanvasWidget : public QWidget
 
     private:
         QVBoxLayout* verticalLayout;
-        QLabel* label;  
+        QLabel* label;
         QPushButton* button;   
-        QPixmap *pixmap;
         QImage *image;
         ICamera *camera;
 
