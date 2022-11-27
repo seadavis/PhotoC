@@ -134,8 +134,7 @@ static vector<Eigen::MatrixXf> cv_to_eigen_channels(Mat m)
             mat_list[2](y, x) = in_pixel((float)v[2]);
         }
     }
-
-    cout << "Return!\n";
+    
     return mat_list;
 }
 
