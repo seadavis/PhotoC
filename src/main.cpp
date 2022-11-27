@@ -31,6 +31,7 @@ int main(int argc, char **argv)
     }
 
     window.set_camera(camera);
+    window.setWindowState(Qt::WindowFullScreen);
     window.show();
 
     int return_num = app.exec();
