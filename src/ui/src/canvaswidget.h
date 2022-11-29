@@ -3,7 +3,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QImage>
-#include <QPixmap>
+
 #include "camera.h"
 
 class CanvasWidget : public QWidget

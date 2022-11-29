@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "canvaswidget.h"
+#include "compositeselection.h"
 
 class MainWindow : public QMainWindow
 {
@@ -17,6 +18,8 @@ class MainWindow : public QMainWindow
       ICamera* camera;
       CanvasWidget* canvas;
       QPushButton* button;   
+      QDockWidget* leftDock;
+      CompositeSelection* compositeSelection;
 
 };
 
