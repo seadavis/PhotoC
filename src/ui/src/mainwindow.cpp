@@ -15,6 +15,7 @@ MainWindow::MainWindow(ICamera* camera)
   setCentralWidget(canvas);
 
   leftDock = new QDockWidget(tr("Left"), this);
+  leftDock->setMinimumWidth(0.4*this->geometry().width());
   leftDock->setAllowedAreas(Qt::LeftDockWidgetArea
                                   | Qt::RightDockWidgetArea);
 

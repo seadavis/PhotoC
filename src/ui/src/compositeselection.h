@@ -2,7 +2,9 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QImage>
+#include <QLineEdit>
 
 class CompositeSelection : public QWidget
 {
@@ -11,5 +13,11 @@ class CompositeSelection : public QWidget
 
     private:
         QVBoxLayout* layout;
-        QLabel *label;
+        QVBoxLayout* sourceLayout;
+
+        QLabel* sourceLabel;
+        QLineEdit* sourceEdit;
+        QWidget* frame;
+        
+
 };
