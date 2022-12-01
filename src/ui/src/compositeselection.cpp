@@ -20,9 +20,9 @@ CompositeSelection::CompositeSelection()
 
 
     frame = new QWidget(this);
-    frame->setMinimumHeight(10);
-    frame->setMinimumWidth(10);
-    frame->setStyleSheet("QWidget{background-image: url(:/resources/images/check_mark.jpg)} ");
+    frame->setMinimumHeight(15);
+    frame->setMinimumWidth(15);
+    frame->setStyleSheet("QWidget{background-image: url(:/resources/images/check_mark.png} ");
     hLayout->addWidget(frame);
     hLayout->addWidget(sourceEdit);
 
