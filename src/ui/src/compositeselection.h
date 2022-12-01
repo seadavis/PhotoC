@@ -19,7 +19,7 @@ class CompositeSelection : public QWidget
 
         QHBoxLayout *hLayout;
         QLineEdit* sourceEdit;
-        QWidget* frame;
+        QLabel* frame;
         
 
 };

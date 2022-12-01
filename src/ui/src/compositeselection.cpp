@@ -18,11 +18,12 @@ CompositeSelection::CompositeSelection()
     sourceEdit = new QLineEdit;
     sourceEdit->setDisabled(true);
 
+  
 
-    frame = new QWidget(this);
-    frame->setMinimumHeight(10);
-    frame->setMinimumWidth(10);
-    frame->setStyleSheet("QWidget{background-image: url(:/resources/images/check_mark.png}; background-color: black ");
+    frame = new QLabel(this);
+    frame->setMinimumHeight(25);
+    frame->setMinimumWidth(25);
+    frame->setPixmap(QPixmap(":/resources/images/check_mark.png"));
     hLayout->addWidget(frame);
     hLayout->addWidget(sourceEdit);
 
