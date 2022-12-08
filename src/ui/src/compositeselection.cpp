@@ -7,7 +7,6 @@ CompositeSelection::CompositeSelection()
 
     hLayout = new QHBoxLayout;
 
-  
     sourceLabel = new QLabel;
     sourceLabel->setText("Error");
 
@@ -18,7 +17,16 @@ CompositeSelection::CompositeSelection()
     sourceEdit = new QLineEdit;
     sourceEdit->setDisabled(true);
 
-  
+    errorLabel = new QLabel(this);
+    errorLabel->setText("Some Error");
+
+    fileTextLayout = new QVBoxLayout;
+    fileTextLayout->addWidget(sourceEdit);
+    sourceEdit->setAlignment(Qt::AlignTop);
+
+    fileTextLayout->addWidget(errorLabel);
+    errorLabel->setAlignment(Qt::AlignBottom);
+    fileTextLayout->setContentsMargins(0, 0, 0, 5);
 
     frame = new QLabel(this);
     frame->setMinimumHeight(25);
@@ -31,8 +39,12 @@ CompositeSelection::CompositeSelection()
     folderImg ->setPixmap(QPixmap(":folder_icon.jpg"));
 
     hLayout->addWidget(frame);
-    hLayout->addWidget(sourceEdit);
+    hLayout->addLayout(fileTextLayout);
     hLayout->addWidget(folderImg);
+    frame->setAlignment(Qt::AlignTop);
+    folderImg->setAlignment(Qt::AlignTop);
+
+    hLayout->setAlignment(Qt::AlignTop);
 
     sourceLayout->addWidget(sourceLabel);
 }

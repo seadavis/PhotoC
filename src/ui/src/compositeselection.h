@@ -18,8 +18,11 @@ class CompositeSelection : public QWidget
         QLabel* sourceLabel;
 
         QHBoxLayout *hLayout;
+        QVBoxLayout *fileTextLayout;
+
         QLineEdit* sourceEdit;
         QLabel* frame;
         QLabel* folderImg;
+        QLabel* errorLabel;
 
 };
