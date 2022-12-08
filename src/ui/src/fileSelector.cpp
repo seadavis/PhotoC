@@ -11,7 +11,7 @@ void FileSelector::selectFile()
 {
    QFileDialog dialog(this);
    dialog.setFileMode(QFileDialog::AnyFile);
-   //dialog.setNameFilter(tr("Images (*.png )"));
+   dialog.setNameFilter(tr("Images (*.png )"));
 
    errorLabel->setText("");
    statusImg->setPixmap(QPixmap());
