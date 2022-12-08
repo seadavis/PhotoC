@@ -5,6 +5,7 @@
 #include <QHBoxLayout>
 #include <QImage>
 #include <QLineEdit>
+#include "fileSelector.h"
 
 class CompositeSelection : public QWidget
 {
@@ -13,16 +14,6 @@ class CompositeSelection : public QWidget
 
     private:
         QVBoxLayout* layout;
-        QVBoxLayout* sourceLayout;
-
-        QLabel* sourceLabel;
-
-        QHBoxLayout *hLayout;
-        QVBoxLayout *fileTextLayout;
-
-        QLineEdit* sourceEdit;
-        QLabel* frame;
-        QLabel* folderImg;
-        QLabel* errorLabel;
+        FileSelector* sourceSelector;
 
 };
