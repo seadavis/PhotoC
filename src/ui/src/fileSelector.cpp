@@ -1,11 +1,44 @@
 #include "fileSelector.h"
 #include <iostream>
+#include <QFileDialog>
+#include <string>
+#include <regex>
+#include <QString>
 
 using namespace std;
 
 void FileSelector::selectFile()
 {
-    cout << "Hello From File!";
+   QFileDialog dialog(this);
+   dialog.setFileMode(QFileDialog::AnyFile);
+   //dialog.setNameFilter(tr("Images (*.png )"));
+
+   errorLabel->setText("");
+   statusImg->setPixmap(QPixmap());
+
+   if(dialog.exec())
+   {
+        auto selectedFiles = dialog.selectedFiles();
+        
+        if(selectedFiles.count() > 0)
+        {
+            auto selectedFile = selectedFiles.constFirst().toStdString();
+            regex expression("^.*\\.(png|PNG)$");
+
+            if(regex_match(selectedFile, expression))
+            {
+                statusImg->setPixmap(QPixmap(":check_mark.png"));
+            }
+            else
+            {
+                statusImg->setPixmap(QPixmap(":error_icon.png"));
+                errorLabel->setText("File Selected is not a PNG image");
+            }
+            
+            sourceEdit->setText(QString(selectedFile.c_str()));
+        }
+
+   }
 }
 
 FileSelector::FileSelector()
@@ -14,14 +47,14 @@ FileSelector::FileSelector()
     sourceEdit = new QLineEdit;
     sourceEdit->setDisabled(true);
 
-    errorLabel = new QLabel(this);
+    errorLabel = new QLabel;
 
     fileTextLayout = new QVBoxLayout;
     fileTextLayout->addWidget(sourceEdit);
     sourceEdit->setAlignment(Qt::AlignTop);
 
     fileTextLayout->addWidget(errorLabel);
-    errorLabel->setAlignment(Qt::AlignBottom);
+    errorLabel->setAlignment(Qt::AlignTop);
     errorLabel->setStyleSheet("QLabel{color: red;}");
     fileTextLayout->setContentsMargins(0, 0, 0, 5);
 
@@ -29,8 +62,6 @@ FileSelector::FileSelector()
 
     statusImg->setMinimumHeight(25);
     statusImg->setMinimumWidth(25);
-
-        
 
     QPixmap pixmap(":folder_icon.jpg");
     QIcon buttonIcon(pixmap);

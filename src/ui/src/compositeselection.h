@@ -15,5 +15,6 @@ class CompositeSelection : public QWidget
     private:
         QVBoxLayout* layout;
         FileSelector* sourceSelector;
+        FileSelector* targetSelector;
 
 };
