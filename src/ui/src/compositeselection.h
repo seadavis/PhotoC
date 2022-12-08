@@ -20,6 +20,6 @@ class CompositeSelection : public QWidget
         QHBoxLayout *hLayout;
         QLineEdit* sourceEdit;
         QLabel* frame;
-        
+        QLabel* folderImg;
 
 };

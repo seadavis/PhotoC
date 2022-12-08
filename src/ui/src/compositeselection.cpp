@@ -24,8 +24,15 @@ CompositeSelection::CompositeSelection()
     frame->setMinimumHeight(25);
     frame->setMinimumWidth(25);
     frame->setPixmap(QPixmap(":/resources/images/check_mark.png"));
+
+    folderImg = new QLabel(this);
+    folderImg->setMinimumHeight(25);
+    folderImg->setMinimumWidth(25);
+    folderImg ->setPixmap(QPixmap(":/resources/images/folder_icon.jpg"));
+
     hLayout->addWidget(frame);
     hLayout->addWidget(sourceEdit);
+    hLayout->addWidget(folderImg);
 
     sourceLayout->addWidget(sourceLabel);
 }
