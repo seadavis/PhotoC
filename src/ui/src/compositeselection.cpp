@@ -23,12 +23,12 @@ CompositeSelection::CompositeSelection()
     frame = new QLabel(this);
     frame->setMinimumHeight(25);
     frame->setMinimumWidth(25);
-    frame->setPixmap(QPixmap(":/resources/images/check_mark.png"));
+    frame->setPixmap(QPixmap(":check_mark.png"));
 
     folderImg = new QLabel(this);
     folderImg->setMinimumHeight(25);
     folderImg->setMinimumWidth(25);
-    folderImg ->setPixmap(QPixmap(":/resources/images/folder_icon.jpg"));
+    folderImg ->setPixmap(QPixmap(":folder_icon.jpg"));
 
     hLayout->addWidget(frame);
     hLayout->addWidget(sourceEdit);
