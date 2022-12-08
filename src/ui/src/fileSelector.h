@@ -11,12 +11,16 @@ class FileSelector : public QWidget
     public:
         FileSelector();
 
+    private slots:
+      void selectFile();
+
     private:
         QHBoxLayout *mainLayout;
         QVBoxLayout *fileTextLayout;
 
+
         QLineEdit* sourceEdit;
         QLabel* statusImg;
-        QLabel* folderImg;
+        QPushButton* folderImg;
         QLabel* errorLabel;
 };

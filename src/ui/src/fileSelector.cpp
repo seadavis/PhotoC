@@ -1,4 +1,12 @@
 #include "fileSelector.h"
+#include <iostream>
+
+using namespace std;
+
+void FileSelector::selectFile()
+{
+    cout << "Hello From File!";
+}
 
 FileSelector::FileSelector()
 {
@@ -22,15 +30,21 @@ FileSelector::FileSelector()
     statusImg->setMinimumHeight(25);
     statusImg->setMinimumWidth(25);
 
-    folderImg = new QLabel(this);
+        
+
+    QPixmap pixmap(":folder_icon.jpg");
+    QIcon buttonIcon(pixmap);
+    folderImg = new QPushButton;
     folderImg->setMinimumHeight(25);
     folderImg->setMinimumWidth(25);
-    folderImg ->setPixmap(QPixmap(":folder_icon.jpg"));
+    folderImg ->setIcon(buttonIcon);
+
+    
+    connect(folderImg, &QPushButton::released, this, &FileSelector::selectFile);
 
     mainLayout->addWidget(statusImg);
     mainLayout->addLayout(fileTextLayout);
-    mainLayout->addWidget(folderImg);
+    mainLayout->addWidget(folderImg, 0, Qt::AlignTop);
     statusImg->setAlignment(Qt::AlignTop);
-    folderImg->setAlignment(Qt::AlignTop);
 
 }
