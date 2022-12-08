@@ -13,5 +13,5 @@ fi
 
 if [ "$1" == "-s" ]
 then
-    ./bin/field_of_view
+    ./bin/field_of_view $2
 fi
