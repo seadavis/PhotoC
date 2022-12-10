@@ -1,4 +1,5 @@
 #include <opencv2/core.hpp>
+#include<opencv2/opencv.hpp>
 #include <eigen3/Eigen/Dense>
 
 using namespace cv;
@@ -30,4 +31,14 @@ namespace processing{
      * we want to start pasting the image, upper most pixel is 0.
      */
     Mat composite(Mat mask, Mat src, Mat target, unsigned int dx, unsigned int dy);
+
+    /**
+     * makes a new mat that fits within width and height
+     * and plus the two padding parameters. If src is 
+     * smaller than the width or the height black pixels are added
+     * around src.
+     *
+     * @param the source image. Assumes RGB and ignores any A.
+    */
+    Mat make_canvas(Mat src, int width, int height, int width_padding, int height_padding);
 }

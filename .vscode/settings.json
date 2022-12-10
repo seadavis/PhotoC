@@ -23,10 +23,12 @@
     },
     "gtest-adapter.supportLocation": true,
     "files.associations": {
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "array": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp"
     },
     "files.exclude": {
-        "**/*.png": true,
         "**/build": true,
         "**/bin":true
     }

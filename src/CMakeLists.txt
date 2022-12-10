@@ -48,6 +48,7 @@ enable_testing()
 add_executable(
   unit_tests
   ./processing/tests/composite_tests.cpp
+  ./processing/tests/canvas_tests.cpp
 )
 target_link_libraries(
   unit_tests

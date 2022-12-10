@@ -33,7 +33,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/field_of_view",
-            "args": [],
+            "args": ["${workspaceFolder}/src/processing/tests/target_images/beach.png"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

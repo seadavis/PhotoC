@@ -17,8 +17,6 @@ class FileSelector : public QWidget
     private:
         QHBoxLayout *mainLayout;
         QVBoxLayout *fileTextLayout;
-
-
         QLineEdit* sourceEdit;
         QLabel* statusImg;
         QPushButton* folderImg;

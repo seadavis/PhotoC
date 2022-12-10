@@ -255,5 +255,52 @@ Mat processing::composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned 
     return output_img;
 }
 
+Mat processing::make_canvas(Mat src, int width, int height, int width_padding, int height_padding)
+{
+    int total_width = width + width_padding;
+    int total_height = height + height_padding;
 
+    Mat canvas(total_height, total_width, CV_8UC3, cv::Scalar(0, 0, 0));
+    Mat sized_src;
+
+    if(src.size().width < width && src.size().height < height)
+    {
+        sized_src = src;
+    }
+    else if(src.size().width >= width || src.size().height >= height)
+    {
+        auto width_factor = (float)width/(float)src.size().width;
+        auto height_factor = (float)height/(float)src.size().height;
+
+        auto greatest_factor = width_factor < height_factor ? width_factor : height_factor;
+
+        auto new_width = greatest_factor*src.size().width;
+        auto new_height = greatest_factor*src.size().height;
+
+        resize(src, sized_src, Size(new_width, new_height), INTER_AREA);
+    }
+
+    auto size = sized_src.size();
+   
+    int mx = total_width/2 - size.width/2;
+    int my = total_height/2 - size.height/2;
+
+    for(int y = 0; y < sized_src.rows; y++)
+    {
+        for(int x = 0; x < sized_src.cols; x++)
+        {
+            auto v = sized_src.at<Vec4b>(Point(x, y));
+            auto b = v[0];
+            auto g = v[1];
+            auto r = v[2];
+
+            auto p = Point(x + mx, y + my);
+            canvas.at<Vec3b>(p)[0] = b;
+            canvas.at<Vec3b>(p)[1] = g; 
+            canvas.at<Vec3b>(p)[2] = r; 
+        }
+    }
+
+    return canvas;
+}
 
