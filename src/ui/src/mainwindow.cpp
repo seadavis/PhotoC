@@ -14,7 +14,7 @@ MainWindow::MainWindow(ICamera* camera)
   canvas = new CanvasWidget(this, camera);
   setCentralWidget(canvas);
 
-  leftDock = new QDockWidget(tr("Left"), this);
+  leftDock = new QDockWidget(tr("Composite Files"), this);
   leftDock->setMinimumWidth(0.4*this->geometry().width());
   leftDock->setAllowedAreas(Qt::LeftDockWidgetArea
                                   | Qt::RightDockWidgetArea);

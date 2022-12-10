@@ -38,7 +38,11 @@ namespace processing{
      * smaller than the width or the height black pixels are added
      * around src.
      *
-     * @param the source image. Assumes RGB and ignores any A.
+     * @param src source image. Assumes RGB and ignores any alpha channels
+     * @param width the width of the canvas we are putting the image unto
+     * @param height the height of the canvas we are putting the image unto
+     * @param width_padding the padding added to the image on the canvas
+     * @param height_padding the padding added to the image on the canvas
     */
     Mat make_canvas(Mat src, int width, int height, int width_padding, int height_padding);
 }
