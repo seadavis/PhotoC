@@ -13,12 +13,18 @@
  */
 
 #include <QApplication>
+#include <QFile>
 #include "mainwindow.h"
 
 int main(int argc, char **argv)
 {
     QApplication app (argc, argv);
    
+    QFile file(":/resources/stylesheets/default.qss");
+    file.open(QFile::ReadOnly);
+    QString styleSheet = QLatin1String(file.readAll());
+    app.setStyleSheet(styleSheet);
+
     ICamera* camera;
     if(argc > 1)
     {   
