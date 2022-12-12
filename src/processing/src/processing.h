@@ -45,4 +45,14 @@ namespace processing{
      * @param height_padding the padding added to the image on the canvas
     */
     Mat make_canvas(Mat src, int width, int height, int width_padding, int height_padding);
+
+    /**
+     * Draws a bounding rectangle
+     * on around each of the objects found with canny object
+     * detection
+     * 
+     * @param src the image we want to draw a rectangle around. Assumes ABGR formar.
+     * 
+    */
+    Mat bounding_rectangle(Mat& src);
 }

@@ -255,6 +255,33 @@ Mat processing::composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned 
     return output_img;
 }
 
+Mat processing::bounding_rectangle(Mat& src)
+{
+    Mat src_gray;
+    cvtColor(src, src_gray, CV_BGRA2GRAY);
+
+    blur(src_gray, src_gray, Size(3, 3));
+
+    Mat canny_output;
+
+    double threshold = 0.05;
+    Canny(src_gray, canny_output, threshold, threshold*2);
+
+    vector<vector<Point>> contours;
+  
+
+    findContours( canny_output, contours, RETR_TREE, CHAIN_APPROX_SIMPLE );
+
+    Rect bounding_rectangle;
+
+    vector<vector<Point>> countours_poly(contours.size());
+    approxPolyDP(contours[0], countours_poly[0], 3, true);
+    bounding_rectangle = boundingRect(countours_poly[0]);
+
+    rectangle(src, bounding_rectangle, Scalar(0, 255, 0, 255));
+    return src;
+}
+
 Mat processing::make_canvas(Mat src, int width, int height, int width_padding, int height_padding)
 {
     int total_width = width + width_padding;
