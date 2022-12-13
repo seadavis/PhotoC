@@ -1,13 +1,12 @@
 #include "processing.h"
 #include <eigen3/Eigen/Sparse>
-#include <iostream>
 #include <algorithm>
-#include <vector>
 #include <opencv2/imgcodecs.hpp>
+#include <vector>
 
-using namespace cv;
 using namespace std;
 using namespace Eigen;
+using namespace processing;
 
 typedef SparseMatrix<float> SpMat;
 typedef Eigen::Triplet<float> MatTriplet;
@@ -331,3 +330,29 @@ Mat processing::make_canvas(Mat src, int width, int height, int width_padding, i
     return canvas;
 }
 
+CompositeCanvas::CompositeCanvas(int height, int width)
+{
+    this->height = height;
+    this->width = width;
+}
+
+void CompositeCanvas::setBackground(const string& imagePath)
+{
+    Mat img = imread(imagePath, CV_LOAD_IMAGE_UNCHANGED);
+    Mat tgt;
+    cvtColor(img, tgt, CV_BGR2BGRA);
+    backgroundImage = unique_ptr<Mat>(new Mat(tgt));
+}
+
+void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImage)
+{
+
+}
+
+
+ Mat CompositeCanvas::currentImg()
+ {
+    Mat m;
+    m.setTo(Scalar(0, 0, 0));
+    return m;
+ }
