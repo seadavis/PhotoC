@@ -26,11 +26,10 @@ namespace processing{
 
             /**
              * Sets the background image for the given canvas
-             * @param imgPath - the fully qualified path to the image 
-             * we want to set as the background. Assumes PNG.
-             *
+             * @param m - the image we want to set as a background
+             *  this method will then make a copy and save the background as a unique pointer
             */
-            void setBackground(const string& imgPath);
+            void setBackground(Mat m);
 
             /**
              * Sets the composite image for the

@@ -330,29 +330,43 @@ Mat processing::make_canvas(Mat src, int width, int height, int width_padding, i
     return canvas;
 }
 
+static Mat LoadImage(string imagePath)
+{
+    Mat img = imread(imagePath, CV_LOAD_IMAGE_UNCHANGED);
+    Mat tgt;
+    cvtColor(img, tgt, CV_BGR2BGRA);
+    return tgt;
+}
+
 CompositeCanvas::CompositeCanvas(int height, int width)
 {
     this->height = height;
     this->width = width;
 }
 
-void CompositeCanvas::setBackground(const string& imagePath)
+void CompositeCanvas::setBackground(Mat backgrnd)
 {
-    Mat img = imread(imagePath, CV_LOAD_IMAGE_UNCHANGED);
-    Mat tgt;
-    cvtColor(img, tgt, CV_BGR2BGRA);
-    backgroundImage = unique_ptr<Mat>(new Mat(tgt));
+   backgroundImage = unique_ptr<Mat>(new Mat(backgrnd));
 }
 
-void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImage)
+void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImagePath)
 {
-
+    maskImage = unique_ptr<Mat>(new Mat(LoadImage(maskImgPath)));
+    originalImage = unique_ptr<Mat>(new Mat(LoadImage(originalImagePath)));
 }
 
 
  Mat CompositeCanvas::currentImg()
  {
-    Mat m;
-    m.setTo(Scalar(0, 0, 0));
-    return m;
+    unsigned int tgt_height = backgroundImage->size().height;
+    unsigned int tgt_width = backgroundImage->size().width;
+
+    unsigned int tgt_cy = tgt_height/2;
+    unsigned int tgt_cx = tgt_width/2;
+
+    unsigned int src_cy = maskImage->size().height/2;
+    unsigned int src_cx = maskImage->size().width/2;
+
+    Mat result = processing::composite(*maskImage, *originalImage, *backgroundImage, tgt_cx - src_cx, tgt_cy - src_cy );
+    return result;
  }

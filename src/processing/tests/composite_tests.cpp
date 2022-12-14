@@ -60,7 +60,12 @@ TEST_P(Processing, BasicComposite) {
   auto args = GetParam();
 
   
-  auto backgroundImage = "./src/processing/tests/target_images/" + get<1>(args) + ".png";
+  auto backgroundImagePath = "./src/processing/tests/target_images/" + get<1>(args) + ".png";
+  auto backgroundImageRGB = imread(backgroundImagePath, CV_LOAD_IMAGE_UNCHANGED);
+
+  Mat backgroundImage;
+  cvtColor(backgroundImageRGB, backgroundImage, CV_BGR2BGRA);
+
   auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
 
