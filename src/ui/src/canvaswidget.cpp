@@ -30,7 +30,7 @@ void CanvasWidget::handleButton()
     Mat comp = composite(mask, src, tgt, 450, 300);
 
     // the very last step in the process.
-    Mat canvas = make_canvas(comp, label->geometry().width() - 50, label->geometry().height() - 50, 50, 50);
+    Mat canvas = make_canvas(comp, label->geometry().width() - 50, label->geometry().height() - 50);
     Mat print;
 
     cvtColor(canvas, print, CV_BGR2RGB);

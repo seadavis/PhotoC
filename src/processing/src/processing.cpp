@@ -281,19 +281,14 @@ Mat processing::bounding_rectangle(Mat& src)
     return src;
 }
 
-Mat processing::make_canvas(Mat src, int width, int height, int width_padding, int height_padding)
+static Mat size_to_fit(Mat src, int width, int height)
 {
-    int total_width = width + width_padding;
-    int total_height = height + height_padding;
-
-    Mat canvas(total_height, total_width, CV_8UC3, cv::Scalar(0, 0, 0));
     Mat sized_src;
-
-    if(src.size().width < width && src.size().height < height)
+    if(src.size().width <= width && src.size().height <= height)
     {
         sized_src = src;
     }
-    else if(src.size().width >= width || src.size().height >= height)
+    else if(src.size().width > width || src.size().height >=height)
     {
         auto width_factor = (float)width/(float)src.size().width;
         auto height_factor = (float)height/(float)src.size().height;
@@ -306,10 +301,21 @@ Mat processing::make_canvas(Mat src, int width, int height, int width_padding, i
         resize(src, sized_src, Size(new_width, new_height), INTER_AREA);
     }
 
+    return sized_src;
+}
+
+Mat processing::make_canvas(Mat src, int width, int height)
+{
+    
+    Mat canvas(width, height, CV_8UC3, cv::Scalar(0, 0, 0));
+    Mat sized_src = size_to_fit(src, width, height);
+
+  
+
     auto size = sized_src.size();
    
-    int mx = total_width/2 - size.width/2;
-    int my = total_height/2 - size.height/2;
+    int mx = width/2 - size.width/2;
+    int my = height/2 - size.height/2;
 
     for(int y = 0; y < sized_src.rows; y++)
     {
@@ -342,6 +348,9 @@ CompositeCanvas::CompositeCanvas(int height, int width)
 {
     this->height = height;
     this->width = width;
+    this->backgroundImage = nullptr;
+    this->maskImage = nullptr;
+    this->originalImage = nullptr;
 }
 
 void CompositeCanvas::setBackground(Mat backgrnd)
@@ -355,18 +364,47 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
     originalImage = unique_ptr<Mat>(new Mat(LoadImage(originalImagePath)));
 }
 
+bool CompositeCanvas::only_background_available()
+{
+    return backgroundImage != nullptr && 
+            (maskImage == nullptr || originalImage == nullptr);
+}
+
+bool CompositeCanvas::only_src_available()
+{
+    return backgroundImage == nullptr && 
+            (maskImage != nullptr && originalImage != nullptr);
+}
+
+bool CompositeCanvas::src_and_background_available()
+{
+    return backgroundImage != nullptr && 
+            maskImage != nullptr && originalImage != nullptr;
+}
+
 
  Mat CompositeCanvas::currentImg()
  {
-    unsigned int tgt_height = backgroundImage->size().height;
-    unsigned int tgt_width = backgroundImage->size().width;
+    Mat img;
+    
+    if(src_and_background_available())
+    {
 
-    unsigned int tgt_cy = tgt_height/2;
-    unsigned int tgt_cx = tgt_width/2;
+        Mat sizedOriginal = size_to_fit(*originalImage, width, height);
+        Mat sizedMask = size_to_fit(*maskImage, width, height);
+        Mat sizedBackground =  size_to_fit(*backgroundImage, width, height);
+    
+        unsigned int tgt_height = sizedBackground.size().height;
+        unsigned int tgt_width = sizedBackground.size().width;
 
-    unsigned int src_cy = maskImage->size().height/2;
-    unsigned int src_cx = maskImage->size().width/2;
+        unsigned int tgt_cy = tgt_height/2;
+        unsigned int tgt_cx = tgt_width/2;
 
-    Mat result = processing::composite(*maskImage, *originalImage, *backgroundImage, tgt_cx - src_cx, tgt_cy - src_cy );
-    return result;
+        unsigned int src_cy = maskImage->size().height/2;
+        unsigned int src_cx = maskImage->size().width/2;
+
+        img = processing::composite(sizedMask, sizedOriginal, sizedBackground, tgt_cx - src_cx, tgt_cy - src_cy );
+    }
+
+    return make_canvas(img, width, height);
  }
