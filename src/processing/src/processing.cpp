@@ -309,9 +309,6 @@ Mat processing::make_canvas(Mat src, int width, int height)
     
     Mat canvas(width, height, CV_8UC3, cv::Scalar(0, 0, 0));
     Mat sized_src = size_to_fit(src, width, height);
-
-  
-
     auto size = sized_src.size();
    
     int mx = width/2 - size.width/2;
