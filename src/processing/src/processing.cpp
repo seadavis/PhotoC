@@ -381,10 +381,10 @@ void CompositeCanvas::setBackground(Mat backgrnd)
    backgroundImage = unique_ptr<Mat>(new Mat(backgrnd));
 }
 
-void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImagePath)
+void CompositeCanvas::setComposite(const CompositePaths& paths)
 {
-    maskImage = unique_ptr<Mat>(new Mat(LoadImage(maskImgPath)));
-    originalImage = unique_ptr<Mat>(new Mat(LoadImage(originalImagePath)));
+    maskImage = unique_ptr<Mat>(new Mat(LoadImage(paths.mask_img_path)));
+    originalImage = unique_ptr<Mat>(new Mat(LoadImage(paths.original_img_path)));
 }
 
 bool CompositeCanvas::only_background_available()

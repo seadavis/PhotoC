@@ -7,13 +7,15 @@
 #include <QLineEdit>
 #include "fileSelector.h"
 
+
 class CompositeSelection : public QWidget
 {
     public:
-        CompositeSelection();
+        CompositeSelection(shared_ptr<CompositePaths> paths);
 
     private:
         QVBoxLayout* layout;
+        shared_ptr<CompositePaths> paths;
         FileSelector* sourceSelector;
         FileSelector* targetSelector;
 

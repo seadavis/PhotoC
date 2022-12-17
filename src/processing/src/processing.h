@@ -10,6 +10,25 @@ using namespace std;
 
 namespace processing{
 
+    /**
+     * 
+     * Just a container for holding composite paths
+     * Using this as a shortcut instead of events.
+     * 
+     * I could see this class becoming quite large though eventually...
+    */
+    struct CompositePaths
+    {
+        string original_img_path;
+        string mask_img_path;
+
+        CompositePaths()
+        {
+            original_img_path = "";
+            mask_img_path = "";
+        }
+    };
+
     class BackgroundResizedException : public std::exception {
         public:
             BackgroundResizedException(int originalBackgroundHeight, 
@@ -64,15 +83,10 @@ namespace processing{
 
             /**
              * Sets the composite image for the
-             * given canvas.
+             * given canvas, from the paths given in the struct
              * 
-             * @param maskImagePath - the fully qualified path to the image we want to set as the 
-             * composite
-             * 
-             * @param originalImage - the original image that the composite was
-             * cut form.
             */
-            void setComposite(const string& maskImgPath, const string& originalImage);
+            void setComposite(const CompositePaths& paths);
 
             /**
              * 

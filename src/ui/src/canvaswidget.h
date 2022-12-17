@@ -14,13 +14,14 @@ using namespace processing;
 class CanvasWidget : public QWidget
 {
     public:
-       CanvasWidget(QWidget *parent, ICamera* camera);
+       CanvasWidget(QWidget *parent, ICamera* camera, shared_ptr<CompositePaths> paths);
 
     private slots:
       void handleButton();
 
     private:
         unique_ptr<CompositeCanvas> canvas;
+        shared_ptr<CompositePaths> paths;
         QVBoxLayout* verticalLayout;
         QGridLayout* canvasGrid;
         QLabel* canvasLabel;
