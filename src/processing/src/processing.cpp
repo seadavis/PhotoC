@@ -208,8 +208,29 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat
     return solution_channels;
 }
 
-
-Mat processing::composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int my)
+ /**
+ * Pastes the mask image into the target image,
+ * adjusting the color using the source, which
+ * is where the mask came from.
+ * 
+ * Assumes all images are in a BGRA format.
+ * dx and dy are specified such that mask has at least one 
+ * pixel between itself and the target.
+ * 
+ * @param mask the portion of the image we want to  
+ * any fully transparent pixels will not be pasted into target
+ * 
+ * @param src the original image the mask came from
+ * 
+ * @param target the "target" we want to put the image into
+ * 
+ * @param dx specifies in pixel space how far horizontally
+ * we want to start pasting the image, Left most pixel is 0.
+ * 
+ * @param dy specifies in pixel space how far vertically
+ * we want to start pasting the image, upper most pixel is 0.
+ */
+static Mat composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int my)
 {
     
     Mat output_img = tgt.clone();
@@ -304,21 +325,20 @@ static Mat size_to_fit(Mat src, int width, int height)
     return sized_src;
 }
 
-Mat processing::make_canvas(Mat src, int width, int height)
+static Mat fill_in_canvas(Mat src, int width, int height)
 {
     
-    Mat canvas(width, height, CV_8UC3, cv::Scalar(0, 0, 0));
-    Mat sized_src = size_to_fit(src, width, height);
-    auto size = sized_src.size();
+    Mat canvas(Size(width, height), CV_8UC3, cv::Scalar(0, 0, 0));
    
+    auto size = src.size();
     int mx = width/2 - size.width/2;
     int my = height/2 - size.height/2;
 
-    for(int y = 0; y < sized_src.rows; y++)
+    for(int y = 0; y < src.rows; y++)
     {
-        for(int x = 0; x < sized_src.cols; x++)
+        for(int x = 0; x < src.cols; x++)
         {
-            auto v = sized_src.at<Vec4b>(Point(x, y));
+            auto v = src.at<Vec4b>(Point(x, y));
             auto b = v[0];
             auto g = v[1];
             auto r = v[2];
@@ -341,13 +361,19 @@ static Mat LoadImage(string imagePath)
     return tgt;
 }
 
-CompositeCanvas::CompositeCanvas(int height, int width)
+CompositeCanvas::CompositeCanvas()
 {
-    this->height = height;
-    this->width = width;
+    this->height = 0;
+    this->width = 0;
     this->backgroundImage = nullptr;
     this->maskImage = nullptr;
     this->originalImage = nullptr;
+}
+
+void CompositeCanvas::setSize(int width, int height)
+{
+    this->width = width;
+    this->height = height;
 }
 
 void CompositeCanvas::setBackground(Mat backgrnd)
@@ -412,8 +438,8 @@ bool CompositeCanvas::src_and_background_available()
         unsigned int src_cy = maskImage->size().height/2;
         unsigned int src_cx = maskImage->size().width/2;
 
-        img = processing::composite(sizedMask, sizedOriginal, sizedBackground, tgt_cx - src_cx, tgt_cy - src_cy );
+        img = composite(sizedMask, sizedOriginal, sizedBackground, tgt_cx - src_cx, tgt_cy - src_cy );
     }
 
-    return make_canvas(img, width, height);
+    return fill_in_canvas(img, width, height);
  }

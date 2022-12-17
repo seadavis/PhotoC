@@ -3,8 +3,13 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QImage>
-
+#include <memory>
+#include "processing.h"
 #include "camera.h"
+
+using namespace cv;
+using namespace std;
+using namespace processing;
 
 class CanvasWidget : public QWidget
 {
@@ -15,8 +20,11 @@ class CanvasWidget : public QWidget
       void handleButton();
 
     private:
+        unique_ptr<CompositeCanvas> canvas;
         QVBoxLayout* verticalLayout;
-        QLabel* label;
+        QGridLayout* canvasGrid;
+        QLabel* canvasLabel;
+        QLabel* backLabel;
         QPushButton* button;   
         QImage *image;
         ICamera *camera;

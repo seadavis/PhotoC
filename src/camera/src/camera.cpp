@@ -98,7 +98,10 @@ Mat RemoteCamera::snap_picture()
 	printf("Capturing To Memory\n");
 	capture_to_memory(camera, context, &camera_file_path, camera_file, (const char**)&buffer, &buffer_size);
 
-    return imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
+    auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
+	Mat img;
+	cvtColor(m, img, CV_BGR2BGRA);
+	return img;
 }
 
 RemoteCamera::~RemoteCamera()
@@ -114,7 +117,9 @@ FakeCamera::FakeCamera(string file_path)
 Mat FakeCamera::snap_picture()
 {
 	Mat m = imread(pic_path);
-	return m;
+	Mat img;
+    cvtColor(m, img, CV_BGR2BGRA);
+	return img;
 }
 
 int FakeCamera::connect()

@@ -19,6 +19,7 @@ INSTANTIATE_TEST_SUITE_P(CompositeTests,
 
                           make_tuple("eagle", "lake", 1300, 1300), 
                           make_tuple("eagle", "beach",1300, 1300),
+                          make_tuple("eagle", "beach",1446, 880),
                           make_tuple("eagle", "gothenburg",1300, 1300), 
                           make_tuple("eagle", "liberty",1300, 1300),
                           make_tuple("eagle", "library",1300, 1300),
@@ -69,7 +70,8 @@ TEST(Processing, IllegalComposite){
   auto mask = "./src/processing/tests/masks/balloon.png";
   auto original = "./src/processing/tests/original_source_images/balloon.png";
 
-  auto canvas = CompositeCanvas(150, 150);
+  auto canvas = CompositeCanvas();
+  canvas.setSize(150, 150);
   canvas.setBackground(backgroundImage);
   canvas.setComposite(mask, original);
 
@@ -105,7 +107,8 @@ TEST_P(Processing, BasicComposite) {
   auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
 
-  auto canvas = CompositeCanvas(get<3>(args), get<2>(args));
+  auto canvas = CompositeCanvas();
+  canvas.setSize(get<2>(args), get<3>(args));
   canvas.setBackground(backgroundImage);
   canvas.setComposite(mask, original);
 

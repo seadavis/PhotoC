@@ -7,35 +7,32 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include "processing.h"
+
 #include "canvaswidget.h"
 
-using namespace cv;
-using namespace std;
-using namespace processing;
+constexpr double SIZE_FACTOR = 0.65;
 
 void CanvasWidget::handleButton()
-{
- 
+{ 
+
+    int canvasHeight = SIZE_FACTOR*this->height();
+    int canvasWidth = SIZE_FACTOR*this->width();
+
     Mat img =  camera->snap_picture();
-    Mat mask = imread("./src/processing/tests/masks/eagle.png", IMREAD_UNCHANGED);
-    Mat source_raw = imread("./src/processing/tests/original_source_images/eagle.png", IMREAD_UNCHANGED);
-
-    Mat tgt;
-    cvtColor(img, tgt, CV_BGR2BGRA);
-
-    Mat src;
-    cvtColor(source_raw, src, CV_BGR2BGRA);
-
-    Mat comp = composite(mask, src, tgt, 450, 300);
-
-    // the very last step in the process.
-    Mat canvas = make_canvas(comp, label->geometry().width() - 50, label->geometry().height() - 50);
+    canvas->setSize(canvasWidth, canvasHeight);
+    canvas->setBackground(img);
+    canvas->setComposite("./src/processing/tests/masks/eagle.png", "./src/processing/tests/original_source_images/eagle.png");
+    Mat canvasImg = canvas->currentImg();
+   
     Mat print;
 
-    cvtColor(canvas, print, CV_BGR2RGB);
-    image = new QImage(print.data, print.cols, print.rows, QImage::Format_RGB888);
-    label->setPixmap(QPixmap::fromImage(*image));
+    cvtColor(canvasImg, print, CV_BGR2RGB);
+
+    imwrite("./test.png", canvasImg);
+    imwrite("./test_print.png", print);
+    image = new QImage(print.data, print.cols, print.rows, print.step, QImage::Format_RGB888);
+    canvasLabel->setPixmap(QPixmap::fromImage(*image));
+    canvasLabel->setFixedSize(canvasWidth, canvasHeight);
 }
 
 
@@ -43,14 +40,24 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
     verticalLayout = new QVBoxLayout(this);
     this->camera = camera;
-    label = new QLabel;
-    
-    label->setStyleSheet("QLabel { background-color : black; }");
+    canvasGrid = new QGridLayout(parent);
+    backLabel = new QLabel;
+    backLabel->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    backLabel->setStyleSheet("QLabel { background-color : grey; }");
+    backLabel->setSizePolicy(QSizePolicy::MinimumExpanding,
+                     QSizePolicy::MinimumExpanding);
+
+    canvasLabel = new QLabel;
+    canvasLabel->setStyleSheet("QLabel { background-color : black; }");
+   
 
     button = new QPushButton("Snap!");
-
-    verticalLayout->addWidget(label);
+    canvasLabel->setFixedSize(0, 0);
+    canvasGrid->addWidget(backLabel, 0, 0);
+    canvasGrid->addWidget(canvasLabel, 0, 0, Qt::AlignCenter);
+    verticalLayout->addLayout(canvasGrid);
     verticalLayout->addWidget(button);
+    canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
 
     connect(button, &QPushButton::released, this, &CanvasWidget::handleButton);
 }

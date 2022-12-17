@@ -9,20 +9,6 @@
 
 using namespace std;
 
-class Canvas :
-    public testing::TestWithParam<tuple<int, int, int, int>> {
-};
-
-INSTANTIATE_TEST_SUITE_P(CanvasTests,
-                         Canvas,
-                         testing::Values(
-
-                          make_tuple(1300, 1300, 5, 5),
-                          make_tuple(250, 250,10, 10),
-                          make_tuple(1300, 250,10, 10),
-                            make_tuple(894,596,50, 50)
-                          
-                        ));
 
 TEST(CompositeCanvas, BoundingRect)
 {
