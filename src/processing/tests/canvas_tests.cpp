@@ -24,23 +24,6 @@ INSTANTIATE_TEST_SUITE_P(CanvasTests,
                           
                         ));
 
-TEST_P(Canvas, MakeCanvas) {
-
-  auto args = GetParam();
-  Mat m = imread("./src/processing/tests/target_images/beach.png", IMREAD_UNCHANGED);
-
-  Mat tgt;
-  cvtColor(m, tgt, CV_BGR2BGRA);
-
- 
-  Mat actualMat = processing::make_canvas(tgt, get<0>(args), get<1>(args));
-  auto expectedFile = "./src/processing/tests/target_canvas/" + to_string(get<0>(args)) + "_" + to_string(get<1>(args)) + "_" + to_string(get<2>(args)) + "_" + to_string(get<3>(args)) +".png";
-  Mat expectedMat = imread(expectedFile);
-
-  bool const equal = std::equal(actualMat.begin<uchar>(), actualMat.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);
-}
-
 TEST(CompositeCanvas, BoundingRect)
 {
     Mat m = imread("./src/processing/tests/masks/eagle.png", IMREAD_UNCHANGED);

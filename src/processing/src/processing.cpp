@@ -394,6 +394,18 @@ bool CompositeCanvas::src_and_background_available()
         unsigned int tgt_height = sizedBackground.size().height;
         unsigned int tgt_width = sizedBackground.size().width;
 
+        if(tgt_width < sizedMask.size().width || tgt_height < sizedMask.size().height)
+        {
+            throw BackgroundResizedException(originalImage->size().height,
+                                            originalImage->size().width,
+                                            sizedBackground.size().width,
+                                            sizedBackground.size().height,
+                                            sizedMask.size().width,
+                                            sizedMask.size().height);
+        }
+
+      
+
         unsigned int tgt_cy = tgt_height/2;
         unsigned int tgt_cx = tgt_width/2;
 

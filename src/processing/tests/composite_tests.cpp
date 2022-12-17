@@ -27,7 +27,6 @@ INSTANTIATE_TEST_SUITE_P(CompositeTests,
                           make_tuple("balloon", "beach",1300, 1300),
                           make_tuple("balloon", "gothenburg",1300, 1300), 
                           make_tuple("balloon", "liberty",1300, 1300),
-                          make_tuple("balloon", "library",150, 150),
 
                           make_tuple("kitten", "lake",1300, 1300), 
                           make_tuple("kitten", "beach",1300, 1300),
@@ -44,7 +43,7 @@ INSTANTIATE_TEST_SUITE_P(CompositeTests,
 
                           make_tuple("penguin", "lake",1300, 1300), 
                           make_tuple("penguin", "beach",1300, 1300),
-                          make_tuple("penguin", "gothenburg",1300, 1300), 
+                          make_tuple("penguin", "gothenburg",800, 800), 
                           make_tuple("penguin", "liberty",1300, 1300),
                           make_tuple("penguin", "library",1300, 1300),
 
@@ -55,6 +54,42 @@ INSTANTIATE_TEST_SUITE_P(CompositeTests,
                           make_tuple("watereagle", "library",1300, 1300)
                           
                         ));
+
+
+
+TEST(Processing, IllegalComposite){
+
+
+  auto backgroundImagePath = "./src/processing/tests/target_images/library.png";
+  auto backgroundImageRGB = imread(backgroundImagePath, CV_LOAD_IMAGE_UNCHANGED);
+
+  Mat backgroundImage;
+  cvtColor(backgroundImageRGB, backgroundImage, CV_BGR2BGRA);
+
+  auto mask = "./src/processing/tests/masks/balloon.png";
+  auto original = "./src/processing/tests/original_source_images/balloon.png";
+
+  auto canvas = CompositeCanvas(150, 150);
+  canvas.setBackground(backgroundImage);
+  canvas.setComposite(mask, original);
+
+  try
+  {
+    Mat result = canvas.currentImg();
+    FAIL();
+  }
+  catch(BackgroundResizedException ex)
+  {
+    SUCCEED();
+  }
+  catch(exception exception)
+  {
+    FAIL();
+  }
+
+
+}
+
 
 TEST_P(Processing, BasicComposite) {
 
@@ -79,8 +114,8 @@ TEST_P(Processing, BasicComposite) {
   auto fileName =  get<0>(args) + "_" + get<1>(args) + "_" + to_string(get<2>(args)) + "_" + to_string(get<3>(args)) + ".png";
 
   imwrite( "./src/processing/tests/test_composites/" + fileName, result);
-  /*Mat expectedMat = imread("./src/processing/tests/target_composites/" + fileName);
+  Mat expectedMat = imread("./src/processing/tests/target_composites/" + fileName);
 
   bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);*/
+  ASSERT_TRUE(equal);
 }

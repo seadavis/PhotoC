@@ -10,7 +10,37 @@ using namespace std;
 
 namespace processing{
 
+    class BackgroundResizedException : public std::exception {
+        public:
+            BackgroundResizedException(int originalBackgroundHeight, 
+                                       int originalBackgroundWidth,
+                                       int resizedWidth,
+                                       int resizedHeight,
+                                       int foregroundWidth,
+                                       int foregroundHeight)
+            {
+                this->originalBackgroundWidth = originalBackgroundWidth;
+                this->originalBackgroundHeight = originalBackgroundHeight;
+                this->resizedWidth = resizedWidth;
+                this->resizedHeight = resizedHeight;
+                this->foregroundWidth = foregroundWidth;
+                this->foregroundHeight = foregroundHeight;
+            }
 
+            int originalBackgroundHeight;
+            int originalBackgroundWidth;
+            int resizedWidth;
+            int resizedHeight;
+            int foregroundWidth;
+            int foregroundHeight;
+
+            const char* what () {
+                auto msg = "Background Image had a width of: " + to_string(originalBackgroundWidth) + " and a height of: " + to_string(originalBackgroundHeight)
+                        + "but was resized to a width of: " + to_string(resizedWidth) + " and a height of: " + to_string(resizedHeight) + " which is smaller"
+                        + "than the foreground with a width of: " + to_string(foregroundWidth) + " and a height of: " + to_string(foregroundHeight);
+                return msg.c_str();
+            }   
+    };
 
     class CompositeCanvas
     {
