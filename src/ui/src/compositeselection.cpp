@@ -1,12 +1,11 @@
 #include "compositeselection.h"
-#include <memory>
 
-CompositeSelection::CompositeSelection(shared_ptr<CompositePaths> paths)
+
+CompositeSelection::CompositeSelection()
 {
     layout = new QVBoxLayout(this);
-    this->paths = paths;
-    sourceSelector = new FileSelector(paths->mask_img_path);
-    targetSelector = new FileSelector(paths->original_img_path);
+    sourceSelector = new FileSelector;
+    targetSelector = new FileSelector;
     layout->addWidget(sourceSelector);
     layout->addWidget(targetSelector);
 }

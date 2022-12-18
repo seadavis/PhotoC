@@ -34,24 +34,19 @@ void FileSelector::selectFile()
                 statusImg->setPixmap(QPixmap(":error_icon.png"));
                 errorLabel->setText("File Selected is not a PNG image");
             }
-
-            path = selectedFile;
-            sourceEdit->setText(QString(path.c_str()));
-        }
-        else
-        {
-            path = "";
+            
+            sourceEdit->setText(QString(selectedFile.c_str()));
         }
 
    }
 }
 
-FileSelector::FileSelector(string& path)
+FileSelector::FileSelector()
 {
     mainLayout = new QHBoxLayout(this);
     sourceEdit = new QLineEdit;
     sourceEdit->setDisabled(true);
-    this->path = path;
+
     errorLabel = new QLabel;
 
     fileTextLayout = new QVBoxLayout;

@@ -5,14 +5,11 @@
 #include <QHBoxLayout>
 #include <QImage>
 #include <QLineEdit>
-#include <string>
-
-using namespace std;
 
 class FileSelector : public QWidget
 {
     public:
-        FileSelector(string& path);
+        FileSelector();
 
     private slots:
       void selectFile();
@@ -22,7 +19,6 @@ class FileSelector : public QWidget
         QVBoxLayout *fileTextLayout;
         QLineEdit* sourceEdit;
         QLabel* statusImg;
-        string& path;
         QPushButton* folderImg;
         QLabel* errorLabel;
 };

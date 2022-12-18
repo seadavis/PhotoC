@@ -67,14 +67,13 @@ TEST(Processing, IllegalComposite){
   Mat backgroundImage;
   cvtColor(backgroundImageRGB, backgroundImage, CV_BGR2BGRA);
 
-  auto paths = CompositePaths();
-  paths.mask_img_path = "./src/processing/tests/masks/balloon.png";
-  paths.original_img_path = "./src/processing/tests/original_source_images/balloon.png";
+  auto mask = "./src/processing/tests/masks/balloon.png";
+  auto original = "./src/processing/tests/original_source_images/balloon.png";
 
   auto canvas = CompositeCanvas();
   canvas.setSize(150, 150);
   canvas.setBackground(backgroundImage);
-  canvas.setComposite(paths);
+  canvas.setComposite(mask, original);
 
   try
   {
@@ -105,9 +104,8 @@ TEST_P(Processing, BasicComposite) {
   Mat backgroundImage;
   cvtColor(backgroundImageRGB, backgroundImage, CV_BGR2BGRA);
 
-  auto paths = CompositePaths();
-  paths.mask_img_path = "./src/processing/tests/masks/" + get<0>(args) + ".png";
-  paths.original_img_path = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
+  auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
+  auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
 
   auto canvas = CompositeCanvas();
   canvas.setSize(get<2>(args), get<3>(args));

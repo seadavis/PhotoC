@@ -15,16 +15,13 @@ constexpr double SIZE_FACTOR = 0.65;
 void CanvasWidget::handleButton()
 { 
 
-    if(paths->mask_img_path.length() > 0 && paths->original_img_path.length() > 0)
-        return;
-
     int canvasHeight = SIZE_FACTOR*this->height();
     int canvasWidth = SIZE_FACTOR*this->width();
 
     Mat img =  camera->snap_picture();
     canvas->setSize(canvasWidth, canvasHeight);
     canvas->setBackground(img);
-    canvas->setComposite(*paths);
+    canvas->setComposite("./src/processing/tests/masks/eagle.png", "./src/processing/tests/original_source_images/eagle.png");
     Mat canvasImg = canvas->currentImg();
    
     Mat print;
@@ -39,10 +36,9 @@ void CanvasWidget::handleButton()
 }
 
 
-CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera, shared_ptr<CompositePaths> paths) : QWidget(parent)
+CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
     verticalLayout = new QVBoxLayout(this);
-    this->paths = paths;
     this->camera = camera;
     canvasGrid = new QGridLayout(parent);
     backLabel = new QLabel;

@@ -11,8 +11,7 @@ MainWindow::MainWindow(ICamera* camera)
       return;
   QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
   
-  compositePaths = shared_ptr<CompositePaths>(new CompositePaths);
-  canvas = new CanvasWidget(this, camera, compositePaths);
+  canvas = new CanvasWidget(this, camera);
   setCentralWidget(canvas);
 
   leftDock = new QDockWidget(tr("Composite Files"), this);
@@ -20,8 +19,7 @@ MainWindow::MainWindow(ICamera* camera)
   leftDock->setAllowedAreas(Qt::LeftDockWidgetArea
                                   | Qt::RightDockWidgetArea);
 
- 
-  compositeSelection = new CompositeSelection(compositePaths);
+  compositeSelection = new CompositeSelection();
   addDockWidget(Qt::RightDockWidgetArea, leftDock);
   leftDock->setWidget(compositeSelection);
 

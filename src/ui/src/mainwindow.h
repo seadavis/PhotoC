@@ -19,7 +19,6 @@ class MainWindow : public QMainWindow
       CanvasWidget* canvas;
       QPushButton* button;   
       QDockWidget* leftDock;
-      shared_ptr<CompositePaths> compositePaths;
       CompositeSelection* compositeSelection;
 
 };
