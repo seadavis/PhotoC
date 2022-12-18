@@ -40,9 +40,6 @@ void CanvasWidget::handleButton()
     Mat print;
 
     cvtColor(canvasImg, print, CV_BGR2RGB);
-
-    imwrite("./test.png", canvasImg);
-    imwrite("./test_print.png", print);
     image = new QImage(print.data, print.cols, print.rows, print.step, QImage::Format_RGB888);
     canvasLabel->setPixmap(QPixmap::fromImage(*image));
     canvasLabel->setFixedSize(canvasWidth, canvasHeight);
