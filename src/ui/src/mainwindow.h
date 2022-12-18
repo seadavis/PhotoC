@@ -21,6 +21,10 @@ class MainWindow : public QMainWindow
       QDockWidget* leftDock;
       CompositeSelection* compositeSelection;
 
+      void updateOriginalPhotoPath(string path);
+
+      void updateMaskPhotoPath(string path);
+
 };
 
 #endif // WINDOW_H

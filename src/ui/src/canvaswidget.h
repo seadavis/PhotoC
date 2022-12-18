@@ -14,7 +14,11 @@ using namespace processing;
 class CanvasWidget : public QWidget
 {
     public:
-       CanvasWidget(QWidget *parent, ICamera* camera);
+      CanvasWidget(QWidget *parent, ICamera* camera);
+
+      void setMaskPath(string path);
+
+      void setOriginalPath(string path);
 
     private slots:
       void handleButton();
@@ -28,5 +32,8 @@ class CanvasWidget : public QWidget
         QPushButton* button;   
         QImage *image;
         ICamera *camera;
+
+        string maskPath;
+        string originalPath;
 
 };

@@ -2,6 +2,16 @@
 #include <QtWidgets>
 #include <QToolBar>
 
+void MainWindow::updateOriginalPhotoPath(string path)
+{
+  canvas->setOriginalPath(path);
+}
+
+void MainWindow::updateMaskPhotoPath(string path)
+{
+    canvas->setMaskPath(path);
+}
+
 
 MainWindow::MainWindow(ICamera* camera) 
 {
@@ -23,5 +33,7 @@ MainWindow::MainWindow(ICamera* camera)
   addDockWidget(Qt::RightDockWidgetArea, leftDock);
   leftDock->setWidget(compositeSelection);
 
+  connect(compositeSelection, &CompositeSelection::originalPathChanged, this, &MainWindow::updateOriginalPhotoPath);
+  connect(compositeSelection, &CompositeSelection::maskPathChanged, this, &MainWindow::updateMaskPhotoPath);
 }
 

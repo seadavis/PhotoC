@@ -12,8 +12,21 @@
 
 constexpr double SIZE_FACTOR = 0.65;
 
+void CanvasWidget::setMaskPath(string path)
+{
+    maskPath = path;
+}
+
+void CanvasWidget::setOriginalPath(string path)
+{
+   originalPath = path;
+}
+
 void CanvasWidget::handleButton()
 { 
+
+    if(maskPath.length() == 0 || originalPath.length() == 0)
+        return;
 
     int canvasHeight = SIZE_FACTOR*this->height();
     int canvasWidth = SIZE_FACTOR*this->width();
@@ -21,7 +34,7 @@ void CanvasWidget::handleButton()
     Mat img =  camera->snap_picture();
     canvas->setSize(canvasWidth, canvasHeight);
     canvas->setBackground(img);
-    canvas->setComposite("./src/processing/tests/masks/eagle.png", "./src/processing/tests/original_source_images/eagle.png");
+    canvas->setComposite(maskPath, originalPath);
     Mat canvasImg = canvas->currentImg();
    
     Mat print;
