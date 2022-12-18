@@ -12,37 +12,49 @@
 
 constexpr double SIZE_FACTOR = 0.65;
 
+void CanvasWidget::setCompositesIfAvailable()
+{
+    if(maskPath.length() != 0 && originalPath.length() != 0)
+    {
+        canvas->setComposite(maskPath, originalPath);
+        render();
+    }
+}
+
+void CanvasWidget::render()
+{
+    Mat canvasImg = canvas->currentImg();
+    Mat print;
+    cvtColor(canvasImg, print, CV_BGR2RGB);
+    image = new QImage(print.data, print.cols, print.rows, print.step, QImage::Format_RGB888);
+    canvasLabel->setPixmap(QPixmap::fromImage(*image));
+}
+
+void CanvasWidget::resizeEvent(QResizeEvent* event) 
+{
+    canvasHeight = SIZE_FACTOR*this->height();
+    canvasWidth = SIZE_FACTOR*this->width();
+    canvasLabel->setFixedSize(canvasWidth, canvasHeight);
+    canvas->setSize(canvasWidth, canvasHeight);
+}
+
 void CanvasWidget::setMaskPath(string path)
 {
     maskPath = path;
+    setCompositesIfAvailable();
 }
 
 void CanvasWidget::setOriginalPath(string path)
 {
-   originalPath = path;
+    originalPath = path;
+    setCompositesIfAvailable();
 }
 
 void CanvasWidget::handleButton()
 { 
-
-    if(maskPath.length() == 0 || originalPath.length() == 0)
-        return;
-
-    int canvasHeight = SIZE_FACTOR*this->height();
-    int canvasWidth = SIZE_FACTOR*this->width();
-
     Mat img =  camera->snap_picture();
-    canvas->setSize(canvasWidth, canvasHeight);
     canvas->setBackground(img);
-    canvas->setComposite(maskPath, originalPath);
-    Mat canvasImg = canvas->currentImg();
-   
-    Mat print;
-
-    cvtColor(canvasImg, print, CV_BGR2RGB);
-    image = new QImage(print.data, print.cols, print.rows, print.step, QImage::Format_RGB888);
-    canvasLabel->setPixmap(QPixmap::fromImage(*image));
-    canvasLabel->setFixedSize(canvasWidth, canvasHeight);
+    render();
 }
 
 

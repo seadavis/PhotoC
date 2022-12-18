@@ -410,6 +410,11 @@ bool CompositeCanvas::src_and_background_available()
  {
     Mat img;
     
+    if(only_src_available())
+    {
+        img = size_to_fit(*maskImage, width, height);
+    }
+
     if(src_and_background_available())
     {
 

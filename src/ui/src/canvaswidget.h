@@ -20,6 +20,9 @@ class CanvasWidget : public QWidget
 
       void setOriginalPath(string path);
 
+    protected:
+      virtual void resizeEvent(QResizeEvent* resizeEvent) override;
+
     private slots:
       void handleButton();
 
@@ -32,8 +35,13 @@ class CanvasWidget : public QWidget
         QPushButton* button;   
         QImage *image;
         ICamera *camera;
-
+        int canvasWidth;
+        int canvasHeight;
         string maskPath;
         string originalPath;
+
+        void setCompositesIfAvailable();
+
+        void render();
 
 };
