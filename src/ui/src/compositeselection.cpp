@@ -10,31 +10,26 @@ void CompositeSelection::setOriginalPath(string path)
     emit originalPathChanged(path);
 }
 
+
+void CompositeSelection::resizeEvent(QResizeEvent* event) 
+{
+    groupBox->setFixedHeight(this->height()*0.25);
+    groupBox->setFixedWidth(this->width()*0.95);
+}
+
 CompositeSelection::CompositeSelection()
 {
-    layout = new QVBoxLayout(this);
+    vBoxLayout = new QVBoxLayout;
+    groupBox = new QGroupBox(this);
+    maskSelector = new FileSelector;
+    originalSelector = new FileSelector;
+    maskSelector->setTitle("Mask:");
+    originalSelector->setTitle("Original:");
 
-    sourceLayout = new QVBoxLayout(this);
-    targetLayout = new QVBoxLayout(this);
+    vBoxLayout->addWidget(maskSelector);
+    vBoxLayout->addWidget(originalSelector);
+    groupBox->setLayout(vBoxLayout);
 
-    sourceLabel = new QLabel;
-    targetLabel = new QLabel;
-
-    sourceLabel->setText("Mask File:");
-    targetLabel->setText("Original File:");
-
-    sourceSelector = new FileSelector;
-    targetSelector = new FileSelector;
-
-    sourceLayout->addWidget(sourceLabel, 0, Qt::AlignTop);
-    sourceLayout->addWidget(sourceSelector,0, Qt::AlignTop);
-
-    targetLayout->addWidget(targetLabel,0, Qt::AlignTop);
-    targetLayout->addWidget(targetSelector,0, Qt::AlignTop);
-   
-    layout->addLayout(sourceLayout);
-    layout->addLayout(targetLayout);
-
-    connect(sourceSelector, &FileSelector::fileChanged, this, &CompositeSelection::setMaskPath);
-    connect(targetSelector, &FileSelector::fileChanged, this, &CompositeSelection::setOriginalPath);
+    connect(maskSelector, &FileSelector::fileChanged, this, &CompositeSelection::setMaskPath);
+    connect(originalSelector, &FileSelector::fileChanged, this, &CompositeSelection::setOriginalPath);
 }

@@ -3,8 +3,10 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QFormLayout>
 #include <QImage>
 #include <QLineEdit>
+#include <QGroupBox>
 #include <string>
 #include "fileSelector.h"
 #pragma once
@@ -18,6 +20,9 @@ class CompositeSelection : public QWidget
     public:
         CompositeSelection();
 
+    protected:
+      virtual void resizeEvent(QResizeEvent* resizeEvent) override;
+
     public slots:
         void setMaskPath(string filePath);
         void setOriginalPath(string filePath);
@@ -27,15 +32,9 @@ class CompositeSelection : public QWidget
         void originalPathChanged(string filePath);
 
     private:
-        QVBoxLayout* layout;
-
-        QVBoxLayout* sourceLayout;
-        QVBoxLayout* targetLayout;
-
-        QLabel* sourceLabel;
-        QLabel *targetLabel;
-
-        FileSelector* sourceSelector;
-        FileSelector* targetSelector;
+        QVBoxLayout* vBoxLayout;
+        QGroupBox* groupBox;
+        FileSelector* maskSelector;
+        FileSelector* originalSelector;
 
 };

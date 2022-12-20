@@ -5,6 +5,7 @@
 #include <QHBoxLayout>
 #include <QImage>
 #include <QLineEdit>
+#include <QFormLayout>
 #include <string>
 #pragma once
 
@@ -16,6 +17,7 @@ class FileSelector : public QWidget
 
     public:
         FileSelector();
+        void setTitle(string title);
 
     public slots:
         void setFile(string path);
@@ -27,8 +29,8 @@ class FileSelector : public QWidget
       void selectFile();
 
     private:
-        QHBoxLayout *mainLayout;
-        QVBoxLayout *fileTextLayout;
+        QGridLayout *grid;
+        QLabel* title;
         QLineEdit* sourceEdit;
         QLabel* statusImg;
         QPushButton* folderImg;

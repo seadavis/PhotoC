@@ -50,25 +50,23 @@ void FileSelector::setFile(string path)
     emit fileChanged(path);
 }
 
+void FileSelector::setTitle(string title)
+{
+    this->title->setText(QString(title.c_str()));
+}
+
 FileSelector::FileSelector()
 {
-    mainLayout = new QHBoxLayout(this);
+    grid = new QGridLayout(this);
     sourceEdit = new QLineEdit;
     sourceEdit->setDisabled(true);
 
     errorLabel = new QLabel;
+    title = new QLabel;
 
-    fileTextLayout = new QVBoxLayout;
-    fileTextLayout->addWidget(sourceEdit);
-    sourceEdit->setAlignment(Qt::AlignTop);
-
-    fileTextLayout->addWidget(errorLabel);
-    errorLabel->setAlignment(Qt::AlignTop);
     errorLabel->setStyleSheet("QLabel{color: red;}");
-    fileTextLayout->setContentsMargins(0, 0, 0, 5);
 
     statusImg = new QLabel(this);
-
     statusImg->setMinimumHeight(25);
     statusImg->setMinimumWidth(25);
 
@@ -79,12 +77,12 @@ FileSelector::FileSelector()
     folderImg->setMinimumWidth(25);
     folderImg ->setIcon(buttonIcon);
 
-    
     connect(folderImg, &QPushButton::released, this, &FileSelector::selectFile);
 
-    mainLayout->addWidget(statusImg);
-    mainLayout->addLayout(fileTextLayout);
-    mainLayout->addWidget(folderImg, 0, Qt::AlignTop);
-    statusImg->setAlignment(Qt::AlignTop);
+    grid->addWidget(statusImg, 1, 0);
+    grid->addWidget(title, 0, 1);
+    grid->addWidget(sourceEdit, 1, 1);
+    grid->addWidget(folderImg, 1, 2);
+    grid->addWidget(errorLabel, 2, 1);
 
 }
