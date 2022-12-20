@@ -1,11 +1,6 @@
 #include <QWidget>
-#include <QLabel>
-#include <QPushButton>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QFormLayout>
-#include <QImage>
-#include <QLineEdit>
 #include <QGroupBox>
 #include <string>
 #include "fileSelector.h"

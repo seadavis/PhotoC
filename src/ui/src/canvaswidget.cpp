@@ -57,7 +57,6 @@ void CanvasWidget::handleButton()
     render();
 }
 
-
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
     verticalLayout = new QVBoxLayout(this);

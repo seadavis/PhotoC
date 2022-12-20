@@ -1,11 +1,9 @@
 #include <QWidget>
 #include <QLabel>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QImage>
 #include <QLineEdit>
 #include <QFormLayout>
+#include <QPushButton>
 #include <string>
 #pragma once
 
