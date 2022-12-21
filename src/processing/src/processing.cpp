@@ -383,8 +383,11 @@ void CompositeCanvas::setBackground(Mat backgrnd)
 
 void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImagePath)
 {
-    maskImage = unique_ptr<Mat>(new Mat(LoadImage(maskImgPath)));
-    originalImage = unique_ptr<Mat>(new Mat(LoadImage(originalImagePath)));
+    if(maskImgPath.length() > 0)
+        maskImage = unique_ptr<Mat>(new Mat(LoadImage(maskImgPath)));
+
+    if(originalImagePath.length() > 0)
+        originalImage = unique_ptr<Mat>(new Mat(LoadImage(originalImagePath)));
 }
 
 bool CompositeCanvas::only_background_available()
@@ -410,12 +413,24 @@ bool CompositeCanvas::src_and_background_available()
  {
     Mat img;
     
-    if(only_src_available())
+    if(only_background_available())
+    {
+        img = size_to_fit(*backgroundImage, width, height);
+    }
+
+    else if(only_src_available())
     {
         img = size_to_fit(*maskImage, width, height);
     }
 
-    if(src_and_background_available())
+    else if(originalImage != nullptr && maskImage != nullptr &&
+         originalImage->size() != maskImage->size())
+    {
+        if(backgroundImage != nullptr)
+            img = size_to_fit(*backgroundImage, width, height);
+    }
+
+    else if(src_and_background_available())
     {
 
         Mat sizedOriginal = size_to_fit(*originalImage, width, height);
