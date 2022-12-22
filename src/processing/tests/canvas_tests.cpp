@@ -18,7 +18,39 @@ class CompositeMissingOneImage :
   public testing::TestWithParam<tuple<string, string, string, int, int, string>> {
 };
 
+class BoundingRectangleHitData :
+  public testing::TestWithParam<Point> {
+};
+
+
+class BoundingRectangleHitDataConsecutivePoints :
+  public testing::TestWithParam<tuple<Point, Point>> {
+};
+
 Mat loadBackgroundImage(string path);
+
+INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
+                          BoundingRectangleHitDataConsecutivePoints,
+                          testing::Values(
+                              make_tuple(Point(499, 351), Point(0,0)),
+                              make_tuple(Point(484, 372), Point(490, 412))
+                          ) );
+
+INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
+                          BoundingRectangleHitData,
+                          testing::Values(
+                               Point(499, 351),
+                               Point(550, 431),
+                               Point(505, 356),
+                               Point(450, 352),
+                               Point(562, 476),
+                               Point(55, 459),
+                               Point(0, 0),
+                               Point(120, 120),
+                               Point(455, 345),
+                               Point(563, 477),
+                               Point(456, 346)
+                          ) );
 
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
                           CompositeMissingOneImage,
@@ -126,6 +158,56 @@ TEST(CompositeCanvas, OnlyBackgroundSet)
     Mat result = canvas.currentImg();
 
     imwrite("./src/processing/tests/target_missing_images/only_background_set.png", result);
+}
+
+
+TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
+{
+    auto args = GetParam();
+    Point p1 = get<0>(args);
+    Point p2 = get<1>(args);
+    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/gothenburg.png");
+    auto maskPath = "./src/processing/tests/masks/kitten.png";
+    auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
+  
+    auto canvas = CompositeCanvas();
+    canvas.setSize(1300, 1300);
+    canvas.setBackground(backgroundImage);
+    canvas.setComposite(maskPath, originalPath);
+  
+    canvas.currentImg();
+    canvas.tap(p1);
+    canvas.tap(p2);
+    Mat result = canvas.currentImg();
+
+    auto outImage = "double_tap_" + to_string(p1.x) + "_" + to_string(p1.y) + ".png";
+    imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
+    Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
+    bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
+    ASSERT_TRUE(equal);
+}
+
+TEST_P(BoundingRectangleHitData, SingleStepTests)
+{
+    Point args = GetParam();
+    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/gothenburg.png");
+    auto maskPath = "./src/processing/tests/masks/kitten.png";
+    auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
+  
+    auto canvas = CompositeCanvas();
+    canvas.setSize(1300, 1300);
+    canvas.setBackground(backgroundImage);
+    canvas.setComposite(maskPath, originalPath);
+  
+    canvas.currentImg();
+    canvas.tap(args);
+    Mat result = canvas.currentImg();
+
+    auto outImage = "single_tap_" + to_string(args.x) + "_" + to_string(args.y) + ".png";
+    imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
+    Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
+    bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
+    ASSERT_TRUE(equal);
 }
 
 TEST_P(CompositeMissingOneImage, MissingOrMismatching)

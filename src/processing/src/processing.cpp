@@ -20,7 +20,7 @@ static bool is_mask_pixel(Mat& m, unsigned int x, unsigned int y)
 
     if(x >= size.width || y >= size.height) return false;
 
-    return m.at<Vec4b>(Point(x, y))[3] > 0;
+    return m.at<Vec4b>(cv::Point(x, y))[3] > 0;
 }
 
 static unsigned int flatten(Mat& m, unsigned int x, unsigned int y) 
@@ -127,7 +127,7 @@ static vector<Eigen::MatrixXf> cv_to_eigen_channels(Mat m)
     {
         for(unsigned int x = 0; x < size.width; x++)
         {
-            auto v = m.at<Vec4b>(Point(x, y));
+            auto v = m.at<Vec4b>(cv::Point(x, y));
             mat_list[0](y, x) = in_pixel((float)v[0]);
             mat_list[1](y, x) = in_pixel((float)v[1]);
             mat_list[2](y, x) = in_pixel((float)v[2]);
@@ -261,7 +261,7 @@ static Mat composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int m
                 auto g = (int)(out_pixel(g_raw));
                 auto r = (int)(out_pixel(r_raw));
 
-                auto p = Point(x + mx, y + my);
+                auto p = cv::Point(x + mx, y + my);
                 
                 output_img.at<Vec4b>(p)[0] = b;
                 output_img.at<Vec4b>(p)[1] = g; 
@@ -275,7 +275,15 @@ static Mat composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int m
     return output_img;
 }
 
-Mat processing::bounding_rectangle(Mat& src)
+/**
+ * Draws a bounding rectangle
+ * on around each of the objects found with canny object
+ * detection
+ * 
+ * @param src the image we want to draw a rectangle around. Assumes ABGR formar.
+ * 
+*/
+static Rect bounding_rectangle(Mat& src)
 {
     Mat src_gray;
     cvtColor(src, src_gray, CV_BGRA2GRAY);
@@ -288,8 +296,6 @@ Mat processing::bounding_rectangle(Mat& src)
     Canny(src_gray, canny_output, threshold, threshold*2);
 
     vector<vector<Point>> contours;
-  
-
     findContours( canny_output, contours, RETR_TREE, CHAIN_APPROX_SIMPLE );
 
     Rect bounding_rectangle;
@@ -298,8 +304,7 @@ Mat processing::bounding_rectangle(Mat& src)
     approxPolyDP(contours[0], countours_poly[0], 3, true);
     bounding_rectangle = boundingRect(countours_poly[0]);
 
-    rectangle(src, bounding_rectangle, Scalar(0, 255, 0, 255));
-    return src;
+    return bounding_rectangle;
 }
 
 static Mat size_to_fit(Mat src, int width, int height)
@@ -353,11 +358,17 @@ static Mat fill_in_canvas(Mat src, int width, int height)
     return canvas;
 }
 
-static Mat LoadImage(string imagePath)
+static Rect translate(const Rect& r, int x, int y)
+{
+    return Rect(Point(r.x + x, r.y + y), r.size());
+}
+
+Mat CompositeCanvas::LoadImage(string imagePath)
 {
     Mat img = imread(imagePath, CV_LOAD_IMAGE_UNCHANGED);
     Mat tgt;
     cvtColor(img, tgt, CV_BGR2BGRA);
+    tgt = size_to_fit(tgt, width, height);
     return tgt;
 }
 
@@ -384,10 +395,27 @@ void CompositeCanvas::setBackground(Mat backgrnd)
 void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImagePath)
 {
     if(maskImgPath.length() > 0)
+    {
         maskImage = unique_ptr<Mat>(new Mat(LoadImage(maskImgPath)));
+        boundingRectangle = bounding_rectangle(*maskImage);
+    }
+        
 
     if(originalImagePath.length() > 0)
         originalImage = unique_ptr<Mat>(new Mat(LoadImage(originalImagePath)));
+}
+
+void CompositeCanvas::tap(Point p)
+{
+    auto placedRect = translate(boundingRectangle, x_pos, y_pos);
+
+    int x_min = placedRect.tl().x;
+    int y_min = placedRect.tl().y;
+
+    int x_max = x_min + placedRect.size().width;
+    int y_max = y_min + placedRect.size().height;
+
+    showBoundingRectangle = p.x >= x_min && p.x <= x_max && p.y >= y_min && p.y <= y_max;
 }
 
 bool CompositeCanvas::only_background_available()
@@ -412,53 +440,63 @@ bool CompositeCanvas::src_and_background_available()
  Mat CompositeCanvas::currentImg()
  {
     Mat img;
-    
+
     if(only_background_available())
     {
-        img = size_to_fit(*backgroundImage, width, height);
+        img = *backgroundImage;
     }
 
     else if(only_src_available())
     {
-        img = size_to_fit(*maskImage, width, height);
+        img = *maskImage;
     }
 
     else if(originalImage != nullptr && maskImage != nullptr &&
          originalImage->size() != maskImage->size())
     {
         if(backgroundImage != nullptr)
-            img = size_to_fit(*backgroundImage, width, height);
+            img = *backgroundImage;
     }
 
     else if(src_and_background_available())
     {
 
-        Mat sizedOriginal = size_to_fit(*originalImage, width, height);
-        Mat sizedMask = size_to_fit(*maskImage, width, height);
-        Mat sizedBackground =  size_to_fit(*backgroundImage, width, height);
-    
-        unsigned int tgt_height = sizedBackground.size().height;
-        unsigned int tgt_width = sizedBackground.size().width;
+        Mat mask = *maskImage;
+        Mat original = *originalImage;
+        Mat background = *backgroundImage;
 
-        if(tgt_width < sizedMask.size().width || tgt_height < sizedMask.size().height)
+        int tgt_height = background.size().height;
+        int tgt_width = background.size().width;
+
+        if(tgt_width < mask.size().width || tgt_height < mask.size().height)
         {
-            throw BackgroundResizedException(originalImage->size().height,
-                                            originalImage->size().width,
-                                            sizedBackground.size().width,
-                                            sizedBackground.size().height,
-                                            sizedMask.size().width,
-                                            sizedMask.size().height);
+            throw BackgroundResizedException(original.size().height,
+                                            original.size().width,
+                                            background.size().width,
+                                            background.size().height,
+                                            mask.size().width,
+                                            mask.size().height);
         }
 
       
 
-        unsigned int tgt_cy = tgt_height/2;
-        unsigned int tgt_cx = tgt_width/2;
+        int tgt_cy = tgt_height/2;
+        int tgt_cx = tgt_width/2;
 
-        unsigned int src_cy = maskImage->size().height/2;
-        unsigned int src_cx = maskImage->size().width/2;
+        int src_cy = maskImage->size().height/2;
+        int src_cx = maskImage->size().width/2;
 
-        img = composite(sizedMask, sizedOriginal, sizedBackground, tgt_cx - src_cx, tgt_cy - src_cy );
+        x_pos = tgt_cx - src_cx;
+        y_pos = tgt_cy - src_cy;
+
+        img = composite(mask, original, background, x_pos , y_pos);
+
+        if(showBoundingRectangle)
+        {
+            auto placedRect = translate(boundingRectangle, x_pos, y_pos);
+            rectangle(img, placedRect, Scalar(0, 255, 0, 255));
+        }
+        
     }
 
     return fill_in_canvas(img, width, height);

@@ -10,6 +10,8 @@ using namespace std;
 
 namespace processing{
 
+
+    
     class BackgroundResizedException : public std::exception {
         public:
             BackgroundResizedException(int originalBackgroundHeight, 
@@ -74,6 +76,8 @@ namespace processing{
             */
             void setComposite(const string& maskImgPath, const string& originalImage);
 
+            void tap(Point p);
+
             /**
              * 
              * Gives the current representation 
@@ -87,23 +91,19 @@ namespace processing{
             bool only_background_available();
             bool only_src_available();
             bool src_and_background_available();
+            Mat LoadImage(string imagePath);
+
+            bool showBoundingRectangle;
 
             int height;
             int width;
             unique_ptr<Mat> originalImage;
             unique_ptr<Mat> maskImage;
             unique_ptr<Mat> backgroundImage;
+            Rect boundingRectangle;
+
+            /* the position the rectangle is drawn in */
+            int x_pos = -1;
+            int y_pos = -1;
     };
-
-   
-
-    /**
-     * Draws a bounding rectangle
-     * on around each of the objects found with canny object
-     * detection
-     * 
-     * @param src the image we want to draw a rectangle around. Assumes ABGR formar.
-     * 
-    */
-    Mat bounding_rectangle(Mat& src);
 }
