@@ -91,9 +91,12 @@ namespace processing{
             bool only_background_available();
             bool only_src_available();
             bool src_and_background_available();
-            Mat LoadImage(string imagePath);
+            Rect translate_to_canvas_coordindates(const Rect& r);
+            Mat loadImage(string imagePath);
 
-            bool showBoundingRectangle;
+            void draw_adornments(Mat canvas);
+
+            bool showBoundingRectangle = false;
 
             int height;
             int width;
@@ -101,9 +104,5 @@ namespace processing{
             unique_ptr<Mat> maskImage;
             unique_ptr<Mat> backgroundImage;
             Rect boundingRectangle;
-
-            /* the position the rectangle is drawn in */
-            int x_pos = -1;
-            int y_pos = -1;
     };
 }

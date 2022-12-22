@@ -19,7 +19,7 @@ class CompositeMissingOneImage :
 };
 
 class BoundingRectangleHitData :
-  public testing::TestWithParam<Point> {
+  public testing::TestWithParam<tuple<Point, bool, bool>> {
 };
 
 
@@ -32,24 +32,25 @@ Mat loadBackgroundImage(string path);
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
                           BoundingRectangleHitDataConsecutivePoints,
                           testing::Values(
-                              make_tuple(Point(499, 351), Point(0,0)),
-                              make_tuple(Point(484, 372), Point(490, 412))
+                              make_tuple(Point(637, 592), Point(0,0)),
+                              make_tuple(Point(688, 672), Point(690, 674))
                           ) );
 
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
                           BoundingRectangleHitData,
                           testing::Values(
-                               Point(499, 351),
-                               Point(550, 431),
-                               Point(505, 356),
-                               Point(450, 352),
-                               Point(562, 476),
-                               Point(55, 459),
-                               Point(0, 0),
-                               Point(120, 120),
-                               Point(455, 345),
-                               Point(563, 477),
-                               Point(456, 346)
+                               make_tuple(Point(637, 592), true, true), // displays
+                               make_tuple(Point(688, 672), true, true), // displays
+                               make_tuple(Point(643, 597), true, true), // displays
+                                make_tuple(Point(588, 593),true, true), // misses
+                                make_tuple(Point(55, 459),true, true), // misses
+                                make_tuple(Point(0, 0),true, true), // misses
+                                make_tuple(Point(120, 120),true, true), // misses
+                                make_tuple(Point(593, 586),true, true), // misses
+                                make_tuple(Point(701, 718),true, true), //misses
+                                make_tuple(Point(637, 592), false, true), // displays
+                                make_tuple(Point(688, 672), true, false), // background
+                                 make_tuple(Point(643, 597), false, false) // nothing
                           ) );
 
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
@@ -189,21 +190,28 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
 
 TEST_P(BoundingRectangleHitData, SingleStepTests)
 {
-    Point args = GetParam();
+    auto args = GetParam();
+    auto p = get<0>(args);
     auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/gothenburg.png");
     auto maskPath = "./src/processing/tests/masks/kitten.png";
     auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
   
     auto canvas = CompositeCanvas();
     canvas.setSize(1300, 1300);
-    canvas.setBackground(backgroundImage);
-    canvas.setComposite(maskPath, originalPath);
+
+    bool set_back = get<1>(args);
+    bool set_comp = get<2>(args);
+
+    if(set_back)
+      canvas.setBackground(backgroundImage);
+
+    if(set_comp)
+      canvas.setComposite(maskPath, originalPath);
   
-    canvas.currentImg();
-    canvas.tap(args);
+    canvas.tap(p);
     Mat result = canvas.currentImg();
 
-    auto outImage = "single_tap_" + to_string(args.x) + "_" + to_string(args.y) + ".png";
+    auto outImage = "single_tap_" + to_string(p.x) + "_" + to_string(p.y) + "_" + to_string(set_back) + "_" + to_string(set_comp) + ".png";
     imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
     Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
     bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());

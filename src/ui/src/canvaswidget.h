@@ -4,6 +4,7 @@
 #include <QVBoxLayout>
 #include <QImage>
 #include <memory>
+#include <QMouseEvent>
 #include "processing.h"
 #include "camera.h"
 
@@ -22,6 +23,7 @@ class CanvasWidget : public QWidget
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
+      virtual void mousePressEvent(QMouseEvent *mouseEvent) override;
 
     private slots:
       void handleButton();

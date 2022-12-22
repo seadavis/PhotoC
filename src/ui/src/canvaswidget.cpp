@@ -21,6 +21,22 @@ void CanvasWidget::setCompositesIfAvailable()
     }
 }
 
+void CanvasWidget::mousePressEvent(QMouseEvent *mouseEvent)
+{
+
+    int mouse_y = mouseEvent->y();
+    int mouse_x = mouseEvent->x();
+
+    int height = this->height();
+    int width = this->width();
+
+    int y = mouse_y - ((1.0 - SIZE_FACTOR)*height)/2;
+    int x = mouse_x - ((1.0 - SIZE_FACTOR)*width)/2;
+
+    canvas->tap(Point(x, y));
+    render();
+}
+
 void CanvasWidget::render()
 {
     Mat canvasImg = canvas->currentImg();

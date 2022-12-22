@@ -363,13 +363,26 @@ static Rect translate(const Rect& r, int x, int y)
     return Rect(Point(r.x + x, r.y + y), r.size());
 }
 
-Mat CompositeCanvas::LoadImage(string imagePath)
+Rect CompositeCanvas::translate_to_canvas_coordindates(const Rect& r)
+{
+    if(maskImage != nullptr)
+    {
+        Mat mask = *maskImage;
+        int x_trans = width/2 - mask.size().width/2;
+        int y_trans = height/2 - mask.size().height/2;
+        return translate(r, x_trans, y_trans);
+    }
+   
+    return Rect(r);
+}
+
+Mat CompositeCanvas::loadImage(string imagePath)
 {
     Mat img = imread(imagePath, CV_LOAD_IMAGE_UNCHANGED);
     Mat tgt;
     cvtColor(img, tgt, CV_BGR2BGRA);
-    tgt = size_to_fit(tgt, width, height);
-    return tgt;
+    auto sizedTgt = size_to_fit(tgt, width, height);
+    return sizedTgt;
 }
 
 CompositeCanvas::CompositeCanvas()
@@ -389,25 +402,26 @@ void CompositeCanvas::setSize(int width, int height)
 
 void CompositeCanvas::setBackground(Mat backgrnd)
 {
-   backgroundImage = unique_ptr<Mat>(new Mat(backgrnd));
+   auto sizedBackground = size_to_fit(backgrnd, width, height);
+   backgroundImage = unique_ptr<Mat>(new Mat(sizedBackground));
 }
 
 void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImagePath)
 {
     if(maskImgPath.length() > 0)
     {
-        maskImage = unique_ptr<Mat>(new Mat(LoadImage(maskImgPath)));
+        maskImage = unique_ptr<Mat>(new Mat(loadImage(maskImgPath)));
         boundingRectangle = bounding_rectangle(*maskImage);
     }
         
 
     if(originalImagePath.length() > 0)
-        originalImage = unique_ptr<Mat>(new Mat(LoadImage(originalImagePath)));
+        originalImage = unique_ptr<Mat>(new Mat(loadImage(originalImagePath)));
 }
 
 void CompositeCanvas::tap(Point p)
 {
-    auto placedRect = translate(boundingRectangle, x_pos, y_pos);
+    auto placedRect = translate_to_canvas_coordindates(boundingRectangle);
 
     int x_min = placedRect.tl().x;
     int y_min = placedRect.tl().y;
@@ -436,11 +450,19 @@ bool CompositeCanvas::src_and_background_available()
             maskImage != nullptr && originalImage != nullptr;
 }
 
+void CompositeCanvas::draw_adornments(Mat canvas)
+{
+    if(showBoundingRectangle)
+    {
+        auto placedRect = translate_to_canvas_coordindates(boundingRectangle);
+        rectangle(canvas, placedRect, Scalar(0, 255, 0, 255));
+    }
+}
 
  Mat CompositeCanvas::currentImg()
  {
     Mat img;
-
+    
     if(only_background_available())
     {
         img = *backgroundImage;
@@ -479,25 +501,22 @@ bool CompositeCanvas::src_and_background_available()
         }
 
       
-
+        // all cordinate sections until after the rectangle is placed on
+        // is relative to the background image. 
         int tgt_cy = tgt_height/2;
         int tgt_cx = tgt_width/2;
 
         int src_cy = maskImage->size().height/2;
         int src_cx = maskImage->size().width/2;
 
-        x_pos = tgt_cx - src_cx;
-        y_pos = tgt_cy - src_cy;
+        int x_pos = tgt_cx - src_cx;
+        int y_pos = tgt_cy - src_cy;
 
-        img = composite(mask, original, background, x_pos , y_pos);
+        img = composite(mask, original, background, x_pos, y_pos);
 
-        if(showBoundingRectangle)
-        {
-            auto placedRect = translate(boundingRectangle, x_pos, y_pos);
-            rectangle(img, placedRect, Scalar(0, 255, 0, 255));
-        }
-        
     }
 
-    return fill_in_canvas(img, width, height);
+    auto canvas = fill_in_canvas(img, width, height);
+    draw_adornments(canvas);
+    return canvas;
  }
