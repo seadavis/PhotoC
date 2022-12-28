@@ -365,15 +365,7 @@ static Rect translate(const Rect& r, int x, int y)
 
 Rect CompositeCanvas::translate_to_canvas_coordindates(const Rect& r)
 {
-    if(maskImage != nullptr)
-    {
-        Mat mask = *maskImage;
-        int x_trans = width/2 - mask.size().width/2;
-        int y_trans = height/2 - mask.size().height/2;
-        return translate(r, x_trans, y_trans);
-    }
-   
-    return Rect(r);
+    return translate(r, mx, my);
 }
 
 Mat CompositeCanvas::loadImage(string imagePath)
@@ -398,12 +390,15 @@ void CompositeCanvas::setSize(int width, int height)
 {
     this->width = width;
     this->height = height;
+    initPlacement();
 }
 
 void CompositeCanvas::setBackground(Mat backgrnd)
 {
    auto sizedBackground = size_to_fit(backgrnd, width, height);
    backgroundImage = unique_ptr<Mat>(new Mat(sizedBackground));
+
+   initPlacement();
 }
 
 void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImagePath)
@@ -417,6 +412,8 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
 
     if(originalImagePath.length() > 0)
         originalImage = unique_ptr<Mat>(new Mat(loadImage(originalImagePath)));
+
+    initPlacement();
 }
 
 void CompositeCanvas::tap(Point p)
@@ -456,6 +453,23 @@ void CompositeCanvas::draw_adornments(Mat canvas)
     {
         auto placedRect = translate_to_canvas_coordindates(boundingRectangle);
         rectangle(canvas, placedRect, Scalar(0, 255, 0, 255));
+    }
+}
+
+void CompositeCanvas::initPlacement()
+{
+    if(src_and_background_available())
+    {
+
+        int tgt_cy = height/2;
+        int tgt_cx = width/2;
+
+        int src_cy = maskImage->size().height/2;
+        int src_cx = maskImage->size().width/2;
+
+        // in canvas coordinates
+        mx = tgt_cx - src_cx;
+        my = tgt_cy - src_cy;
     }
 }
 
@@ -500,19 +514,12 @@ void CompositeCanvas::draw_adornments(Mat canvas)
                                             mask.size().height);
         }
 
-      
-        // all cordinate sections until after the rectangle is placed on
-        // is relative to the background image. 
-        int tgt_cy = tgt_height/2;
-        int tgt_cx = tgt_width/2;
+        // switch to image coordinates
 
-        int src_cy = maskImage->size().height/2;
-        int src_cx = maskImage->size().width/2;
+        int x_diff = (width - tgt_width)/2;
+        int y_diff = (height - tgt_height)/2;
 
-        int x_pos = tgt_cx - src_cx;
-        int y_pos = tgt_cy - src_cy;
-
-        img = composite(mask, original, background, x_pos, y_pos);
+        img = composite(mask, original, background, mx - x_diff, my - y_diff);
 
     }
 

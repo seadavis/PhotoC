@@ -94,12 +94,18 @@ namespace processing{
             Rect translate_to_canvas_coordindates(const Rect& r);
             Mat loadImage(string imagePath);
 
+            void initPlacement();
+
             void draw_adornments(Mat canvas);
 
             bool showBoundingRectangle = false;
 
             int height;
             int width;
+
+            int mx;
+            int my;
+
             unique_ptr<Mat> originalImage;
             unique_ptr<Mat> maskImage;
             unique_ptr<Mat> backgroundImage;
