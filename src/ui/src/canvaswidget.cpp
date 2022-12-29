@@ -47,9 +47,18 @@ void CanvasWidget::mouseMoveEvent(QMouseEvent *mouseEvent)
     prev_mouse_x = mouse_x;
     prev_mouse_y = mouse_y;
 
-    auto p = qtToCanvasCoords(delta_x, delta_y);
+    auto p = qtToCanvasCoords(mouse_x, mouse_y);
 
-    canvas->translate(get<0>(p), get<1>(p));
+    if(canvas->hit(Point(get<0>(p), get<1>(p))))
+    {
+        setCursor(QCursor(Qt::CursorShape::SizeAllCursor));
+    }
+    else
+    {
+        setCursor(QCursor(Qt::CursorShape::ArrowCursor));
+    }
+
+    canvas->translate(delta_x, delta_y);
     render();
 }
 
@@ -107,6 +116,8 @@ void CanvasWidget::setOriginalPath(string path)
 
 void CanvasWidget::handleButton()
 { 
+    bool mouseTrack = hasMouseTracking();
+
     Mat img =  camera->snap_picture();
     canvas->setBackground(img);
     render();
