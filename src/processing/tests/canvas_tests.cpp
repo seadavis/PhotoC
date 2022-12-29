@@ -197,9 +197,9 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
 
     auto outImage = "double_tap_" + to_string(p1.x) + "_" + to_string(p1.y) + ".png";
     imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
-    /*Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
+    Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
     bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
-    ASSERT_TRUE(equal);*/
+    ASSERT_TRUE(equal);
 }
 
 TEST_P(BoundingRectangleHitData, SingleStepTests)
