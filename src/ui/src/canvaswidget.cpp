@@ -7,10 +7,22 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <QCursor>
 
 #include "canvaswidget.h"
 
 constexpr double SIZE_FACTOR = 0.65;
+
+tuple<int, int> CanvasWidget::qtToCanvasCoords(int mouse_x, int mouse_y)
+{
+    int height = this->height();
+    int width = this->width();
+
+    int y = mouse_y - ((1.0 - SIZE_FACTOR)*height)/2;
+    int x = mouse_x - ((1.0 - SIZE_FACTOR)*width)/2;
+
+    return tuple<int, int>(x, y);
+}
 
 void CanvasWidget::setCompositesIfAvailable()
 {
@@ -21,20 +33,47 @@ void CanvasWidget::setCompositesIfAvailable()
     }
 }
 
+void CanvasWidget::mouseMoveEvent(QMouseEvent *mouseEvent)
+{
+
+    int mouse_y = mouseEvent->y();
+    int mouse_x = mouseEvent->x();
+
+    int delta_x = mouse_x - prev_mouse_x;
+    int delta_y = mouse_y - prev_mouse_y;
+
+    cout << "Delta X: " << delta_x << "Delta Y: " << delta_y << "\n";
+
+    prev_mouse_x = mouse_x;
+    prev_mouse_y = mouse_y;
+
+    auto p = qtToCanvasCoords(delta_x, delta_y);
+
+    canvas->translate(get<0>(p), get<1>(p));
+    render();
+}
+
+
+void CanvasWidget::mouseReleaseEvent(QMouseEvent *mouseEvent)
+{
+    // force release
+    canvas->tap(Point(-100, -100));
+    render();
+}
+
 void CanvasWidget::mousePressEvent(QMouseEvent *mouseEvent)
 {
 
     int mouse_y = mouseEvent->y();
     int mouse_x = mouseEvent->x();
 
-    int height = this->height();
-    int width = this->width();
+    auto p = qtToCanvasCoords(mouse_x, mouse_y);
 
-    int y = mouse_y - ((1.0 - SIZE_FACTOR)*height)/2;
-    int x = mouse_x - ((1.0 - SIZE_FACTOR)*width)/2;
-
-    canvas->tap(Point(x, y));
+    canvas->tap(Point(get<0>(p), get<1>(p)));
     render();
+
+    prev_mouse_x = mouse_x;
+    prev_mouse_y = mouse_y;
 }
 
 void CanvasWidget::render()
@@ -75,6 +114,7 @@ void CanvasWidget::handleButton()
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
+    setMouseTracking(true);
     verticalLayout = new QVBoxLayout(this);
     this->camera = camera;
     canvasGrid = new QGridLayout(parent);
@@ -95,6 +135,6 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     verticalLayout->addLayout(canvasGrid);
     verticalLayout->addWidget(button);
     canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
-
+    
     connect(button, &QPushButton::released, this, &CanvasWidget::handleButton);
 }
