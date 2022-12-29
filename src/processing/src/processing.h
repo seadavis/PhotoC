@@ -76,7 +76,31 @@ namespace processing{
             */
             void setComposite(const string& maskImgPath, const string& originalImage);
 
+            /***
+             * Tells that canvas that a user
+             * has "tapped" the given point. The point
+             * should be in corrdinates relative to canvas space.
+             * 
+             * Selects an image if one is to be selected.
+             * 
+             * @param p - the point that was tapped.
+            */
             void tap(Point p);
+
+            /**
+             * 
+             * Horizontally and vertically translates the last 
+             * selected image. If no composite was selected then 
+             * we do nothing
+             * 
+             * @param dx - the amount to horizontally translate the last selected
+             * image. Relative to the entire canvas
+             * 
+             * @param dy - the amount to vertically translate the last selected
+             * image.
+            */
+            void translate(int dx, int dy);
+
 
             /**
              * 
@@ -87,7 +111,6 @@ namespace processing{
 
         private:
            
-
             bool only_background_available();
             bool only_src_available();
             bool src_and_background_available();

@@ -285,26 +285,7 @@ static Mat composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int m
 */
 static Rect bounding_rectangle(Mat& src)
 {
-    Mat src_gray;
-    cvtColor(src, src_gray, CV_BGRA2GRAY);
-
-    blur(src_gray, src_gray, Size(3, 3));
-
-    Mat canny_output;
-
-    double threshold = 0.05;
-    Canny(src_gray, canny_output, threshold, threshold*2);
-
-    vector<vector<Point>> contours;
-    findContours( canny_output, contours, RETR_TREE, CHAIN_APPROX_SIMPLE );
-
-    Rect bounding_rectangle;
-
-    vector<vector<Point>> countours_poly(contours.size());
-    approxPolyDP(contours[0], countours_poly[0], 3, true);
-    bounding_rectangle = boundingRect(countours_poly[0]);
-
-    return bounding_rectangle;
+    return Rect(0, 0, src.size().width, src.size().height);
 }
 
 static Mat size_to_fit(Mat src, int width, int height)
@@ -358,14 +339,24 @@ static Mat fill_in_canvas(Mat src, int width, int height)
     return canvas;
 }
 
-static Rect translate(const Rect& r, int x, int y)
+static Rect translate_rectangle(const Rect& r, int x, int y)
 {
     return Rect(Point(r.x + x, r.y + y), r.size());
 }
 
 Rect CompositeCanvas::translate_to_canvas_coordindates(const Rect& r)
 {
-    return translate(r, mx, my);
+    return translate_rectangle(r, mx, my);
+}
+
+void CompositeCanvas::translate(int dx, int dy)
+{
+    if(showBoundingRectangle)
+    {
+        mx = mx + dx;
+        my = my + dy;
+    }
+
 }
 
 Mat CompositeCanvas::loadImage(string imagePath)
