@@ -19,7 +19,7 @@ class CompositeMissingOneImage :
 };
 
 class BoundingRectangleHitData :
-  public testing::TestWithParam<tuple<Point, bool, bool>> {
+  public testing::TestWithParam<tuple<Point, bool, bool, bool>> {
 };
 
 class TranslationData :
@@ -41,7 +41,9 @@ INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
                               make_tuple("penguin", "beach", 894, 596, Point(450, 300), 150, 150),
                               make_tuple("penguin", "beach", 894, 596, Point(450, 300), 0, 0),
                               make_tuple("moon", "lake", 901, 676, Point(450, 300), -75, 75),
-                              make_tuple("balloon", "gothenburg", 901, 676, Point(450, 300), 200, -125)
+                              make_tuple("balloon", "gothenburg", 901, 676, Point(450, 300), 200, -125),
+                              make_tuple("balloon", "gothenburg", 901, 676, Point(450, 300), -525, -415),
+                              make_tuple("balloon", "gothenburg", 901, 676, Point(450, 300), 525, 415)
                           ) );
 
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
@@ -54,17 +56,17 @@ INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
                           BoundingRectangleHitData,
                           testing::Values(
-                               make_tuple(Point(637, 592), true, true), // displays
-                               make_tuple(Point(688, 672), true, true), // displays
-                               make_tuple(Point(643, 597), true, true), // displays
-                                make_tuple(Point(580, 569),true, true), // misses
-                                make_tuple(Point(55, 459),true, true), // misses
-                                make_tuple(Point(0, 0),true, true), // misses
-                                make_tuple(Point(120, 120),true, true), // misses
-                                make_tuple(Point(721, 729),true, true), //misses
-                                make_tuple(Point(637, 592), false, true), // displays
-                                make_tuple(Point(688, 672), true, false), // background
-                                 make_tuple(Point(643, 597), false, false) // nothing
+                               make_tuple(Point(637, 592), true, true, true), // displays
+                               make_tuple(Point(688, 672), true, true, true), // displays
+                               make_tuple(Point(643, 597), true, true, true), // displays
+                                make_tuple(Point(580, 569),true, true, false), // misses
+                                make_tuple(Point(55, 459),true, true, false), // misses
+                                make_tuple(Point(0, 0),true, true, false), // misses
+                                make_tuple(Point(120, 120),true, true, false), // misses
+                                make_tuple(Point(721, 729),true, true, false), //misses
+                                make_tuple(Point(637, 592), false, true, true), // displays
+                                make_tuple(Point(688, 672), true, false, false), // background
+                                 make_tuple(Point(643, 597), false, false, false) // nothing
                           ) );
 
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
@@ -222,6 +224,8 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
     if(set_comp)
       canvas.setComposite(maskPath, originalPath);
   
+    bool hit = canvas.hit(p);
+    ASSERT_EQ(hit, get<3>(args));
     canvas.tap(p);
     Mat result = canvas.currentImg();
 
@@ -275,9 +279,8 @@ TEST_P(TranslationData, ValidTranslations) {
 
   imwrite( "./src/processing/tests/test_translations/" + fileName, result);
   Mat expectedMat = imread("./src/processing/tests/target_translations/" + fileName);
-
   bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);*
+  ASSERT_TRUE(equal);
 }
 
 TEST_P(Composites, BasicComposite) {

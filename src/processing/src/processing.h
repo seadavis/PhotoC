@@ -88,6 +88,14 @@ namespace processing{
             void tap(Point p);
 
             /**
+             * Determines if the composite image is hit at that particular point or not
+             * 
+             * @param p - the point we are querying - in canvas space
+            */
+            bool hit(Point p);
+
+
+            /**
              * 
              * Horizontally and vertically translates the last 
              * selected image. If no composite was selected then 
@@ -126,6 +134,7 @@ namespace processing{
             int height;
             int width;
 
+            // position of image in image coordinates
             int mx;
             int my;
 

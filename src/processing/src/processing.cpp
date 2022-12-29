@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <opencv2/imgcodecs.hpp>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 using namespace Eigen;
@@ -261,7 +262,7 @@ static Mat composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int m
                 auto g = (int)(out_pixel(g_raw));
                 auto r = (int)(out_pixel(r_raw));
 
-                auto p = cv::Point(x + mx, y + my);
+                auto p = Point(x + mx, y + my);
                 
                 output_img.at<Vec4b>(p)[0] = b;
                 output_img.at<Vec4b>(p)[1] = g; 
@@ -269,6 +270,34 @@ static Mat composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int m
             }
             
             
+        }
+    }
+
+    return output_img;
+}
+
+static Mat naive_composite(Mat mask, Mat src, Mat tgt,  unsigned int mx, unsigned int my)
+{
+    Mat output_img = tgt.clone();
+    
+    // put the solved channels into the output matrix
+    for(int y = 0; y < src.rows; y++)
+    {
+        for(int x = 0; x < src.cols; x++)
+        {
+            if(is_mask_pixel(mask, x, y))
+            {
+                auto v = mask.at<Vec4b>(Point(x, y));
+                auto b = v[0];
+                auto g = v[1];
+                auto r = v[2];
+
+                auto p = Point(x + mx, y + my);
+                
+                output_img.at<Vec4b>(p)[0] = b;
+                output_img.at<Vec4b>(p)[1] = g; 
+                output_img.at<Vec4b>(p)[2] = r; 
+            }
         }
     }
 
@@ -346,15 +375,36 @@ static Rect translate_rectangle(const Rect& r, int x, int y)
 
 Rect CompositeCanvas::translate_to_canvas_coordindates(const Rect& r)
 {
-    return translate_rectangle(r, mx, my);
+    int x_adjustment = backgroundImage != nullptr ? (width - backgroundImage->size().width)/2 : 0;
+    int y_adjustment = backgroundImage != nullptr ? (height - backgroundImage->size().height)/2 : 0;
+
+    return translate_rectangle(r, mx + x_adjustment, my + y_adjustment);
 }
 
 void CompositeCanvas::translate(int dx, int dy)
 {
     if(showBoundingRectangle)
     {
-        mx = mx + dx;
-        my = my + dy;
+        int mx_prime = mx + dx;
+        int my_prime = my + dy;
+
+        if(mx_prime < 1)
+            mx = 5;
+
+        else if(backgroundImage != nullptr && mx_prime + maskImage->size().width >= backgroundImage->size().width)
+            mx =  backgroundImage->size().width - maskImage->size().width - 5;
+
+        else
+            mx = mx_prime;
+
+        if(my_prime < 1)
+            my = 5;
+
+        else if(backgroundImage != nullptr && my_prime + maskImage->size().height >= backgroundImage->size().height)
+            my = backgroundImage->size().height - maskImage->size().height - 5;
+        
+        else
+            my = my_prime;
     }
 
 }
@@ -407,7 +457,7 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
     initPlacement();
 }
 
-void CompositeCanvas::tap(Point p)
+bool CompositeCanvas::hit(Point p)
 {
     auto placedRect = translate_to_canvas_coordindates(boundingRectangle);
 
@@ -417,7 +467,12 @@ void CompositeCanvas::tap(Point p)
     int x_max = x_min + placedRect.size().width;
     int y_max = y_min + placedRect.size().height;
 
-    showBoundingRectangle = p.x >= x_min && p.x <= x_max && p.y >= y_min && p.y <= y_max;
+    return p.x >= x_min && p.x <= x_max && p.y >= y_min && p.y <= y_max;
+}
+
+void CompositeCanvas::tap(Point p)
+{
+    showBoundingRectangle = hit(p);
 }
 
 bool CompositeCanvas::only_background_available()
@@ -451,16 +506,19 @@ void CompositeCanvas::initPlacement()
 {
     if(src_and_background_available())
     {
-
-        int tgt_cy = height/2;
-        int tgt_cx = width/2;
-
         int src_cy = maskImage->size().height/2;
         int src_cx = maskImage->size().width/2;
 
-        // in canvas coordinates
-        mx = tgt_cx - src_cx;
-        my = tgt_cy - src_cy;
+        mx = backgroundImage->size().width/2 - src_cx;
+        my = backgroundImage->size().height/2 - src_cy;
+    }
+    else if(only_src_available())
+    {
+        int src_cy = maskImage->size().height/2;
+        int src_cx = maskImage->size().width/2;
+
+        mx = width/2 - src_cx;
+        my = height/2 - src_cy;
     }
 }
 
@@ -505,13 +563,15 @@ void CompositeCanvas::initPlacement()
                                             mask.size().height);
         }
 
-        // switch to image coordinates
-
-        int x_diff = (width - tgt_width)/2;
-        int y_diff = (height - tgt_height)/2;
-
-        img = composite(mask, original, background, mx - x_diff, my - y_diff);
-
+        if(showBoundingRectangle)
+        {
+            img = naive_composite(mask, original, background, mx, my);
+        }
+        else
+        {
+            img = composite(mask, original, background, mx, my);
+        }
+       
     }
 
     auto canvas = fill_in_canvas(img, width, height);
