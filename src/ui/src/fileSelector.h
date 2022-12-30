@@ -24,7 +24,7 @@ class FileSelector : public QWidget
         void fileChanged(string path);
 
     private slots:
-      void selectFile();
+        void selectFile();
 
     private:
         QGridLayout *grid;

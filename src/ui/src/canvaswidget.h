@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <QMouseEvent>
+#include "ImageViewer.h"
 #include "processing.h"
 #include "camera.h"
 
@@ -24,23 +25,21 @@ class CanvasWidget : public QWidget
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
-      virtual void mousePressEvent(QMouseEvent *mouseEvent) override;
-      virtual void mouseMoveEvent(QMouseEvent *mouseEvent) override;
-      virtual void mouseReleaseEvent(QMouseEvent *mouseEvent) override;
-
-      tuple<int, int> qtToCanvasCoords(int mouse_x, int mouse_y);
 
     private slots:
       void handleButton();
+      
+      void handleMouseMoveOnImage(int x, int y);
+      void handleMousePressOnImage(int x, int y);
+      void handleMouseReleaseOnImage(int x, int y);
 
     private:
         unique_ptr<CompositeCanvas> canvas;
         QVBoxLayout* verticalLayout;
         QGridLayout* canvasGrid;
-        QLabel* canvasLabel;
+        ImageViewer* canvasViewer;
         QLabel* backLabel;
         QPushButton* button;   
-        QImage *image;
         ICamera *camera;
         int canvasWidth;
         int canvasHeight;
