@@ -24,11 +24,17 @@ void CanvasWidget::setCompositesIfAvailable()
 
 void CanvasWidget::handleMouseMoveOnImage(int x, int y)
 {
-    if(canvas->hit(Point(x, y)))
+    auto hitType = canvas->hit(Point(x, y));
+
+    if(hitType == ObjectType::Image)
     {
         setCursor(QCursor(Qt::CursorShape::SizeAllCursor));
     }
-    else
+    else if (hitType == ObjectType::SizeCircle)
+    {
+        setCursor(QCursor(Qt::CursorShape::SizeFDiagCursor));
+    }
+    else if(hitType == ObjectType::None)
     {
         setCursor(QCursor(Qt::CursorShape::ArrowCursor));
     }
@@ -46,8 +52,7 @@ void CanvasWidget::handleMouseMoveOnImage(int x, int y)
 void CanvasWidget::handleMouseReleaseOnImage(int x, int y)
 {
     setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    // force release
-    canvas->tap(Point(-100, -100));
+    canvas->releaseObject();
     render();
 }
 

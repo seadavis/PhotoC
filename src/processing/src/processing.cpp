@@ -363,6 +363,11 @@ static ImageBorder translate_border(ImageBorder b, int x, int y)
     return ImageBorder(b.width(), b.height(), Point(b.tl().x + x, b.tl().y + y));
 }
 
+static bool is_point_within_circle(Point p, Point center, int radius)
+{
+    return pow(p.x - center.x, 2) + (p.y - center.y, 2) < pow(radius, 2);
+}
+
 int ImageBorder::width()
 {
     return r.size().width;
@@ -397,6 +402,32 @@ void ImageBorder::draw(Mat m)
     br_circle.draw(m);
 }
 
+ObjectType ImageBorder::hit(Point p)
+{
+    auto top_left = tl();
+    if(is_point_within_circle(p, top_left, Radius))
+    {
+        return ObjectType::SizeCircle;
+    }
+
+    auto bottom_right = br();
+    if(is_point_within_circle(p, bottom_right, Radius))
+    {
+        return ObjectType::SizeCircle;
+    }
+
+    int x_min = tl().x;
+    int y_min = tl().y;
+
+    int x_max = x_min + width();
+    int y_max = y_min + height();
+
+    if(p.x >= x_min && p.x <= x_max && p.y >= y_min && p.y <= y_max)
+        return ObjectType::Image;
+
+    return ObjectType::None;
+}
+
 void Circle::draw(Mat m)
 {
     circle(m, center, radius, SelectionColor, FILLED, LINE_8);
@@ -412,7 +443,7 @@ ImageBorder CompositeCanvas::translate_to_canvas_coordindates(const ImageBorder&
 
 void CompositeCanvas::translate(int dx, int dy)
 {
-    if(showBoundingRectangle)
+    if(objectSelected)
     {
         int mx_prime = mx + dx;
         int my_prime = my + dy;
@@ -486,22 +517,39 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
     initPlacement();
 }
 
-bool CompositeCanvas::hit(Point p)
+ObjectType CompositeCanvas::hit(Point p)
 {
-    auto placedRect = translate_to_canvas_coordindates(border);
 
-    int x_min = placedRect.tl().x;
-    int y_min = placedRect.tl().y;
+    auto placedBorder = translate_to_canvas_coordindates(border);
+    auto hitType = placedBorder.hit(p);
 
-    int x_max = x_min + placedRect.width();
-    int y_max = y_min + placedRect.height();
+    if(hitType == ObjectType::SizeCircle && !showBoundingRectangle)
+    {
+        return ObjectType::None;
+    }
 
-    return p.x >= x_min && p.x <= x_max && p.y >= y_min && p.y <= y_max;
+    return hitType;
 }
 
 void CompositeCanvas::tap(Point p)
 {
-    showBoundingRectangle = hit(p);
+    auto hitType = hit(p);
+    if(hitType == ObjectType::Image)
+    {
+        showBoundingRectangle = true;
+        objectSelected = true;
+    }
+    else
+    {
+        showBoundingRectangle = false;
+        objectSelected = false;
+    }
+    
+}
+
+void CompositeCanvas::releaseObject()
+{
+    objectSelected = false;
 }
 
 bool CompositeCanvas::only_background_available()

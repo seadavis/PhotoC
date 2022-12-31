@@ -19,7 +19,7 @@ class CompositeMissingOneImage :
 };
 
 class BoundingRectangleHitData :
-  public testing::TestWithParam<tuple<Point, bool, bool, bool>> {
+  public testing::TestWithParam<tuple<Point, bool, bool, ObjectType>> {
 };
 
 class TranslationData :
@@ -56,17 +56,17 @@ INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
                           BoundingRectangleHitData,
                           testing::Values(
-                               make_tuple(Point(637, 592), true, true, true), // displays
-                               make_tuple(Point(688, 672), true, true, true), // displays
-                               make_tuple(Point(643, 597), true, true, true), // displays
-                                make_tuple(Point(580, 569),true, true, false), // misses
-                                make_tuple(Point(55, 459),true, true, false), // misses
-                                make_tuple(Point(0, 0),true, true, false), // misses
-                                make_tuple(Point(120, 120),true, true, false), // misses
-                                make_tuple(Point(721, 729),true, true, false), //misses
-                                make_tuple(Point(637, 592), false, true, true), // displays
-                                make_tuple(Point(688, 672), true, false, false), // background
-                                 make_tuple(Point(643, 597), false, false, false) // nothing
+                               make_tuple(Point(637, 592), true, true, ObjectType::Image), // displays
+                               make_tuple(Point(688, 672), true, true, ObjectType::Image), // displays
+                               make_tuple(Point(643, 597), true, true, ObjectType::Image), // displays
+                                make_tuple(Point(580, 569),true, true, ObjectType::None), // misses
+                                make_tuple(Point(55, 459),true, true, ObjectType::None), // misses
+                                make_tuple(Point(0, 0),true, true, ObjectType::None), // misses
+                                make_tuple(Point(120, 120),true, true, ObjectType::None), // misses
+                                make_tuple(Point(721, 729),true, true, ObjectType::None), //misses
+                                make_tuple(Point(637, 592), false, true, ObjectType::Image), // displays
+                                make_tuple(Point(688, 672), true, false, ObjectType::None), // background
+                                 make_tuple(Point(643, 597), false, false, ObjectType::None) // nothing
                           ) );
 
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
@@ -224,8 +224,8 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
     if(set_comp)
       canvas.setComposite(maskPath, originalPath);
   
-    bool hit = canvas.hit(p);
-    ASSERT_EQ(hit, get<3>(args));
+    auto hitType = canvas.hit(p);
+    ASSERT_EQ(hitType, get<3>(args));
     canvas.tap(p);
     Mat result = canvas.currentImg();
 

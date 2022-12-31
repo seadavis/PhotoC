@@ -10,6 +10,13 @@ using namespace std;
 
 namespace processing{
 
+    enum ObjectType
+    {
+        Image,
+        SizeCircle,
+        None
+    };
+
     class Circle
     {
         public:
@@ -60,6 +67,8 @@ namespace processing{
             int width();
 
             int height();
+
+            ObjectType hit(Point p);
 
             /**
              * 
@@ -160,8 +169,7 @@ namespace processing{
              * 
              * @param p - the point we are querying - in canvas space
             */
-            bool hit(Point p);
-
+            ObjectType hit(Point p);
 
             /**
              * 
@@ -177,6 +185,12 @@ namespace processing{
             */
             void translate(int dx, int dy);
 
+            /**
+             * Releases the currently held object if it
+             * exists. If no object is being held this does nothing.
+             * 
+            */
+            void releaseObject();
 
             /**
              * 
@@ -198,6 +212,7 @@ namespace processing{
             void draw_adornments(Mat canvas);
 
             bool showBoundingRectangle = false;
+            bool objectSelected = false;
 
             int height;
             int width;
