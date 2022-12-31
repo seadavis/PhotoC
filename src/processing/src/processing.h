@@ -10,6 +10,74 @@ using namespace std;
 
 namespace processing{
 
+    class Circle
+    {
+        public:
+            Circle(int radius, Point center) :
+                radius(radius), center(center)
+                {}
+
+            Circle() :
+                radius(0), center(Point(0, 0))
+            {}
+
+            int radius;
+            Point center;
+
+            void draw(Mat m);
+
+    };
+
+    /**
+     * used internally to processing to represent a border
+     * around an "Image", such as a mask
+     * used in a composite
+    */
+    class ImageBorder
+    {
+        public:
+
+            /**
+             * @param width - the width of the image border not including 
+             * the "resizing circles"
+             * 
+             * @param height - the height of the image border not including
+             * the "resizing circles"
+             * 
+             * @param tl - the top left of the image border.
+            */
+            ImageBorder(int width, int height, Point tl);
+
+            ImageBorder(){};
+
+            /**
+             * 
+             * Draws intself unto the given matrix
+            */
+            void draw(Mat m);
+
+        
+            int width();
+
+            int height();
+
+            /**
+             * 
+             * The top left point of the border
+            */
+            Point tl();
+
+            /**
+             * The bottom right point of the border
+            */
+            Point br();
+
+        private:
+            Rect r;
+            Circle tl_circle;
+            Circle br_circle;
+
+    };
 
     
     class BackgroundResizedException : public std::exception {
@@ -122,7 +190,7 @@ namespace processing{
             bool only_background_available();
             bool only_src_available();
             bool src_and_background_available();
-            Rect translate_to_canvas_coordindates(const Rect& r);
+            ImageBorder translate_to_canvas_coordindates(const ImageBorder& r);
             Mat loadImage(string imagePath);
 
             void initPlacement();
@@ -141,6 +209,6 @@ namespace processing{
             unique_ptr<Mat> originalImage;
             unique_ptr<Mat> maskImage;
             unique_ptr<Mat> backgroundImage;
-            Rect boundingRectangle;
+            ImageBorder border;
     };
 }

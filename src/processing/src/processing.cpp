@@ -13,6 +13,9 @@ typedef SparseMatrix<float> SpMat;
 typedef Eigen::Triplet<float> MatTriplet;
 
 constexpr float GAMMA = 2.2f;
+constexpr int Radius = 5;
+
+const Scalar SelectionColor = Scalar(0, 255, 0, 255);
 
 static bool is_mask_pixel(Mat& m, unsigned int x, unsigned int y)
 {   
@@ -304,19 +307,6 @@ static Mat naive_composite(Mat mask, Mat src, Mat tgt,  unsigned int mx, unsigne
     return output_img;
 }
 
-/**
- * Draws a bounding rectangle
- * on around each of the objects found with canny object
- * detection
- * 
- * @param src the image we want to draw a rectangle around. Assumes ABGR formar.
- * 
-*/
-static Rect bounding_rectangle(Mat& src)
-{
-    return Rect(0, 0, src.size().width, src.size().height);
-}
-
 static Mat size_to_fit(Mat src, int width, int height)
 {
     Mat sized_src;
@@ -368,17 +358,56 @@ static Mat fill_in_canvas(Mat src, int width, int height)
     return canvas;
 }
 
-static Rect translate_rectangle(const Rect& r, int x, int y)
+static ImageBorder translate_border(ImageBorder b, int x, int y)
 {
-    return Rect(Point(r.x + x, r.y + y), r.size());
+    return ImageBorder(b.width(), b.height(), Point(b.tl().x + x, b.tl().y + y));
 }
 
-Rect CompositeCanvas::translate_to_canvas_coordindates(const Rect& r)
+int ImageBorder::width()
+{
+    return r.size().width;
+}
+
+int ImageBorder::height()
+{
+    return r.size().height;
+}
+
+Point ImageBorder::tl()
+{
+    return r.tl();
+}
+
+Point ImageBorder::br()
+{
+    return r.br();
+}
+
+ImageBorder::ImageBorder(int width, int height, Point tl)
+{
+    r = Rect(tl.x, tl.y, width, height);
+    tl_circle = Circle(Radius, r.tl());
+    br_circle = Circle(Radius, r.br());
+}
+
+void ImageBorder::draw(Mat m)
+{
+    rectangle(m, r, SelectionColor);
+    tl_circle.draw(m);
+    br_circle.draw(m);
+}
+
+void Circle::draw(Mat m)
+{
+    circle(m, center, radius, SelectionColor, FILLED, LINE_8);
+}
+
+ImageBorder CompositeCanvas::translate_to_canvas_coordindates(const ImageBorder& b)
 {
     int x_adjustment = backgroundImage != nullptr ? (width - backgroundImage->size().width)/2 : 0;
     int y_adjustment = backgroundImage != nullptr ? (height - backgroundImage->size().height)/2 : 0;
 
-    return translate_rectangle(r, mx + x_adjustment, my + y_adjustment);
+    return translate_border(b, mx + x_adjustment, my + y_adjustment);
 }
 
 void CompositeCanvas::translate(int dx, int dy)
@@ -447,7 +476,7 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
     if(maskImgPath.length() > 0)
     {
         maskImage = unique_ptr<Mat>(new Mat(loadImage(maskImgPath)));
-        boundingRectangle = bounding_rectangle(*maskImage);
+        border = ImageBorder(maskImage->size().width, maskImage->size().height, Point(0, 0));
     }
         
 
@@ -459,13 +488,13 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
 
 bool CompositeCanvas::hit(Point p)
 {
-    auto placedRect = translate_to_canvas_coordindates(boundingRectangle);
+    auto placedRect = translate_to_canvas_coordindates(border);
 
     int x_min = placedRect.tl().x;
     int y_min = placedRect.tl().y;
 
-    int x_max = x_min + placedRect.size().width;
-    int y_max = y_min + placedRect.size().height;
+    int x_max = x_min + placedRect.width();
+    int y_max = y_min + placedRect.height();
 
     return p.x >= x_min && p.x <= x_max && p.y >= y_min && p.y <= y_max;
 }
@@ -497,8 +526,8 @@ void CompositeCanvas::draw_adornments(Mat canvas)
 {
     if(showBoundingRectangle)
     {
-        auto placedRect = translate_to_canvas_coordindates(boundingRectangle);
-        rectangle(canvas, placedRect, Scalar(0, 255, 0, 255));
+        auto placedRect = translate_to_canvas_coordindates(border);
+        placedRect.draw(canvas);
     }
 }
 
