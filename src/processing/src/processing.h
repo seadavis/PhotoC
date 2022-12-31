@@ -173,17 +173,14 @@ namespace processing{
 
             /**
              * 
-             * Horizontally and vertically translates the last 
-             * selected image. If no composite was selected then 
-             * we do nothing
+             * Tells us the cursorMoved 
+             * by the given change in x and change in y. Both measure in pixels
              * 
-             * @param dx - the amount to horizontally translate the last selected
-             * image. Relative to the entire canvas
+             * @param dx - the amount the cursor moved horizontally
              * 
-             * @param dy - the amount to vertically translate the last selected
-             * image.
+             * @param dy - the amount the cursor moved vertically
             */
-            void translate(int dx, int dy);
+            void cursorMoved(int dx, int dy);
 
             /**
              * Releases the currently held object if it
@@ -204,7 +201,7 @@ namespace processing{
             bool only_background_available();
             bool only_src_available();
             bool src_and_background_available();
-            ImageBorder translate_to_canvas_coordindates(const ImageBorder& r);
+            ImageBorder translate_to_canvas_coordindates(ImageBorder b);
             Mat loadImage(string imagePath);
 
             void initPlacement();
@@ -212,14 +209,21 @@ namespace processing{
             void draw_adornments(Mat canvas);
 
             bool showBoundingRectangle = false;
-            bool objectSelected = false;
+            ObjectType objectSelected = ObjectType::None;
 
             int height;
             int width;
 
+            int maskWidth;
+            int maskHeight;
+
             // position of image in image coordinates
             int mx;
             int my;
+
+            // the scaling of x and Y repsectively
+            int scaleX = 1;
+            int scaleY = 1;
 
             unique_ptr<Mat> originalImage;
             unique_ptr<Mat> maskImage;

@@ -358,11 +358,6 @@ static Mat fill_in_canvas(Mat src, int width, int height)
     return canvas;
 }
 
-static ImageBorder translate_border(ImageBorder b, int x, int y)
-{
-    return ImageBorder(b.width(), b.height(), Point(b.tl().x + x, b.tl().y + y));
-}
-
 static bool is_point_within_circle(Point p, Point center, int radius)
 {
     return pow(p.x - center.x, 2) + (p.y - center.y, 2) < pow(radius, 2);
@@ -433,17 +428,37 @@ void Circle::draw(Mat m)
     circle(m, center, radius, SelectionColor, FILLED, LINE_8);
 }
 
-ImageBorder CompositeCanvas::translate_to_canvas_coordindates(const ImageBorder& b)
+ImageBorder CompositeCanvas::translate_to_canvas_coordindates(ImageBorder b)
 {
     int x_adjustment = backgroundImage != nullptr ? (width - backgroundImage->size().width)/2 : 0;
     int y_adjustment = backgroundImage != nullptr ? (height - backgroundImage->size().height)/2 : 0;
 
-    return translate_border(b, mx + x_adjustment, my + y_adjustment);
+    Point tl = b.tl();
+
+    auto top_left = Point(tl.x + mx + x_adjustment, tl.y + my + y_adjustment);
+
+    return ImageBorder(maskWidth, maskHeight, top_left);
 }
 
-void CompositeCanvas::translate(int dx, int dy)
+void CompositeCanvas::cursorMoved(int dx, int dy)
 {
-    if(objectSelected)
+    if(objectSelected == ObjectType::SizeCircle && maskImage != nullptr)
+    {
+        int sign = 1;
+
+        if(dx < 0 && dy < 0)
+            sign = -1;
+        
+        auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
+
+        auto deltaHeight = maskHeight + deltaPixels;
+        auto deltaWidth = maskWidth + deltaPixels;
+
+        maskWidth = deltaWidth;
+        maskHeight = deltaHeight;   
+    }
+
+    else if(objectSelected == ObjectType::Image)
     {
         int mx_prime = mx + dx;
         int my_prime = my + dy;
@@ -507,6 +522,8 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
     if(maskImgPath.length() > 0)
     {
         maskImage = unique_ptr<Mat>(new Mat(loadImage(maskImgPath)));
+        maskHeight = maskImage->size().height;
+        maskWidth = maskImage->size().width;
         border = ImageBorder(maskImage->size().width, maskImage->size().height, Point(0, 0));
     }
         
@@ -532,22 +549,22 @@ ObjectType CompositeCanvas::hit(Point p)
 void CompositeCanvas::tap(Point p)
 {
     auto hitType = hit(p);
-    if(hitType == ObjectType::Image)
+    if(hitType != ObjectType::None)
     {
         showBoundingRectangle = true;
-        objectSelected = true;
+        objectSelected = hitType;
     }
     else
     {
         showBoundingRectangle = false;
-        objectSelected = false;
+        objectSelected = ObjectType::None;
     }
     
 }
 
 void CompositeCanvas::releaseObject()
 {
-    objectSelected = false;
+    objectSelected = ObjectType::None;
 }
 
 bool CompositeCanvas::only_background_available()
@@ -572,8 +589,8 @@ void CompositeCanvas::draw_adornments(Mat canvas)
 {
     if(showBoundingRectangle)
     {
-        auto placedRect = translate_to_canvas_coordindates(border);
-        placedRect.draw(canvas);
+        auto placedBorder = translate_to_canvas_coordindates(border);
+        placedBorder.draw(canvas);
     }
 }
 
@@ -625,10 +642,16 @@ void CompositeCanvas::initPlacement()
         Mat original = *originalImage;
         Mat background = *backgroundImage;
 
+        Mat resizedMask;
+        Mat resizedOriginal;
+
+        resize(mask, resizedMask, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+        resize(original, resizedOriginal, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+
         int tgt_height = background.size().height;
         int tgt_width = background.size().width;
 
-        if(tgt_width < mask.size().width || tgt_height < mask.size().height)
+        if(tgt_width < resizedMask.size().width || tgt_height < resizedMask.size().height)
         {
             throw BackgroundResizedException(original.size().height,
                                             original.size().width,
@@ -640,11 +663,11 @@ void CompositeCanvas::initPlacement()
 
         if(showBoundingRectangle)
         {
-            img = naive_composite(mask, original, background, mx, my);
+            img = naive_composite(resizedMask, resizedOriginal, background, mx, my);
         }
         else
         {
-            img = composite(mask, original, background, mx, my);
+            img = composite(resizedMask, resizedOriginal, background, mx, my);
         }
        
     }

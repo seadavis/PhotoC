@@ -271,7 +271,7 @@ TEST_P(TranslationData, ValidTranslations) {
   canvas.setBackground(backgroundImage);
   canvas.setComposite(mask, original);
   canvas.tap(get<4>(args));
-  canvas.translate(get<5>(args), get<6>(args));
+  canvas.cursorMoved(get<5>(args), get<6>(args));
 
   Mat result = canvas.currentImg();
 

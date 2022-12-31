@@ -45,7 +45,7 @@ void CanvasWidget::handleMouseMoveOnImage(int x, int y)
     prev_mouse_x = x;
     prev_mouse_y = y;
 
-    canvas->translate(delta_x, delta_y);
+    canvas->cursorMoved(delta_x, delta_y);
     render();
 }
 
