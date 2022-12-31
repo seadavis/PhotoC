@@ -510,7 +510,6 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
         border = ImageBorder(maskImage->size().width, maskImage->size().height, Point(0, 0));
     }
         
-
     if(originalImagePath.length() > 0)
         originalImage = unique_ptr<Mat>(new Mat(loadImage(originalImagePath)));
 
@@ -519,7 +518,6 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
 
 ObjectType CompositeCanvas::hit(Point p)
 {
-
     auto placedBorder = translate_to_canvas_coordindates(border);
     auto hitType = placedBorder.hit(p);
 
