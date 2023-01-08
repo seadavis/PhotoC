@@ -18,7 +18,12 @@ MainWindow::MainWindow(ICamera* camera)
  
   this->camera = camera;
   if(!camera->connect())
-      return;
+  {
+    auto msg = new QErrorMessage(this);
+    msg->showMessage("Could not connect to camera. Please connect camera and restart program");
+    return;
+  }
+      
   QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
   
   canvas = new CanvasWidget(this, camera);

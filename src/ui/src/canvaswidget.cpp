@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <QCursor>
+#include <QErrorMessage>
 
 #include "canvaswidget.h"
 
@@ -91,10 +92,19 @@ void CanvasWidget::setOriginalPath(string path)
 }
 
 void CanvasWidget::handleButton()
-{ 
-    Mat img =  camera->snap_picture();
-    canvas->setBackground(img);
-    render();
+{  
+    try
+    {
+        Mat img =  camera->snap_picture();
+        canvas->setBackground(img);
+        render();
+    }
+    catch(const exception &ex)
+    {
+        auto msg = new QErrorMessage(this);
+        auto what = ex.what();
+        msg->showMessage(QString(what));
+    }
 }
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)

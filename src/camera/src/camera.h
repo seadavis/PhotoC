@@ -8,6 +8,13 @@
 using namespace cv;
 using namespace std;
 
+ 
+    class CameraOperationException : public runtime_error {
+        public:
+            CameraOperationException(string operation_name) : runtime_error("Unable to perform a:  " + operation_name + ". Check camera connection.") {};
+    
+    };
+
 class ICamera
 {
 

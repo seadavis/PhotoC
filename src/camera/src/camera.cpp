@@ -98,6 +98,9 @@ Mat RemoteCamera::snap_picture()
 	printf("Capturing To Memory\n");
 	capture_to_memory(camera, context, &camera_file_path, camera_file, (const char**)&buffer, &buffer_size);
 
+	if(buffer_size == 0)
+		throw CameraOperationException("snap picture");
+
     auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
 	Mat img;
 	cvtColor(m, img, CV_BGR2BGRA);
