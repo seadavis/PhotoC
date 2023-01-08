@@ -13,7 +13,6 @@ class Composites :
     public testing::TestWithParam<tuple<string, string, int, int>> {
 };
 
-
 class CompositeMissingOneImage :
   public testing::TestWithParam<tuple<string, string, string, int, int, string>> {
 };
@@ -30,8 +29,25 @@ class BoundingRectangleHitDataConsecutivePoints :
   public testing::TestWithParam<tuple<Point, Point>> {
 };
 
+class ScalingImage :
+  public testing::TestWithParam<tuple<string, string, Point, Point, Point, Point, string>> {
+};
+
 Mat loadBackgroundImage(string path);
 
+
+
+INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
+                          ScalingImage,
+                          testing::Values(
+                              make_tuple("penguin", "library", Point(408, 312), Point(0,0), Point(345, 191), Point(15, 15), "penguin_library_no_translation.png"),
+                              make_tuple("penguin", "library", Point(408, 312), Point(20,5), Point(365, 196), Point(15, 15), "penguin_library_with_translation.png"),
+                              make_tuple("penguin", "library", Point(408, 312), Point(0,0), Point(345, 191), Point(500, 15), "penguin_library_too_big.png"),
+                               make_tuple("penguin", "library", Point(408, 312), Point(0,0), Point(345, 191), Point(-5, -170), "penguin_library_too_small.png"),
+                              make_tuple("watereagle", "library", Point(425, 252), Point(0,0), Point(474, 301), Point(60, 60), "watereagle_library_no_translation.png"),
+                              make_tuple("watereagle", "library", Point(425, 252), Point(0,0), Point(474, 301), Point(60, 600), "watereagle_library_too_big.png"),
+                              make_tuple("watereagle", "library", Point(425, 252), Point(0,0), Point(474, 301), Point(-110, -5), "watereagle_library_too_small.png")
+                          ) );
 
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
                           TranslationData,
@@ -279,6 +295,43 @@ TEST_P(TranslationData, ValidTranslations) {
 
   imwrite( "./src/processing/tests/test_translations/" + fileName, result);
   Mat expectedMat = imread("./src/processing/tests/target_translations/" + fileName);
+  bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
+  ASSERT_TRUE(equal);
+}
+
+TEST_P(ScalingImage, ScaleTests){
+  
+  auto args = GetParam();
+  auto backgroundImagePath = "./src/processing/tests/target_images/" + get<1>(args) + ".png";
+  auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+
+  auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
+  auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
+
+  auto canvas = CompositeCanvas();
+  canvas.setSize(800, 547);
+  canvas.setBackground(backgroundImage);
+  canvas.setComposite(mask, original);
+
+  Point tapPoint_1 = get<2>(args);
+  Point movePoint_1 = get<3>(args);
+  Point tapPoint = get<4>(args);
+  Point movePoint = get<5>(args);
+
+  canvas.tap(tapPoint_1);
+  canvas.cursorMoved(movePoint_1.x, movePoint_1.x);
+  canvas.tap(tapPoint);
+  canvas.cursorMoved(movePoint.x, movePoint.y);
+
+  //exit out of canvas
+  canvas.tap(Point(0, 0));
+
+  Mat result = canvas.currentImg();
+
+  auto fileName =  get<6>(args);
+
+  imwrite( "./src/processing/tests/test_scaling/" + fileName, result);
+  Mat expectedMat = imread("./src/processing/tests/target_scaling/" + fileName);
   bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
   ASSERT_TRUE(equal);
 }

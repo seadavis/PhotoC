@@ -20,9 +20,9 @@ const Scalar SelectionColor = Scalar(0, 255, 0, 255);
 static bool is_mask_pixel(Mat& m, unsigned int x, unsigned int y)
 {   
     auto size = m.size();
-    if(x < 0 || y < 0) return false;
+    if(x <= 0 || y <= 0) return false;
 
-    if(x >= size.width || y >= size.height) return false;
+    if(x >= size.width - 1 || y >= size.height - 1) return false;
 
     return m.at<Vec4b>(cv::Point(x, y))[3] > 0;
 }
@@ -175,7 +175,7 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat
             {
                 if(is_mask_pixel(mask_image, x, y))
                 {
-                   
+                  
                     float pixel = source_channels[channel_number](y, x);
                 
                     float grad = 
@@ -454,8 +454,25 @@ void CompositeCanvas::cursorMoved(int dx, int dy)
         auto deltaHeight = maskHeight + deltaPixels;
         auto deltaWidth = maskWidth + deltaPixels;
 
+        auto maxWidth = backgroundImage == nullptr ? width : backgroundImage->size().width;
+        auto maxHeight = backgroundImage == nullptr ? height : backgroundImage->size().height;
+
+        if(deltaHeight >= maxHeight)
+            deltaHeight = maxHeight - 10;
+
+        if(deltaWidth >= maxWidth)
+            deltaWidth = maxWidth - 10;
+
+        if(deltaHeight < 10)
+            deltaHeight = 10;
+
+        if(deltaWidth < 10)
+            deltaWidth = 10;
+
         maskWidth = deltaWidth;
         maskHeight = deltaHeight;   
+
+        initPlacement();
     }
 
     else if(objectSelected == ObjectType::Image)
@@ -535,6 +552,9 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
 
 ObjectType CompositeCanvas::hit(Point p)
 {
+    if(maskImage == nullptr)
+        return ObjectType::None;
+
     auto placedBorder = translate_to_canvas_coordindates(border);
     auto hitType = placedBorder.hit(p);
 
@@ -596,18 +616,19 @@ void CompositeCanvas::draw_adornments(Mat canvas)
 
 void CompositeCanvas::initPlacement()
 {
+
     if(src_and_background_available())
     {
-        int src_cy = maskImage->size().height/2;
-        int src_cx = maskImage->size().width/2;
+        int src_cy = maskHeight/2;
+        int src_cx = maskWidth/2;
 
         mx = backgroundImage->size().width/2 - src_cx;
         my = backgroundImage->size().height/2 - src_cy;
     }
     else if(only_src_available())
     {
-        int src_cy = maskImage->size().height/2;
-        int src_cx = maskImage->size().width/2;
+        int src_cy = maskHeight/2;
+        int src_cx = maskWidth/2;
 
         mx = width/2 - src_cx;
         my = height/2 - src_cy;
