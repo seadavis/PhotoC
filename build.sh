@@ -1,5 +1,17 @@
-cmake -S./src/ -B./build/ 
+# This script builds and does the testing or uns the UI
+# pass -s to start the program. Pass -t to run the automated tests
+# no arguments just builds
+
+
+cmake -DCMAKE_BUILD_TYPE=Debug -S./src/ -B./build/ 
 cmake --build build
-cd build && ctest
-cd ../
-./bin/field_of_view
+
+if [ "$1" == "-t" ]
+then
+    ./bin/unit_tests
+fi
+
+if [ "$1" == "-s" ]
+then
+    ./bin/field_of_view $2
+fi

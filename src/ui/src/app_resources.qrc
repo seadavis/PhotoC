@@ -1,0 +1,8 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file alias="check_mark.png">resources/images/check_mark.png</file>
+    <file alias="folder_icon.jpg">resources/images/folder_icon.jpg</file>
+    <file alias="error_icon.png">resources/images/error_icon.png</file>
+    <file >resources/stylesheets/default.qss</file>
+</qresource>
+</RCC>
