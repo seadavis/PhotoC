@@ -51,7 +51,7 @@ add_executable(
 )
 target_link_libraries(
   unit_tests
-  processing camera ui Qt5::Widgets GTest::gtest_main ${OpenCV_LIBS}
+  processing GTest::gtest_main ${OpenCV_LIBS}
 )
 
 target_include_directories(unit_tests PUBLIC
