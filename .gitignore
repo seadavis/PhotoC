@@ -1,3 +1,5 @@
 bin/
 build/
 src/processing/tests/test_*/*
+*.data.*
+*.data
