@@ -1,2 +1,2 @@
-perf record ./bin/benchmarks
-perf script > ./build/benchmarks/composite_benchmarks.perf
+perf record -F 99 -a -g -- ./bin/benchmarks
+perf report
