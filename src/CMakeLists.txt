@@ -14,7 +14,7 @@ find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Gui REQUIRED )
 find_package(OpenCV REQUIRED )
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-
+find_package(benchmark REQUIRED)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -51,13 +51,26 @@ add_executable(
 )
 target_link_libraries(
   unit_tests
-  processing camera ui Qt5::Widgets GTest::gtest_main ${OpenCV_LIBS}
+  processing GTest::gtest_main ${OpenCV_LIBS}
 )
 
 target_include_directories(unit_tests PUBLIC
                           "${PROJECT_SOURCE_DIR}/processing/src/"
-                          )
+)
 
 include(GoogleTest)
 gtest_discover_tests(unit_tests)
+
+add_executable(
+  benchmarks
+  ./processing/tests/benchmarks/blending_benchmarks.cpp
+)
+target_link_libraries(
+  benchmarks
+  processing benchmark::benchmark ${OpenCV_LIBS}
+)
+target_include_directories(benchmarks PUBLIC
+                          "${PROJECT_SOURCE_DIR}/processing/src/"
+)
+
 

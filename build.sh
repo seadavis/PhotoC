@@ -3,7 +3,10 @@
 # no arguments just builds
 
 
-cmake -DCMAKE_BUILD_TYPE=Debug -S./src/ -B./build/ 
+cmake -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_C_FLAGS_DEBUG="-g -O0" \
+      -DCMAKE_CXX_FLAGS_DEBUG="-g -O0" \
+      -S./src/ -B./build/ 
 cmake --build build
 
 if [ "$1" == "-t" ]
