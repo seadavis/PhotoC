@@ -1,12 +1,17 @@
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 #include <opencv2/imgcodecs.hpp>
 #include <memory>
 #include <string>
 
 using namespace cv;
 using namespace std;
+using namespace Eigen;
+
+typedef SparseMatrix<float> SpMat;
+typedef Eigen::Triplet<float> MatTriplet;
 
 namespace processing{
 
@@ -204,6 +209,9 @@ namespace processing{
             ImageBorder translate_to_canvas_coordindates(ImageBorder b);
             Mat loadImage(string imagePath);
 
+            SpMat sourceMatrix;
+            map<unsigned int, unsigned int> variableMap;
+
             void initPlacement();
 
             void draw_adornments(Mat canvas);
@@ -228,6 +236,7 @@ namespace processing{
             unique_ptr<Mat> originalImage;
             unique_ptr<Mat> maskImage;
             unique_ptr<Mat> backgroundImage;
+            array<Eigen::MatrixXf, 3> sourceChannels;
             ImageBorder border;
     };
 }

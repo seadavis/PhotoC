@@ -1,16 +1,13 @@
 #include "processing.h"
-#include <eigen3/Eigen/Sparse>
 #include <algorithm>
 #include <opencv2/imgcodecs.hpp>
 #include <vector>
 #include <cmath>
 
 using namespace std;
-using namespace Eigen;
+
 using namespace processing;
 
-typedef SparseMatrix<float> SpMat;
-typedef Eigen::Triplet<float> MatTriplet;
 
 constexpr float GAMMA = 2.2f;
 constexpr int Radius = 5;
@@ -27,7 +24,7 @@ static bool is_mask_pixel(Mat& m, unsigned int x, unsigned int y)
     return m.at<Vec4b>(cv::Point(x, y))[3] > 0;
 }
 
-static unsigned int flatten(Mat& m, unsigned int x, unsigned int y) 
+static inline unsigned int flatten(Mat& m, unsigned int x, unsigned int y) 
 {
 	return  m.size().width * y + x;
 }
@@ -79,7 +76,7 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
 
     // we assign the matrix into a triplet so what we can put it into a 
     // sparse matrix
-    vector<MatTriplet> mt;
+    vector<MatTriplet> mt(size.height*size.width);
 
     for(unsigned int y = 0; y < size.height; y++)
     {
@@ -118,10 +115,10 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
  * Convers the given open cv matrix to 
  * 3 eigen matrices green, blue and red
  **/
-static vector<Eigen::MatrixXf> cv_to_eigen_channels(Mat m)
+static array<Eigen::MatrixXf, 3> cv_to_eigen_channels(Mat& m)
 {
     auto const size = m.size();
-    vector<Eigen::MatrixXf> mat_list(3);
+    array<Eigen::MatrixXf, 3> mat_list;
 
     mat_list[0] = Eigen::MatrixXf(size.height, size.width);
     mat_list[1] = Eigen::MatrixXf(size.height, size.width);
@@ -153,13 +150,12 @@ static vector<Eigen::MatrixXf> cv_to_eigen_channels(Mat m)
  * @param my - the position of source into target, relative to the upper left hand corner of both
  * @param channel_number the color channel we are solving for.
  **/
-static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat& target_image, unsigned int mx, unsigned int my, unsigned int num_unknowns, Eigen::SimplicialCholesky<SpMat>& solver)
+static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, array<Eigen::MatrixXf, 3>& sourceChannels, Mat& target_image, unsigned int mx, unsigned int my, unsigned int num_unknowns, Eigen::SimplicialCholesky<SpMat>& solver)
 {
     auto size = source_image.size();
     int h = target_image.size().height;
     int w = target_image.size().width;
 
-    auto source_channels = cv_to_eigen_channels(source_image);
     auto target_channels = cv_to_eigen_channels(target_image);
 
     vector<VectorXf> solution_channels(3);
@@ -169,6 +165,9 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat
         unsigned int row = 0;
         VectorXf b(num_unknowns);
 
+        auto sourceChannel = sourceChannels[channel_number];
+        auto targetChannel = target_channels[channel_number];
+
         for(unsigned int y = 0; y < size.height; y++)
         {
             for(unsigned int x = 0; x < size.width; x++)
@@ -176,30 +175,31 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat
                 if(is_mask_pixel(mask_image, x, y))
                 {
                   
-                    float pixel = source_channels[channel_number](y, x);
+                   
+                    float pixel = sourceChannel(y, x);
                 
                     float grad = 
-                        pixel -  source_channels[channel_number](y - 1,x) + 
-                        pixel -  source_channels[channel_number](y,x-1)+ 
-                        pixel -  source_channels[channel_number](y+1,x) + 
-                        pixel - source_channels[channel_number](y,x+1);
+                        pixel -  sourceChannel(y - 1,x) + 
+                        pixel -  sourceChannel(y,x-1)+ 
+                        pixel -  sourceChannel(y+1,x) + 
+                        pixel - sourceChannel(y,x+1);
 
                     b[row] = grad;
 
                     if(!is_mask_pixel(mask_image, x, y - 1)){
-                        b[row] += target_channels[channel_number](y + my - 1, x + mx);
+                        b[row] += targetChannel(y + my - 1, x + mx);
                     }
 
                     if(!is_mask_pixel(mask_image, x - 1, y)){
-                        b[row] += target_channels[channel_number](y + my, x - 1 + mx);
+                        b[row] += targetChannel(y + my, x - 1 + mx);
                     }
 
                     if(!is_mask_pixel(mask_image, x, y + 1)){
-                        b[row] += target_channels[channel_number](y + 1 + my, x + mx);
+                        b[row] += targetChannel(y + 1 + my, x + mx);
                     }
 
                     if(!is_mask_pixel(mask_image, x + 1, y )){
-                        b[row] += target_channels[channel_number](y + my, x + mx +1);
+                        b[row] += targetChannel(y + my, x + mx +1);
                     }
                     row++;
                 }
@@ -234,17 +234,14 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat
  * @param dy specifies in pixel space how far vertically
  * we want to start pasting the image, upper most pixel is 0.
  */
-static Mat composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int my)
+static Mat composite(Mat& mask, Mat& src, Mat& tgt, SpMat& matrix, array<Eigen::MatrixXf, 3>& sourceChannels, map<unsigned int, unsigned int>& variable_map,  unsigned int mx, unsigned int my)
 {
     
-    Mat output_img(Size(tgt.size().width, tgt.size().height), tgt.type());
-    map<unsigned int, unsigned int> variable_map;
-
-    auto matrix = form_matrix(mask, variable_map);
+    Mat output_img = tgt.clone();
     SimplicialCholesky<SpMat> solver;
     solver.compute(matrix);
 
-    vector<VectorXf> solution_channels = form_target_slns(mask, src, tgt, mx, my, (unsigned int)variable_map.size(), solver);
+    vector<VectorXf> solution_channels = form_target_slns(mask, src, sourceChannels, tgt, mx, my, (unsigned int)variable_map.size(), solver);
     
     // put the solved channels into the output matrix
     for(int y = 0; y < src.rows; y++)
@@ -540,10 +537,16 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
         maskHeight = maskImage->size().height;
         maskWidth = maskImage->size().width;
         border = ImageBorder(maskImage->size().width, maskImage->size().height, Point(0, 0));
+        sourceMatrix = form_matrix(*maskImage, variableMap);
     }
         
     if(originalImagePath.length() > 0)
+    {
         originalImage = unique_ptr<Mat>(new Mat(loadImage(originalImagePath)));
+        sourceChannels = cv_to_eigen_channels(*originalImage);
+    }
+        
+
 
     initPlacement();
 }
@@ -686,7 +689,7 @@ void CompositeCanvas::initPlacement()
         }
         else
         {
-            img = composite(resizedMask, resizedOriginal, background, mx, my);
+            img = composite(resizedMask, resizedOriginal, background, sourceMatrix, sourceChannels, variableMap, mx, my);
         }
        
     }

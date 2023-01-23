@@ -107,8 +107,8 @@ static void BM_MapSpeed(benchmark::State& state)
 
 }
 
-BENCHMARK(BM_MapSpeed);
-BENCHMARK(BM_IsMaskSpeed);
+//BENCHMARK(BM_MapSpeed);
+//BENCHMARK(BM_IsMaskSpeed);
 // Register the function as a benchmark
 BENCHMARK(BM_CompositeCalculations);
 
