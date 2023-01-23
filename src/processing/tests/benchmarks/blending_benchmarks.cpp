@@ -4,9 +4,23 @@
 #include <string>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <iostream>
+#include <random>
+#include <map>
+#include <tuple>
 
 using namespace processing;
 using namespace std;
+
+static bool is_mask_pixel(Mat& m, unsigned int x, unsigned int y)
+{   
+    auto size = m.size();
+    if(x <= 0 || y <= 0) return false;
+
+    if(x >= size.width - 1 || y >= size.height - 1) return false;
+
+    return m.at<Vec4b>(cv::Point(x, y))[3] > 0;
+}
 
 Mat loadBackgroundImage(string path)
 {
@@ -43,7 +57,58 @@ static void BM_CompositeCalculations(benchmark::State& state) {
 
 }
 
+static void BM_IsMaskSpeed(benchmark::State& state)
+{
+  auto mask = "./src/processing/tests/masks/eagle_mask_large.png";
+  auto img = loadBackgroundImage(mask);
 
+  random_device rd; // obtain a random number from hardware
+  mt19937 gen(rd()); // seed the generator
+  uniform_int_distribution<> distrX(0, img.size().width - 1); // define the range
+  uniform_int_distribution<> distrY(0, img.size().height - 1); // define the range
+
+
+  for(auto _ : state)
+  {
+   
+    auto isMask = is_mask_pixel(img, distrX(gen), distrY(gen));
+    
+  }
+
+}
+
+static void BM_MapSpeed(benchmark::State& state)
+{
+  auto mask = "./src/processing/tests/masks/eagle_mask_large.png";
+  auto img = loadBackgroundImage(mask);
+
+  random_device rd; // obtain a random number from hardware
+  mt19937 gen(rd()); // seed the generator
+  uniform_int_distribution<> distrX(0, img.size().width - 1); // define the range
+  uniform_int_distribution<> distrY(0, img.size().width - 1); // define the range
+
+  map<tuple<int, int>, bool> m;
+
+  for(int x = 0; x < img.size().width; x++)
+  {
+    for(int y = 0; y < img.size().height; y++)
+    {
+      auto isMask = is_mask_pixel(img, distrX(gen), distrY(gen));
+      m[make_tuple(x, y)] = isMask;
+    }
+  }
+
+  for(auto _ : state)
+  {
+   
+    auto isMask =m[make_tuple(distrX(gen), distrY(gen))];
+    
+  }
+
+}
+
+BENCHMARK(BM_MapSpeed);
+BENCHMARK(BM_IsMaskSpeed);
 // Register the function as a benchmark
 BENCHMARK(BM_CompositeCalculations);
 

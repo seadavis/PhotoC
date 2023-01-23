@@ -237,7 +237,7 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat
 static Mat composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int my)
 {
     
-    Mat output_img = tgt.clone();
+    Mat output_img(Size(tgt.size().width, tgt.size().height), tgt.type());
     map<unsigned int, unsigned int> variable_map;
 
     auto src_sz = src.size();
