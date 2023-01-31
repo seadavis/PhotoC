@@ -234,13 +234,10 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, arr
  * @param dy specifies in pixel space how far vertically
  * we want to start pasting the image, upper most pixel is 0.
  */
-static Mat composite(Mat& mask, Mat& src, Mat& tgt, SpMat& matrix, array<Eigen::MatrixXf, 3>& sourceChannels, map<unsigned int, unsigned int>& variable_map,  unsigned int mx, unsigned int my)
+static Mat composite(Mat& mask, Mat& src, Mat& tgt, SimplicialCholesky<SpMat>& solver, array<Eigen::MatrixXf, 3>& sourceChannels, map<unsigned int, unsigned int>& variable_map,  unsigned int mx, unsigned int my)
 {
     
     Mat output_img = tgt.clone();
-    SimplicialCholesky<SpMat> solver;
-    solver.compute(matrix);
-
     vector<VectorXf> solution_channels = form_target_slns(mask, src, sourceChannels, tgt, mx, my, (unsigned int)variable_map.size(), solver);
     
     // put the solved channels into the output matrix
@@ -537,7 +534,8 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
         maskHeight = maskImage->size().height;
         maskWidth = maskImage->size().width;
         border = ImageBorder(maskImage->size().width, maskImage->size().height, Point(0, 0));
-        sourceMatrix = form_matrix(*maskImage, variableMap);
+        auto sourceMatrix = form_matrix(*maskImage, variableMap);
+        solver.compute(sourceMatrix);
     }
         
     if(originalImagePath.length() > 0)
@@ -651,7 +649,8 @@ void CompositeCanvas::initPlacement()
     }
 
     else if(originalImage != nullptr && maskImage != nullptr &&
-         originalImage->size() != maskImage->size())
+         originalImage->size().height < maskImage->size().height &&
+         originalImage->size().width < maskImage->size().width)
     {
         if(backgroundImage != nullptr)
             img = *backgroundImage;
@@ -689,7 +688,7 @@ void CompositeCanvas::initPlacement()
         }
         else
         {
-            img = composite(resizedMask, resizedOriginal, background, sourceMatrix, sourceChannels, variableMap, mx, my);
+            img = composite(resizedMask, resizedOriginal, background, solver, sourceChannels, variableMap, mx, my);
         }
        
     }

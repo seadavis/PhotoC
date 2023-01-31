@@ -4,8 +4,8 @@
 
 
 cmake -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS_DEBUG="-g -O0" \
-      -DCMAKE_CXX_FLAGS_DEBUG="-g -O0" \
+        -DCMAKE_C_FLAGS_DEBUG="-g -O3" \
+      -DCMAKE_CXX_FLAGS_DEBUG="-g -O3" \
       -S./src/ -B./build/ 
 cmake --build build
 

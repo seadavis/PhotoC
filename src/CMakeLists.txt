@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
 set(RESOURCE_FILES ./ui/src/app_resources.qrc)
+set(BENCHMARK_ENABLE_LIBPFM ON)
 
 find_package( Qt5Core REQUIRED )
 find_package( Qt5Widgets REQUIRED )

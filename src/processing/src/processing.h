@@ -209,7 +209,7 @@ namespace processing{
             ImageBorder translate_to_canvas_coordindates(ImageBorder b);
             Mat loadImage(string imagePath);
 
-            SpMat sourceMatrix;
+            SimplicialCholesky<SpMat> solver;
             map<unsigned int, unsigned int> variableMap;
 
             void initPlacement();
