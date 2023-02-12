@@ -12,6 +12,7 @@ using namespace Eigen;
 
 typedef SparseMatrix<float> SpMat;
 typedef Eigen::Triplet<float> MatTriplet;
+typedef Eigen::SimplicialLDLT<SpMat> Solver;
 
 namespace processing{
 
@@ -209,7 +210,7 @@ namespace processing{
             ImageBorder translate_to_canvas_coordindates(ImageBorder b);
             Mat loadImage(string imagePath);
 
-            SimplicialCholesky<SpMat> solver;
+            Solver solver;
             map<unsigned int, unsigned int> variableMap;
 
             void initPlacement();
@@ -236,7 +237,6 @@ namespace processing{
             unique_ptr<Mat> originalImage;
             unique_ptr<Mat> maskImage;
             unique_ptr<Mat> backgroundImage;
-            array<Eigen::MatrixXf, 3> sourceChannels;
             ImageBorder border;
     };
 }

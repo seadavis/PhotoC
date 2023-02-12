@@ -5,8 +5,8 @@
 #include <cmath>
 
 using namespace std;
-
 using namespace processing;
+
 
 
 constexpr float GAMMA = 2.2f;
@@ -118,33 +118,6 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
 }
 
 /**
- * Convers the given open cv matrix to 
- * 3 eigen matrices green, blue and red
- **/
-static array<Eigen::MatrixXf, 3> cv_to_eigen_channels(Mat& m)
-{
-    auto const size = m.size();
-    array<Eigen::MatrixXf, 3> mat_list;
-
-    mat_list[0] = Eigen::MatrixXf(size.height, size.width);
-    mat_list[1] = Eigen::MatrixXf(size.height, size.width);
-    mat_list[2] = Eigen::MatrixXf(size.height, size.width);
-
-    for(unsigned int y = 0; y < size.height; y++)
-    {
-        for(unsigned int x = 0; x < size.width; x++)
-        {
-            auto v = m.at<Vec4b>(cv::Point(x, y));
-            mat_list[0](y, x) = in_pixel((float)v[0]);
-            mat_list[1](y, x) = in_pixel((float)v[1]);
-            mat_list[2](y, x) = in_pixel((float)v[2]);
-        }
-    }
-    
-    return mat_list;
-}
-
-/**
  * Forms a b vector for the given matrix 
  * and the given channel number.
  * Channel referring to BGR (due to OpenCV implementation quirk).
@@ -156,7 +129,7 @@ static array<Eigen::MatrixXf, 3> cv_to_eigen_channels(Mat& m)
  * @param my - the position of source into target, relative to the upper left hand corner of both
  * @param channel_number the color channel we are solving for.
  **/
-static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, array<Eigen::MatrixXf, 3>& sourceChannels, Mat& target_image, unsigned int mx, unsigned int my, unsigned int num_unknowns, Eigen::SimplicialCholesky<SpMat>& solver)
+static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat& target_image, unsigned int mx, unsigned int my, unsigned int num_unknowns, Solver& solver)
 {
     auto size = source_image.size();
     int h = target_image.size().height;
@@ -169,8 +142,6 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, arr
         unsigned int row = 0;
         VectorXf b(num_unknowns);
 
-        auto sourceChannel = sourceChannels[channel_number];
-
         for(unsigned int y = 0; y < size.height; y++)
         {
             for(unsigned int x = 0; x < size.width; x++)
@@ -178,14 +149,13 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, arr
                 if(is_mask_pixel(mask_image, x, y))
                 {
                   
-                   
-                    float pixel = sourceChannel(y, x);
+                    float pixel =  get_matrix_channel(source_image,  x, y, channel_number);
                 
                     float grad = 
-                        pixel -  sourceChannel(y - 1,x) + 
-                        pixel -  sourceChannel(y,x-1)+ 
-                        pixel -  sourceChannel(y+1,x) + 
-                        pixel - sourceChannel(y,x+1);
+                        pixel -  get_matrix_channel(source_image,  x, y-1, channel_number) + 
+                        pixel -  get_matrix_channel(source_image,  x-1, y, channel_number) + 
+                        pixel -  get_matrix_channel(source_image,  x, y+1, channel_number) + 
+                        pixel - get_matrix_channel(source_image,  x + 1, y, channel_number);
 
                     b[row] = grad;
 
@@ -238,11 +208,11 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, arr
  * @param dy specifies in pixel space how far vertically
  * we want to start pasting the image, upper most pixel is 0.
  */
-static Mat composite(Mat& mask, Mat& src, Mat& tgt, SimplicialCholesky<SpMat>& solver, array<Eigen::MatrixXf, 3>& sourceChannels, map<unsigned int, unsigned int>& variable_map,  unsigned int mx, unsigned int my)
+static Mat composite(Mat& mask, Mat& src, Mat& tgt, Solver& solver, map<unsigned int, unsigned int>& variable_map,  unsigned int mx, unsigned int my)
 {
     
     Mat output_img = tgt.clone();
-    vector<VectorXf> solution_channels = form_target_slns(mask, src, sourceChannels, tgt, mx, my, (unsigned int)variable_map.size(), solver);
+    vector<VectorXf> solution_channels = form_target_slns(mask, src, tgt, mx, my, (unsigned int)variable_map.size(), solver);
     
     // put the solved channels into the output matrix
     for(int y = 0; y < src.rows; y++)
@@ -545,7 +515,6 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
     if(originalImagePath.length() > 0)
     {
         originalImage = unique_ptr<Mat>(new Mat(loadImage(originalImagePath)));
-        sourceChannels = cv_to_eigen_channels(*originalImage);
     }
     
     initPlacement();
@@ -690,7 +659,7 @@ void CompositeCanvas::initPlacement()
         }
         else
         {
-            img = composite(resizedMask, resizedOriginal, background, solver, sourceChannels, variableMap, mx, my);
+            img = composite(resizedMask, resizedOriginal, background, solver, variableMap, mx, my);
         }
        
     }
