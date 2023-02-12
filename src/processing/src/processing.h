@@ -1,12 +1,10 @@
-#include <opencv2/core.hpp>
-#include <opencv2/opencv.hpp>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
 #include <opencv2/imgcodecs.hpp>
 #include <memory>
 #include <string>
+#include "utilities.h"
 
-using namespace cv;
 using namespace std;
 using namespace Eigen;
 

@@ -2,14 +2,11 @@
 #include <algorithm>
 #include <opencv2/imgcodecs.hpp>
 #include <vector>
-#include <cmath>
+
 
 using namespace std;
 using namespace processing;
 
-
-
-constexpr float GAMMA = 2.2f;
 constexpr int Radius = 5;
 
 const Scalar SelectionColor = Scalar(0, 255, 0, 255);
@@ -27,33 +24,6 @@ static bool is_mask_pixel(Mat& m, unsigned int x, unsigned int y)
 static inline unsigned int flatten(Mat& m, unsigned int x, unsigned int y) 
 {
 	return  m.size().width * y + x;
-}
-
-static float clamp(float x) {
-	if (x > 1.0) {
-		return 1.0;
-	}
-	else if (x < 0.0) {
-		return 0.0;
-	}
-	else {
-		return x;
-	}
-}
-
-static inline float in_pixel(float pixel)
-{
-    return pow(pixel/255.0f, 1.0f/GAMMA);
-}
-
-static inline float out_pixel(float pixel)
-{
-    return pow(clamp(pixel), GAMMA)*255.0f;
-}
-
-static inline float get_matrix_channel(Mat& m, int x, int y, int channel_number)
-{
-    return in_pixel((float)m.at<Vec4b>(cv::Point(x, y))[channel_number]);
 }
 
 static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
