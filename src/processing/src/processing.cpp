@@ -30,6 +30,7 @@ static inline unsigned int flatten(Mat& m, unsigned int x, unsigned int y)
 }
 
 
+
 static float clamp(float x) {
 	if (x > 1.0) {
 		return 1.0;
@@ -50,6 +51,11 @@ static inline float in_pixel(float pixel)
 static inline float out_pixel(float pixel)
 {
     return pow(clamp(pixel), GAMMA)*255.0f;
+}
+
+static inline float get_matrix_channel(Mat& m, int x, int y, int channel_number)
+{
+    return in_pixel((float)m.at<Vec4b>(cv::Point(x, y))[channel_number]);
 }
 
 static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
@@ -156,7 +162,6 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, arr
     int h = target_image.size().height;
     int w = target_image.size().width;
 
-    auto target_channels = cv_to_eigen_channels(target_image);
 
     vector<VectorXf> solution_channels(3);
 
@@ -166,7 +171,6 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, arr
         VectorXf b(num_unknowns);
 
         auto sourceChannel = sourceChannels[channel_number];
-        auto targetChannel = target_channels[channel_number];
 
         for(unsigned int y = 0; y < size.height; y++)
         {
@@ -187,19 +191,20 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, arr
                     b[row] = grad;
 
                     if(!is_mask_pixel(mask_image, x, y - 1)){
-                        b[row] += targetChannel(y + my - 1, x + mx);
+                        b[row] += get_matrix_channel(target_image,  x + mx, y + my - 1, channel_number);
                     }
 
                     if(!is_mask_pixel(mask_image, x - 1, y)){
-                        b[row] += targetChannel(y + my, x - 1 + mx);
+                        
+                        b[row] += get_matrix_channel(target_image, x - 1 + mx, y + my, channel_number);
                     }
 
-                    if(!is_mask_pixel(mask_image, x, y + 1)){
-                        b[row] += targetChannel(y + 1 + my, x + mx);
+                    if(!is_mask_pixel(mask_image, x, y + 1)){                     
+                        b[row] +=  get_matrix_channel(target_image, x + mx, y + 1 + my, channel_number);
                     }
 
                     if(!is_mask_pixel(mask_image, x + 1, y )){
-                        b[row] += targetChannel(y + my, x + mx +1);
+                        b[row] += get_matrix_channel(target_image, x + mx +1, y + my, channel_number);
                     }
                     row++;
                 }
