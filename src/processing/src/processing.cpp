@@ -29,8 +29,6 @@ static inline unsigned int flatten(Mat& m, unsigned int x, unsigned int y)
 	return  m.size().width * y + x;
 }
 
-
-
 static float clamp(float x) {
 	if (x > 1.0) {
 		return 1.0;
