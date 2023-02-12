@@ -1,6 +1,5 @@
 #include "utilities.h"
 
-
 constexpr float GAMMA = 2.2f;
 
 float processing::clamp(float x) {
