@@ -162,7 +162,6 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, arr
     int h = target_image.size().height;
     int w = target_image.size().width;
 
-
     vector<VectorXf> solution_channels(3);
 
     for(int channel_number = 0; channel_number < 3; channel_number++)
@@ -548,9 +547,7 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
         originalImage = unique_ptr<Mat>(new Mat(loadImage(originalImagePath)));
         sourceChannels = cv_to_eigen_channels(*originalImage);
     }
-        
-
-
+    
     initPlacement();
 }
 
