@@ -100,61 +100,88 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
  * @param my - the position of source into target, relative to the upper left hand corner of both
  * @param channel_number the color channel we are solving for.
  **/
-static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat& target_image, unsigned int mx, unsigned int my, unsigned int num_unknowns, Solver& solver)
+static VectorXf form_target_slns_for_channel(Mat& mask_image, 
+                                                        Mat& source_image, 
+                                                        Mat& target_image, 
+                                                        unsigned int mx, 
+                                                        unsigned int my,
+                                                        unsigned int num_unknowns, 
+                                                        Solver& solver,
+                                                        int channel_number)
 {
     auto size = source_image.size();
     int h = target_image.size().height;
     int w = target_image.size().width;
 
-    vector<VectorXf> solution_channels(3);
+    unsigned int row = 0;
+    VectorXf b(num_unknowns);
 
-    for(int channel_number = 0; channel_number < 3; channel_number++)
+    for(unsigned int y = 0; y < size.height; y++)
     {
-        unsigned int row = 0;
-        VectorXf b(num_unknowns);
-
-        for(unsigned int y = 0; y < size.height; y++)
+        for(unsigned int x = 0; x < size.width; x++)
         {
-            for(unsigned int x = 0; x < size.width; x++)
+            if(is_mask_pixel(mask_image, x, y))
             {
-                if(is_mask_pixel(mask_image, x, y))
-                {
-                  
-                    float pixel =  get_matrix_channel(source_image,  x, y, channel_number);
                 
-                    float grad = 
-                        pixel -  get_matrix_channel(source_image,  x, y-1, channel_number) + 
-                        pixel -  get_matrix_channel(source_image,  x-1, y, channel_number) + 
-                        pixel -  get_matrix_channel(source_image,  x, y+1, channel_number) + 
-                        pixel - get_matrix_channel(source_image,  x + 1, y, channel_number);
+                float pixel =  get_matrix_channel(source_image,  x, y, channel_number);
+            
+                float grad = 
+                    pixel -  get_matrix_channel(source_image,  x, y-1, channel_number) + 
+                    pixel -  get_matrix_channel(source_image,  x-1, y, channel_number) + 
+                    pixel -  get_matrix_channel(source_image,  x, y+1, channel_number) + 
+                    pixel - get_matrix_channel(source_image,  x + 1, y, channel_number);
 
-                    b[row] = grad;
+                b[row] = grad;
 
-                    if(!is_mask_pixel(mask_image, x, y - 1)){
-                        b[row] += get_matrix_channel(target_image,  x + mx, y + my - 1, channel_number);
-                    }
-
-                    if(!is_mask_pixel(mask_image, x - 1, y)){
-                        
-                        b[row] += get_matrix_channel(target_image, x - 1 + mx, y + my, channel_number);
-                    }
-
-                    if(!is_mask_pixel(mask_image, x, y + 1)){                     
-                        b[row] +=  get_matrix_channel(target_image, x + mx, y + 1 + my, channel_number);
-                    }
-
-                    if(!is_mask_pixel(mask_image, x + 1, y )){
-                        b[row] += get_matrix_channel(target_image, x + mx +1, y + my, channel_number);
-                    }
-                    row++;
+                if(!is_mask_pixel(mask_image, x, y - 1)){
+                    b[row] += get_matrix_channel(target_image,  x + mx, y + my - 1, channel_number);
                 }
+
+                if(!is_mask_pixel(mask_image, x - 1, y)){
+                    
+                    b[row] += get_matrix_channel(target_image, x - 1 + mx, y + my, channel_number);
+                }
+
+                if(!is_mask_pixel(mask_image, x, y + 1)){                     
+                    b[row] +=  get_matrix_channel(target_image, x + mx, y + 1 + my, channel_number);
+                }
+
+                if(!is_mask_pixel(mask_image, x + 1, y )){
+                    b[row] += get_matrix_channel(target_image, x + mx +1, y + my, channel_number);
+                }
+                row++;
             }
         }
-
-        solution_channels[channel_number] = solver.solve(b);
     }
 
-    return solution_channels;
+    return solver.solve(b);
+}
+
+static void write_slns_to_img(Mat &outputImg, 
+                            Mat &src, 
+                            Mat &mask, 
+                            map<unsigned int, unsigned int> &variableMap, 
+                            vector<VectorXf> &solutionChannels, 
+                            unsigned int mx, 
+                            unsigned int my, 
+                            int solutionChannel)
+{
+    for(int y = 0; y < src.rows; y++)
+    {
+        for(int x = 0; x < src.cols; x++)
+        {
+           
+            if(is_mask_pixel(mask, x, y))
+            {
+                unsigned int variableNumber = variableMap[flatten(mask, x, y)];
+                const float raw = solutionChannels[solutionChannel][variableNumber];
+                const auto pixelValue = (int)(out_pixel(raw));
+                const auto p = Point(x + mx, y + my);
+                
+                outputImg.at<Vec4b>(p)[solutionChannel] = pixelValue;
+            }
+        }
+    }
 }
 
  /**
@@ -179,41 +206,29 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat
  * @param dy specifies in pixel space how far vertically
  * we want to start pasting the image, upper most pixel is 0.
  */
-static Mat composite(Mat& mask, Mat& src, Mat& tgt, Solver& solver, map<unsigned int, unsigned int>& variable_map,  unsigned int mx, unsigned int my)
+static Mat composite(Mat& mask, 
+                    Mat& src, 
+                    Mat& tgt, 
+                    Solver& solver, 
+                    map<unsigned int, unsigned int>& variableMap,  
+                    unsigned int mx, 
+                    unsigned int my)
 {
+
+    Mat outputImg = tgt.clone();
+ 
+    vector<VectorXf> solutionChannels;
+    solutionChannels.reserve(3);
     
-    Mat output_img = tgt.clone();
-    vector<VectorXf> solution_channels = form_target_slns(mask, src, tgt, mx, my, (unsigned int)variable_map.size(), solver);
-    
-    // put the solved channels into the output matrix
-    for(int y = 0; y < src.rows; y++)
-    {
-        for(int x = 0; x < src.cols; x++)
-        {
-           
-            if(is_mask_pixel(mask, x, y))
-            {
-                unsigned int variable_number = variable_map[flatten(mask, x, y)];
-                const float b_raw = solution_channels[0][variable_number];
-                const float g_raw = solution_channels[1][variable_number];
-                const float r_raw = solution_channels[2][variable_number]; 
+    solutionChannels.push_back(form_target_slns_for_channel(mask, src, tgt, mx, my, (unsigned int)variableMap.size(), solver, 0));
+    solutionChannels.push_back(form_target_slns_for_channel(mask, src, tgt, mx, my, (unsigned int)variableMap.size(), solver, 1));
+    solutionChannels.push_back(form_target_slns_for_channel(mask, src, tgt, mx, my, (unsigned int)variableMap.size(), solver, 2));
 
-                auto b = (int)(out_pixel(b_raw));
-                auto g = (int)(out_pixel(g_raw));
-                auto r = (int)(out_pixel(r_raw));
+    write_slns_to_img(outputImg, src, mask, variableMap, solutionChannels, mx, my, 0);
+    write_slns_to_img(outputImg, src, mask,  variableMap, solutionChannels, mx, my,1);
+    write_slns_to_img(outputImg, src, mask,  variableMap, solutionChannels, mx, my,2);
 
-                auto p = Point(x + mx, y + my);
-                
-                output_img.at<Vec4b>(p)[0] = b;
-                output_img.at<Vec4b>(p)[1] = g; 
-                output_img.at<Vec4b>(p)[2] = r; 
-            }
-            
-            
-        }
-    }
-
-    return output_img;
+    return outputImg;
 }
 
 static Mat naive_composite(Mat mask, Mat src, Mat tgt,  unsigned int mx, unsigned int my)
