@@ -100,7 +100,7 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
  * @param my - the position of source into target, relative to the upper left hand corner of both
  * @param channel_number the color channel we are solving for.
  **/
-static VectorXf form_target_slns_for_channel(Mat& mask_image, 
+static inline VectorXf form_target_slns_for_channel(Mat& mask_image, 
                                                         Mat& source_image, 
                                                         Mat& target_image, 
                                                         unsigned int mx, 
@@ -161,7 +161,7 @@ static void write_slns_to_img(Mat &outputImg,
                             Mat &src, 
                             Mat &mask, 
                             map<unsigned int, unsigned int> &variableMap, 
-                            vector<VectorXf> &solutionChannels, 
+                            VectorXf& solution, 
                             unsigned int mx, 
                             unsigned int my, 
                             int solutionChannel)
@@ -174,7 +174,7 @@ static void write_slns_to_img(Mat &outputImg,
             if(is_mask_pixel(mask, x, y))
             {
                 unsigned int variableNumber = variableMap[flatten(mask, x, y)];
-                const float raw = solutionChannels[solutionChannel][variableNumber];
+                const float raw = solution[variableNumber];
                 const auto pixelValue = (int)(out_pixel(raw));
                 const auto p = Point(x + mx, y + my);
                 
@@ -182,6 +182,19 @@ static void write_slns_to_img(Mat &outputImg,
             }
         }
     }
+}
+
+static void solve_for_channel(Mat outputImg, 
+                            Mat src, 
+                            Mat mask, 
+                            Solver solver,
+                            map<unsigned int, unsigned int> variableMap, 
+                            unsigned int mx, 
+                            unsigned int my, 
+                            int solutionChannel)
+{
+    auto v = form_target_slns_for_channel(mask, src, outputImg, mx, my, (unsigned int)variableMap.size(), solver, solutionChannel);
+    write_slns_to_img(outputImg, src, mask, variableMap, v, mx, my, solutionChannel);
 }
 
  /**
@@ -216,17 +229,16 @@ static Mat composite(Mat& mask,
 {
 
     Mat outputImg = tgt.clone();
- 
-    vector<VectorXf> solutionChannels;
-    solutionChannels.reserve(3);
-    
-    solutionChannels.push_back(form_target_slns_for_channel(mask, src, tgt, mx, my, (unsigned int)variableMap.size(), solver, 0));
-    solutionChannels.push_back(form_target_slns_for_channel(mask, src, tgt, mx, my, (unsigned int)variableMap.size(), solver, 1));
-    solutionChannels.push_back(form_target_slns_for_channel(mask, src, tgt, mx, my, (unsigned int)variableMap.size(), solver, 2));
 
-    write_slns_to_img(outputImg, src, mask, variableMap, solutionChannels, mx, my, 0);
-    write_slns_to_img(outputImg, src, mask,  variableMap, solutionChannels, mx, my,1);
-    write_slns_to_img(outputImg, src, mask,  variableMap, solutionChannels, mx, my,2);
+    size_t partitions = 3;
+    vector<hpx::future<void>> futures;
+    futures.reserve(partitions);
+
+    futures.push_back(hpx::async(solve_for_channel, src, mask, solver, variableMap, mx, my, 0));
+    futures.push_back(hpx::async(solve_for_channel, src, mask, solver, variableMap, mx, my, 1));
+    futures.push_back(hpx::async(solve_for_channel, src, mask, solver, variableMap, mx, my, 2));
+
+    auto allFutures = hpx::when_all(futures).get();
 
     return outputImg;
 }

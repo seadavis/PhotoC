@@ -10,6 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
 set(RESOURCE_FILES ./ui/src/app_resources.qrc)
 set(BENCHMARK_ENABLE_LIBPFM ON)
 
+
 find_package( Qt5Core REQUIRED )
 find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Gui REQUIRED )
