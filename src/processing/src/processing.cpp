@@ -1,7 +1,6 @@
 #include "processing.h"
-#include <hpx/hpx_main.hpp>
-#include <hpx/future.hpp>
 #include <algorithm>
+#include <future>
 #include <opencv2/imgcodecs.hpp>
 #include <vector>
 #include <chrono>
@@ -100,18 +99,18 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
  * @param my - the position of source into target, relative to the upper left hand corner of both
  * @param channel_number the color channel we are solving for.
  **/
-static inline VectorXf form_target_slns_for_channel(Mat& mask_image, 
-                                                        Mat& source_image, 
-                                                        Mat& target_image, 
+static inline VectorXf form_target_slns_for_channel(Mat* mask_image, 
+                                                        Mat* source_image, 
+                                                        Mat* target_image, 
                                                         unsigned int mx, 
                                                         unsigned int my,
                                                         unsigned int num_unknowns, 
-                                                        Solver& solver,
+                                                        Solver* solver,
                                                         int channel_number)
 {
-    auto size = source_image.size();
-    int h = target_image.size().height;
-    int w = target_image.size().width;
+    auto size = source_image->size();
+    int h = target_image->size().height;
+    int w = target_image->size().width;
 
     unsigned int row = 0;
     VectorXf b(num_unknowns);
@@ -120,80 +119,80 @@ static inline VectorXf form_target_slns_for_channel(Mat& mask_image,
     {
         for(unsigned int x = 0; x < size.width; x++)
         {
-            if(is_mask_pixel(mask_image, x, y))
+            if(is_mask_pixel(*mask_image, x, y))
             {
                 
-                float pixel =  get_matrix_channel(source_image,  x, y, channel_number);
+                float pixel =  get_matrix_channel(*source_image,  x, y, channel_number);
             
                 float grad = 
-                    pixel -  get_matrix_channel(source_image,  x, y-1, channel_number) + 
-                    pixel -  get_matrix_channel(source_image,  x-1, y, channel_number) + 
-                    pixel -  get_matrix_channel(source_image,  x, y+1, channel_number) + 
-                    pixel - get_matrix_channel(source_image,  x + 1, y, channel_number);
+                    pixel -  get_matrix_channel(*source_image,  x, y-1, channel_number) + 
+                    pixel -  get_matrix_channel(*source_image,  x-1, y, channel_number) + 
+                    pixel -  get_matrix_channel(*source_image,  x, y+1, channel_number) + 
+                    pixel - get_matrix_channel(*source_image,  x + 1, y, channel_number);
 
                 b[row] = grad;
 
-                if(!is_mask_pixel(mask_image, x, y - 1)){
-                    b[row] += get_matrix_channel(target_image,  x + mx, y + my - 1, channel_number);
+                if(!is_mask_pixel(*mask_image, x, y - 1)){
+                    b[row] += get_matrix_channel(*target_image,  x + mx, y + my - 1, channel_number);
                 }
 
-                if(!is_mask_pixel(mask_image, x - 1, y)){
+                if(!is_mask_pixel(*mask_image, x - 1, y)){
                     
-                    b[row] += get_matrix_channel(target_image, x - 1 + mx, y + my, channel_number);
+                    b[row] += get_matrix_channel(*target_image, x - 1 + mx, y + my, channel_number);
                 }
 
-                if(!is_mask_pixel(mask_image, x, y + 1)){                     
-                    b[row] +=  get_matrix_channel(target_image, x + mx, y + 1 + my, channel_number);
+                if(!is_mask_pixel(*mask_image, x, y + 1)){                     
+                    b[row] +=  get_matrix_channel(*target_image, x + mx, y + 1 + my, channel_number);
                 }
 
-                if(!is_mask_pixel(mask_image, x + 1, y )){
-                    b[row] += get_matrix_channel(target_image, x + mx +1, y + my, channel_number);
+                if(!is_mask_pixel(*mask_image, x + 1, y )){
+                    b[row] += get_matrix_channel(*target_image, x + mx +1, y + my, channel_number);
                 }
                 row++;
             }
         }
     }
 
-    return solver.solve(b);
+    return solver->solve(b);
 }
 
-static void write_slns_to_img(Mat &outputImg, 
-                            Mat &src, 
-                            Mat &mask, 
-                            map<unsigned int, unsigned int> &variableMap, 
+static void write_slns_to_img(Mat *outputImg, 
+                            Mat *src, 
+                            Mat *mask, 
+                            map<unsigned int, unsigned int> *variableMap, 
                             VectorXf& solution, 
                             unsigned int mx, 
                             unsigned int my, 
                             int solutionChannel)
 {
-    for(int y = 0; y < src.rows; y++)
+    for(int y = 0; y < src->rows; y++)
     {
-        for(int x = 0; x < src.cols; x++)
+        for(int x = 0; x < src->cols; x++)
         {
            
-            if(is_mask_pixel(mask, x, y))
+            if(is_mask_pixel(*mask, x, y))
             {
-                unsigned int variableNumber = variableMap[flatten(mask, x, y)];
+                unsigned int variableNumber = (*variableMap)[flatten(*mask, x, y)];
                 const float raw = solution[variableNumber];
                 const auto pixelValue = (int)(out_pixel(raw));
                 const auto p = Point(x + mx, y + my);
                 
-                outputImg.at<Vec4b>(p)[solutionChannel] = pixelValue;
+                outputImg->at<Vec4b>(p)[solutionChannel] = pixelValue;
             }
         }
     }
 }
 
-static void solve_for_channel(Mat outputImg, 
-                            Mat src, 
-                            Mat mask, 
-                            Solver solver,
-                            map<unsigned int, unsigned int> variableMap, 
+static void solve_for_channel(Mat* outputImg, 
+                            Mat* src, 
+                            Mat* mask, 
+                            Solver* solver,
+                            map<unsigned int, unsigned int>* variableMap, 
                             unsigned int mx, 
                             unsigned int my, 
                             int solutionChannel)
 {
-    auto v = form_target_slns_for_channel(mask, src, outputImg, mx, my, (unsigned int)variableMap.size(), solver, solutionChannel);
+    auto v = form_target_slns_for_channel(mask, src, outputImg, mx, my, (unsigned int)variableMap->size(), solver, solutionChannel);
     write_slns_to_img(outputImg, src, mask, variableMap, v, mx, my, solutionChannel);
 }
 
@@ -229,17 +228,16 @@ static Mat composite(Mat& mask,
 {
 
     Mat outputImg = tgt.clone();
-
     size_t partitions = 3;
-    vector<hpx::future<void>> futures;
-    futures.reserve(partitions);
 
-    futures.push_back(hpx::async(solve_for_channel, src, mask, solver, variableMap, mx, my, 0));
-    futures.push_back(hpx::async(solve_for_channel, src, mask, solver, variableMap, mx, my, 1));
-    futures.push_back(hpx::async(solve_for_channel, src, mask, solver, variableMap, mx, my, 2));
+    auto channel1 = async(solve_for_channel, &outputImg, &src, &mask, &solver, &variableMap, mx, my, 0);
+    auto channel2 = async(solve_for_channel, &outputImg,&src, &mask, &solver, &variableMap, mx, my, 1);
+    auto channel3 = async(solve_for_channel, &outputImg,&src, &mask, &solver, &variableMap, mx, my, 2);
 
-    auto allFutures = hpx::when_all(futures).get();
-
+    channel1.wait();
+    channel2.wait();
+    channel3.wait();
+    
     return outputImg;
 }
 
