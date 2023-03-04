@@ -27,7 +27,8 @@ class CanvasWidget : public QWidget
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
 
     private slots:
-      void handleButton();
+      void handleSnapButton();
+      void handleConnectButton();
       
       void handleMouseMoveOnImage(int x, int y);
       void handleMousePressOnImage(int x, int y);
@@ -36,10 +37,12 @@ class CanvasWidget : public QWidget
     private:
         unique_ptr<CompositeCanvas> canvas;
         QVBoxLayout* verticalLayout;
+        QVBoxLayout* buttonLayout;
         QGridLayout* canvasGrid;
         ImageViewer* canvasViewer;
         QLabel* backLabel;
-        QPushButton* button;   
+        QPushButton* snapButton;  
+        QPushButton* connectButton; 
         ICamera *camera;
         int canvasWidth;
         int canvasHeight;

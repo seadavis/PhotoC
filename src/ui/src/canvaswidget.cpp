@@ -91,11 +91,10 @@ void CanvasWidget::setOriginalPath(string path)
     setCompositesIfAvailable();
 }
 
-void CanvasWidget::handleButton()
+void CanvasWidget::handleSnapButton()
 {  
     try
     {
-        
         Mat img =  camera->snap_picture();
         canvas->setBackground(img);
         render();
@@ -106,12 +105,17 @@ void CanvasWidget::handleButton()
         auto what = ex.what();
         msg->showMessage(QString(what));
     }
+}
 
+void CanvasWidget::handleConnectButton()
+{
+    cout << "Connect!";
 }
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
     verticalLayout = new QVBoxLayout(this);
+    buttonLayout = new QVBoxLayout(this);
     this->camera = camera;
     canvasGrid = new QGridLayout(parent);
     backLabel = new QLabel;
@@ -122,15 +126,21 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 
     canvasViewer = new ImageViewer;
 
-    button = new QPushButton("Snap!");
+    snapButton = new QPushButton("Snap!");
+    connectButton = new QPushButton("Connect");
+
+    buttonLayout->addWidget(snapButton);
+    buttonLayout->addWidget(connectButton, 0, Qt::AlignmentFlag::AlignLeft);
+
     canvasViewer->setFixedSize(0, 0);
     canvasGrid->addWidget(backLabel, 0, 0);
     canvasGrid->addWidget(canvasViewer, 0, 0, Qt::AlignCenter);
     verticalLayout->addLayout(canvasGrid);
-    verticalLayout->addWidget(button);
+    verticalLayout->addLayout(buttonLayout);
     canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
     
-    connect(button, &QPushButton::released, this, &CanvasWidget::handleButton);
+    connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
+    connect(connectButton, &QPushButton::released, this, &CanvasWidget::handleConnectButton);
     connect(canvasViewer, &ImageViewer::mouseMoved, this, &CanvasWidget::handleMouseMoveOnImage);
     connect(canvasViewer, &ImageViewer::mousePressed, this, &CanvasWidget::handleMousePressOnImage);
     connect(canvasViewer, &ImageViewer::mouseReleased, this, &CanvasWidget::handleMouseReleaseOnImage);

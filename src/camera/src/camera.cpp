@@ -238,7 +238,7 @@ static void capture_to_memory(Camera *camera, GPContext *context, CameraFilePath
 
 	if(retval < 0)
 	{
-		throw new CameraOperationException("snap picture");
+		throw CameraOperationException("snap picture");
 	}
 
 	printf("  Capture Retval: %d\n", retval);
