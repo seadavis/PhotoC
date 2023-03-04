@@ -70,12 +70,12 @@ RemoteCamera::RemoteCamera()
 	context = create_context();
 	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
 	buffer_size = 0;
+	gp_camera_new(&camera); 
 }
 
 int RemoteCamera::connect()
 {
-		
-	gp_camera_new(&camera); 
+
 	printf("Camera init.  Takes about 10 seconds.\n");
 	int retval = gp_camera_init(camera, context);
 	if (retval != GP_OK) {
@@ -228,7 +228,6 @@ static void errordumper(GPLogLevel level, const char *domain, const char *str,
 static void capture_to_memory(Camera *camera, GPContext *context, CameraFilePath* camera_file_path, CameraFile *file, const char **ptr, unsigned long int *size) {
 	int retval;
 	
-
 	printf("Capturing.\n");
 
 	/* NOP: This gets overridden in the library to /capt0000.jpg */
@@ -236,18 +235,15 @@ static void capture_to_memory(Camera *camera, GPContext *context, CameraFilePath
 	strcpy(camera_file_path->name, "foo.jpg");
 
 	retval = gp_camera_capture(camera, GP_CAPTURE_IMAGE, camera_file_path, context);
-	printf("  Retval: %d\n", retval);
 
-	printf("Pathname on the camera: %s/%s\n", camera_file_path->folder, 
-                                                camera_file_path->name);
+	printf("  Capture Retval: %d\n", retval);
+
 
 	retval = gp_file_new(&file);
 	printf("  Retval: %d\n", retval);
 	retval = gp_camera_file_get(camera, camera_file_path->folder, camera_file_path->name,
 		     GP_FILE_TYPE_NORMAL, file, context);
-	printf("  Retval: %d\n", retval);
 
-  
 	gp_file_get_data_and_size (file, ptr, size);
 
 	/*gp_file_free(file); */

@@ -15,7 +15,6 @@ class MainWindow : public QMainWindow
       MainWindow(ICamera* camera);
 
    private:
-      ICamera* camera;
       CanvasWidget* canvas;
       QPushButton* button;   
       QDockWidget* leftDock;

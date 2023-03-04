@@ -4,14 +4,8 @@
 
 
 cmake -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS_DEBUG="-g -O3" \
-      -DCMAKE_CXX_FLAGS_DEBUG="-g -O3" \
-      -DHPX_DIR=/usr/include/hpx/lib/cmake/HPX/ \
-      -DHPX_WITH_MALLOC=system \
-      -DTCMALLOC_INCLUDE_DIR=/usr/include/gperftools/include/ \
-      -DTCMALLOC_LIBRARY=/usr/include/gperftools/lib/libtcmalloc_minimal_debug.so \
-      -DHWLOC_LIBRARY=/usr/include/hwloc/lib/libhwloc.so \
-      -DHWLOC_INCLUDE_DIR=/usr/include/hwloc/include/ \
+        -DCMAKE_C_FLAGS_DEBUG="-g -O0" \
+      -DCMAKE_CXX_FLAGS_DEBUG="-g -O0" \
       -S./src/ -B./build/ 
 cmake --build build
 

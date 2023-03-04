@@ -95,6 +95,7 @@ void CanvasWidget::handleButton()
 {  
     try
     {
+        
         Mat img =  camera->snap_picture();
         canvas->setBackground(img);
         render();
@@ -105,6 +106,7 @@ void CanvasWidget::handleButton()
         auto what = ex.what();
         msg->showMessage(QString(what));
     }
+
 }
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)

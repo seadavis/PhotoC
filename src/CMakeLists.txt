@@ -17,8 +17,7 @@ find_package( Qt5Gui REQUIRED )
 find_package(OpenCV REQUIRED )
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(benchmark REQUIRED)
-find_package(HPX)
-
+find_package(Threads REQUIRED)
 
 include(FetchContent)
 FetchContent_Declare(
