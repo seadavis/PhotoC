@@ -15,6 +15,18 @@ using namespace std;
     
     };
 
+     class CameraUSBClaimException : public runtime_error {
+        public:
+            CameraUSBClaimException() : runtime_error("Unable to claim USB for camera. You may already be connected.") {};
+    
+    };
+
+    class CameraConnectionException : public runtime_error {
+        public:
+            CameraConnectionException() : runtime_error("Unable to connect to USB camera. Check your cables.") {};
+    
+    };
+
 class ICamera
 {
 

@@ -78,9 +78,14 @@ int RemoteCamera::connect()
 
 	printf("Camera init.  Takes about 10 seconds.\n");
 	int retval = gp_camera_init(camera, context);
-	if (retval != GP_OK) {
-		printf("  Retval of gp_camera_init: %d\n", retval);
-		return 0;
+
+	if(retval == GP_ERROR_IO_USB_CLAIM)
+	{
+		throw CameraUSBClaimException();
+	}
+
+	else if (retval != GP_OK) {
+		throw CameraConnectionException();
 	}
 
 	return 1;

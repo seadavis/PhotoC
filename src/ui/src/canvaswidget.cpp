@@ -110,18 +110,20 @@ void CanvasWidget::handleSnapButton()
 
 void CanvasWidget::handleConnectButton()
 {
-    if(!camera->connect())	
-    {	
-        auto msg = new QErrorMessage(this);	
-        msg->showMessage("Could not connect to camera. Please connect a camera and try again");		
-    }
-    else
+    try
     {
+        camera->connect();
         auto msg = new QMessageBox(this);
         msg->setWindowTitle("Success!");
         msg->setText("Successfully connected camera");
         msg->show();
-    }	
+    }
+    catch(const exception &ex)
+    {
+        auto msg = new QErrorMessage(this);	
+        auto what = ex.what();
+        msg->showMessage(QString(what));		
+    }
 }
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
