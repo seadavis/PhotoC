@@ -37,7 +37,7 @@ class CanvasWidget : public QWidget
     private:
         unique_ptr<CompositeCanvas> canvas;
         QVBoxLayout* verticalLayout;
-        QVBoxLayout* buttonLayout;
+        QHBoxLayout* buttonLayout;
         QGridLayout* canvasGrid;
         ImageViewer* canvasViewer;
         QLabel* backLabel;

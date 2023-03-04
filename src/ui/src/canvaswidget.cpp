@@ -9,6 +9,7 @@
 #include <sstream>
 #include <QCursor>
 #include <QErrorMessage>
+#include <QMessageBox>
 
 #include "canvaswidget.h"
 
@@ -109,13 +110,24 @@ void CanvasWidget::handleSnapButton()
 
 void CanvasWidget::handleConnectButton()
 {
-    cout << "Connect!";
+    if(!camera->connect())	
+    {	
+        auto msg = new QErrorMessage(this);	
+        msg->showMessage("Could not connect to camera. Please connect a camera and try again");		
+    }
+    else
+    {
+        auto msg = new QMessageBox(this);
+        msg->setWindowTitle("Success!");
+        msg->setText("Successfully connected camera");
+        msg->show();
+    }	
 }
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
     verticalLayout = new QVBoxLayout(this);
-    buttonLayout = new QVBoxLayout(this);
+    buttonLayout = new QHBoxLayout(this);
     this->camera = camera;
     canvasGrid = new QGridLayout(parent);
     backLabel = new QLabel;
