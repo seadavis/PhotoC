@@ -236,6 +236,12 @@ static void capture_to_memory(Camera *camera, GPContext *context, CameraFilePath
 
 	retval = gp_camera_capture(camera, GP_CAPTURE_IMAGE, camera_file_path, context);
 
+	if(retval < 0)
+	{
+		throw new CameraOperationException("snap picture");
+	}
+
+
 	printf("  Capture Retval: %d\n", retval);
 
 
