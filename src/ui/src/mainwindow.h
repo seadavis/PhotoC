@@ -21,7 +21,7 @@ class MainWindow : public QMainWindow
       CompositeSelection* compositeSelection;
 
       void updateOriginalPhotoPath(string path);
-
+      void updateCameraConnectingStatus(bool isConnecting);
       void updateMaskPhotoPath(string path);
 
 };

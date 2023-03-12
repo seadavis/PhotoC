@@ -18,18 +18,18 @@ class CanvasWidget : public QWidget
 {
     public:
       CanvasWidget(QWidget *parent, ICamera* camera);
-
       void setMaskPath(string path);
-
       void setOriginalPath(string path);
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
 
+    public slots:
+        
+
     private slots:
       void handleSnapButton();
-      void handleConnectButton();
-      
+      void handleConnectButton();     
       void handleMouseMoveOnImage(int x, int y);
       void handleMousePressOnImage(int x, int y);
       void handleMouseReleaseOnImage(int x, int y);
@@ -53,7 +53,7 @@ class CanvasWidget : public QWidget
         int prev_mouse_y = -1;
 
         void setCompositesIfAvailable();
-
+        void cameraConnectingStatusChanged(bool isConnecting);
         void render();
 
 };

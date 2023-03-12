@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,14 +19,10 @@ extern "C" {
 
 extern int sample_autodetect (CameraList *list, GPContext *context);
 extern int sample_open_camera (Camera ** camera, const char *model, const char *port, GPContext *context);
-
-
 extern int get_config_value_string (Camera *, const char *, char **, GPContext *);
 extern int set_config_value_string (Camera *, const char *, const char *, GPContext *);
 int canon_enable_capture (Camera *camera, int onoff, GPContext *context);
-
 extern int camera_auto_focus (Camera *list, GPContext *context, int onoff);
-
 extern int camera_manual_focus (Camera *list, int tgt, GPContext *context);
 
 #if !defined (O_BINARY)

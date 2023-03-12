@@ -13,7 +13,6 @@ void MainWindow::updateMaskPhotoPath(string path)
     canvas->setMaskPath(path);
 }
 
-
 MainWindow::MainWindow(ICamera* camera) 
 { 
   QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
@@ -29,7 +28,6 @@ MainWindow::MainWindow(ICamera* camera)
   compositeSelection = new CompositeSelection();
   addDockWidget(Qt::RightDockWidgetArea, leftDock);
   leftDock->setWidget(compositeSelection);
-  statusBar()->showMessage(tr("Ready"));
   connect(compositeSelection, &CompositeSelection::originalPathChanged, this, &MainWindow::updateOriginalPhotoPath);
   connect(compositeSelection, &CompositeSelection::maskPathChanged, this, &MainWindow::updateMaskPhotoPath);
 }

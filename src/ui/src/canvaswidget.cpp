@@ -10,7 +10,7 @@
 #include <QCursor>
 #include <QErrorMessage>
 #include <QMessageBox>
-
+#include <QCoreApplication>
 #include "canvaswidget.h"
 
 constexpr double SIZE_FACTOR = 0.65;
@@ -111,19 +111,30 @@ void CanvasWidget::handleSnapButton()
 void CanvasWidget::handleConnectButton()
 {
     try
-    {
+    {   
+        cameraConnectingStatusChanged(true);
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         camera->connect();
         auto msg = new QMessageBox(this);
         msg->setWindowTitle("Success!");
         msg->setText("Successfully connected camera");
         msg->show();
+        cameraConnectingStatusChanged(false);
+        snapButton->setEnabled(true);
     }
     catch(const exception &ex)
     {
+        cameraConnectingStatusChanged(false);
         auto msg = new QErrorMessage(this);	
         auto what = ex.what();
-        msg->showMessage(QString(what));		
+        msg->showMessage(QString(what));
+        snapButton->setEnabled(false);		
     }
+}
+
+void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
+{   
+    connectButton->setEnabled(!isConnecting);
 }
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
@@ -142,17 +153,17 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 
     snapButton = new QPushButton("Snap!");
     connectButton = new QPushButton("Connect");
-
     buttonLayout->addWidget(snapButton);
-    buttonLayout->addWidget(connectButton, 0, Qt::AlignmentFlag::AlignLeft);
+    buttonLayout->addWidget(connectButton);
 
     canvasViewer->setFixedSize(0, 0);
     canvasGrid->addWidget(backLabel, 0, 0);
     canvasGrid->addWidget(canvasViewer, 0, 0, Qt::AlignCenter);
     verticalLayout->addLayout(canvasGrid);
     verticalLayout->addLayout(buttonLayout);
+    buttonLayout->setAlignment(Qt::AlignCenter);
     canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
-    
+    snapButton->setEnabled(false);
     connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
     connect(connectButton, &QPushButton::released, this, &CanvasWidget::handleConnectButton);
     connect(canvasViewer, &ImageViewer::mouseMoved, this, &CanvasWidget::handleMouseMoveOnImage);
