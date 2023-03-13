@@ -219,11 +219,10 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
     auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
   
     auto canvas = CompositeCanvas();
-    canvas.setSize(1300, 1300);
+    canvas.setSize(1300, 1300);    
     canvas.setBackground(backgroundImage);
     canvas.setComposite(maskPath, originalPath);
   
-    canvas.currentImg();
     canvas.tap(p1);
     canvas.tap(p2);
     Mat result = canvas.currentImg();
