@@ -361,8 +361,9 @@ TEST_P(Composites, BasicComposite) {
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
   auto targetFileName =  get<0>(args) + "_" + get<1>(args) + "_" + to_string(get<2>(args)) + "_" + to_string(get<3>(args)) + ".png";
 
+  auto canvas = CompositeCanvas();
   auto renderer = TestRenderer();
-  auto canvasManager = CanvasManager(&renderer);
+  auto canvasManager = CanvasManager(&canvas, &renderer);
   auto resize = Resize(get<2>(args), get<3>(args));
   auto background = BackgroundImageUpdate(backgroundImage);
   auto compUpdate = CompositeImageUpdate(original, mask);

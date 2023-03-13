@@ -20,15 +20,15 @@ void Resize::Operate(CompositeCanvas& compositeCanvas)
     compositeCanvas.setSize(width, height);
 }
 
-CanvasManager::CanvasManager(IRenderImages* renderer)
+CanvasManager::CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer)
 {
     this->renderer = renderer;
-    this->canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
+    this->canvas = canvas;
 }
 
 void CanvasManager::QueueOperation(ICanvasOperator& op)
 {
-    op.Operate(*(canvas.get()));
+    op.Operate(*canvas);
     auto img = canvas->currentImg();
     this->renderer->RenderImage(img);
 }

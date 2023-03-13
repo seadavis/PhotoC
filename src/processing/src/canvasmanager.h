@@ -66,12 +66,12 @@ namespace processing{
     {
 
         public:
-            CanvasManager(IRenderImages* renderer);
+            CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer);
             void QueueOperation(ICanvasOperator& op);
 
 
         private:
-            unique_ptr<CompositeCanvas> canvas;
+            CompositeCanvas* canvas;
             IRenderImages* renderer;
 
     };

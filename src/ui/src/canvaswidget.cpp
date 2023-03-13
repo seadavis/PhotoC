@@ -15,13 +15,14 @@
 
 constexpr double SIZE_FACTOR = 0.65;
 
-void CanvasWidget::setCompositesIfAvailable()
+QTRenderer::QTRenderer(ImageViewer* viewer)
 {
-    if(maskPath.length() != 0 && originalPath.length() != 0)
-    {
-        canvas->setComposite(maskPath, originalPath);
-        render();
-    }
+    this->viewer = viewer;
+}
+
+void QTRenderer::RenderImage(Mat& m)
+{
+    viewer->setImage(m);
 }
 
 void CanvasWidget::handleMouseMoveOnImage(int x, int y)
@@ -83,13 +84,19 @@ void CanvasWidget::resizeEvent(QResizeEvent* event)
 void CanvasWidget::setMaskPath(string path)
 {
     maskPath = path;
-    setCompositesIfAvailable();
+    sendCompositeUpdate();
 }
 
 void CanvasWidget::setOriginalPath(string path)
 {
     originalPath = path;
-    setCompositesIfAvailable();
+    sendCompositeUpdate();
+}
+
+void CanvasWidget::sendCompositeUpdate()
+{
+    auto update = CompositeImageUpdate(originalPath, maskPath);
+    canvasManager->QueueOperation(update);
 }
 
 void CanvasWidget::handleSnapButton()
@@ -163,6 +170,8 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     verticalLayout->addLayout(buttonLayout);
     buttonLayout->setAlignment(Qt::AlignCenter);
     canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
+    renderer = unique_ptr<QTRenderer>(new QTRenderer(canvasViewer));
+    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), renderer.get()));
     snapButton->setEnabled(false);
     connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
     connect(connectButton, &QPushButton::released, this, &CanvasWidget::handleConnectButton);

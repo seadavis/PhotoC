@@ -7,12 +7,22 @@
 #include <vector>
 #include <QMouseEvent>
 #include "ImageViewer.h"
-#include "processing.h"
+#include "canvasmanager.h"
 #include "camera.h"
 
 using namespace cv;
 using namespace std;
 using namespace processing;
+
+class QTRenderer : public IRenderImages
+{
+    public:
+      QTRenderer(ImageViewer* viewer);
+      void RenderImage(Mat& m) override;
+
+    private:
+      ImageViewer* viewer;
+};
 
 class CanvasWidget : public QWidget
 {
@@ -35,7 +45,9 @@ class CanvasWidget : public QWidget
       void handleMouseReleaseOnImage(int x, int y);
 
     private:
+        unique_ptr<CanvasManager> canvasManager;
         unique_ptr<CompositeCanvas> canvas;
+        unique_ptr<QTRenderer> renderer;
         QVBoxLayout* verticalLayout;
         QHBoxLayout* buttonLayout;
         QGridLayout* canvasGrid;
@@ -52,7 +64,7 @@ class CanvasWidget : public QWidget
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;
 
-        void setCompositesIfAvailable();
+        void sendCompositeUpdate();
         void cameraConnectingStatusChanged(bool isConnecting);
         void render();
 
