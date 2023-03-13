@@ -232,14 +232,19 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
     auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
   
     auto canvas = CompositeCanvas();
+    auto renderer = TestRenderer();
+    auto tap1 = TapImage(p1);
+    auto tap2 = TapImage(p2);
+    auto canvasManager = CanvasManager(&canvas, &renderer);
+
     canvas.setSize(1300, 1300);    
     canvas.setBackground(backgroundImage);
     canvas.setComposite(maskPath, originalPath);
-  
-    canvas.tap(p1);
-    canvas.tap(p2);
-    Mat result = canvas.currentImg();
 
+    canvasManager.QueueOperation(tap1);
+    canvasManager.QueueOperation(tap2);
+
+    Mat result = renderer.outputImage;
     auto outImage = "double_tap_" + to_string(p1.x) + "_" + to_string(p1.y) + ".png";
     imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
     Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
