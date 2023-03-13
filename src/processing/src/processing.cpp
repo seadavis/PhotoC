@@ -46,6 +46,7 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
         }
     }
 
+    auto s = variable_map.size();
     const unsigned int num_unknowns = (unsigned int)variable_map.size();
     unsigned int row = 0;
 
@@ -227,7 +228,6 @@ static Mat composite(Mat& mask,
 {
 
     Mat outputImg = tgt.clone();
-    size_t partitions = 3;
 
     auto channel1 = async(solve_for_channel, &outputImg, &src, &mask, &solver, &variableMap, mx, my, 0);
     auto channel2 = async(solve_for_channel, &outputImg,&src, &mask, &solver, &variableMap, mx, my, 1);
