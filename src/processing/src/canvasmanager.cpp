@@ -2,16 +2,23 @@
 
 using namespace processing;
 
-Mat BackgroundImageUpdate::Operate(CompositeCanvas& compositeCanvas)
+void BackgroundImageUpdate::Operate(CompositeCanvas& compositeCanvas)
 {
-    return Mat(0,3,CV_32FC1);
+    compositeCanvas.setBackground(backgroundImage);
 }
 
-Mat CompositeImageUpdate::Operate(CompositeCanvas& compositeCanvas)
+void CompositeImageUpdate::Operate(CompositeCanvas& compositeCanvas)
 {
-     return Mat(0,3,CV_32FC1);
+    if(maskPath.length() != 0 && originalImagePath.length() != 0)
+    {
+        compositeCanvas.setComposite(maskPath, originalImagePath);
+    }
 }
 
+void Resize::Operate(CompositeCanvas& compositeCanvas)
+{
+    compositeCanvas.setSize(width, height);
+}
 
 CanvasManager::CanvasManager(IRenderImages* renderer)
 {
@@ -21,6 +28,8 @@ CanvasManager::CanvasManager(IRenderImages* renderer)
 
 void CanvasManager::QueueOperation(ICanvasOperator& op)
 {
-
+    op.Operate(*(canvas.get()));
+    auto img = canvas->currentImg();
+    this->renderer->RenderImage(img);
 }
 

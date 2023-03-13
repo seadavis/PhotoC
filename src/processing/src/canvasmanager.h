@@ -16,10 +16,10 @@ namespace processing{
     class ICanvasOperator
     {
         public:
-            virtual Mat Operate(CompositeCanvas& canvas) = 0;
+            virtual void Operate(CompositeCanvas& canvas) = 0;
     };
 
-    class CompositeImageUpdate : ICanvasOperator
+    class CompositeImageUpdate : public ICanvasOperator
     {
         public:
             CompositeImageUpdate(string originalImagePath, string maskPath) : 
@@ -30,11 +30,11 @@ namespace processing{
 
             string maskPath;
 
-            Mat Operate(CompositeCanvas& canvas) override;
+            void Operate(CompositeCanvas& canvas) override;
 
     };
 
-    class BackgroundImageUpdate : ICanvasOperator
+    class BackgroundImageUpdate : public ICanvasOperator
     {
         public:
             BackgroundImageUpdate(Mat& backgroundImage) :
@@ -43,7 +43,20 @@ namespace processing{
 
             Mat& backgroundImage;
 
-            Mat Operate(CompositeCanvas& canvas) override;
+            void Operate(CompositeCanvas& canvas) override;
+    };
+
+    class Resize : public ICanvasOperator
+    {
+           public:
+            Resize(int width, int height) :
+                width(width), height(height)
+            {};
+
+            int width;
+            int height;
+
+            void Operate(CompositeCanvas& canvas) override;
     };
 
     /**

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "processing.h"
+#include "canvasmanager.h"
 #include <iostream>
 #include <opencv2/core.hpp>
 
@@ -32,6 +32,21 @@ class BoundingRectangleHitDataConsecutivePoints :
 class ScalingImage :
   public testing::TestWithParam<tuple<string, string, Point, Point, Point, Point, string>> {
 };
+
+class TestRenderer : public IRenderImages{
+
+  public:
+    TestRenderer() {};
+    void RenderImage(Mat& m) override;
+
+    Mat outputImage;
+
+};
+
+void TestRenderer::RenderImage(Mat& m)
+{
+  m.copyTo(outputImage);
+}
 
 Mat loadBackgroundImage(string path);
 
@@ -344,19 +359,22 @@ TEST_P(Composites, BasicComposite) {
 
   auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
+  auto targetFileName =  get<0>(args) + "_" + get<1>(args) + "_" + to_string(get<2>(args)) + "_" + to_string(get<3>(args)) + ".png";
 
-  auto canvas = CompositeCanvas();
-  canvas.setSize(get<2>(args), get<3>(args));
-  canvas.setBackground(backgroundImage);
-  canvas.setComposite(mask, original);
+  auto renderer = TestRenderer();
+  auto canvasManager = CanvasManager(&renderer);
+  auto resize = Resize(get<2>(args), get<3>(args));
+  auto background = BackgroundImageUpdate(backgroundImage);
+  auto compUpdate = CompositeImageUpdate(original, mask);
 
-  Mat result = canvas.currentImg();
+  canvasManager.QueueOperation(resize);
+  canvasManager.QueueOperation(background);
+  canvasManager.QueueOperation(compUpdate);
+  
+  Mat result = renderer.outputImage;
 
-  auto fileName =  get<0>(args) + "_" + get<1>(args) + "_" + to_string(get<2>(args)) + "_" + to_string(get<3>(args)) + ".png";
-
-  imwrite( "./src/processing/tests/test_composites/" + fileName, result);
-  Mat expectedMat = imread("./src/processing/tests/target_composites/" + fileName);
-
+  imwrite( "./src/processing/tests/test_composites/" + targetFileName, result);
+  Mat expectedMat = imread("./src/processing/tests/target_composites/" + targetFileName);
   bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
   ASSERT_TRUE(equal);
 }
