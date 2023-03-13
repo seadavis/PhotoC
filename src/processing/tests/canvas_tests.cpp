@@ -43,6 +43,19 @@ class TestRenderer : public IRenderImages{
 
 };
 
+class TestHitter : public HitImage
+{
+  public:
+    TestHitter(Point p) : HitImage(p) {};
+    ObjectType hitType;
+    void OnHit(ObjectType type) override;
+};
+
+void TestHitter::OnHit(ObjectType type)
+{
+  hitType = type;
+}
+
 void TestRenderer::RenderImage(Mat& m)
 {
   m.copyTo(outputImage);
@@ -241,7 +254,8 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
     auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/gothenburg.png");
     auto maskPath = "./src/processing/tests/masks/kitten.png";
     auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
-  
+       
+
     auto canvas = CompositeCanvas();
     canvas.setSize(1300, 1300);
 
@@ -254,10 +268,15 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
     if(set_comp)
       canvas.setComposite(maskPath, originalPath);
   
-    auto hitType = canvas.hit(p);
-    ASSERT_EQ(hitType, get<3>(args));
-    canvas.tap(p);
-    Mat result = canvas.currentImg();
+    auto hit = TestHitter(p);
+    auto tap = TapImage(p);
+    auto testRenderer = TestRenderer();
+    auto canvasManager = CanvasManager(&canvas, &testRenderer);
+    canvasManager.QueueOperation(hit);
+    canvasManager.QueueOperation(tap);
+
+    Mat result = testRenderer.outputImage;
+    ASSERT_EQ(hit.hitType, get<3>(args));
 
     auto outImage = "single_tap_" + to_string(p.x) + "_" + to_string(p.y) + "_" + to_string(set_back) + "_" + to_string(set_comp) + ".png";
     imwrite("./src/processing/tests/test_hit_data/" + outImage, result);

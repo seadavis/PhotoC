@@ -34,6 +34,31 @@ namespace processing{
 
     };
 
+    class TapImage : public ICanvasOperator
+    {
+        public:
+            TapImage(cv::Point pointToTap) : 
+                pointToTap(pointToTap)
+            {};
+
+            cv::Point pointToTap;
+            void Operate(CompositeCanvas& canvas) override;
+
+    };
+
+    class HitImage : public ICanvasOperator
+    {
+        public:
+            HitImage(cv::Point pointToHit) : 
+                pointToHit(pointToHit)
+            {};
+            
+            cv::Point pointToHit;
+            virtual void OnHit(ObjectType type) = 0;
+            void Operate(CompositeCanvas& canvas) override;
+
+    };
+
     class BackgroundImageUpdate : public ICanvasOperator
     {
         public:

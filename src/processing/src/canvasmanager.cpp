@@ -15,6 +15,17 @@ void CompositeImageUpdate::Operate(CompositeCanvas& compositeCanvas)
     }
 }
 
+void TapImage::Operate(CompositeCanvas& compositeCanvas)
+{
+    compositeCanvas.tap(pointToTap);
+}
+
+void HitImage::Operate(CompositeCanvas& compositeCanvas)
+{
+    const auto objectType = compositeCanvas.hit(pointToHit);
+    OnHit(objectType);
+}
+
 void Resize::Operate(CompositeCanvas& compositeCanvas)
 {
     compositeCanvas.setSize(width, height);
