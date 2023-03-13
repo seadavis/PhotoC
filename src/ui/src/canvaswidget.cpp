@@ -25,22 +25,27 @@ void QTRenderer::RenderImage(Mat& m)
     viewer->setImage(m);
 }
 
+void QTHitImage::OnHit(ObjectType type)
+{
+     if(type == ObjectType::Image)
+    {
+        widget->setCursor(QCursor(Qt::CursorShape::SizeAllCursor));
+    }
+    else if (type == ObjectType::SizeCircle)
+    {
+        widget->setCursor(QCursor(Qt::CursorShape::SizeFDiagCursor));
+    }
+    else if(type == ObjectType::None)
+    {
+        widget->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
+    }
+}
+
 void CanvasWidget::handleMouseMoveOnImage(int x, int y)
 {
-    auto hitType = canvas->hit(Point(x, y));
 
-    if(hitType == ObjectType::Image)
-    {
-        setCursor(QCursor(Qt::CursorShape::SizeAllCursor));
-    }
-    else if (hitType == ObjectType::SizeCircle)
-    {
-        setCursor(QCursor(Qt::CursorShape::SizeFDiagCursor));
-    }
-    else if(hitType == ObjectType::None)
-    {
-        setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    }
+    auto hit = QTHitImage(Point(x,y), this);
+    canvasManager->QueueOperation(hit);
 
     int delta_x = x - prev_mouse_x;
     int delta_y = y - prev_mouse_y;

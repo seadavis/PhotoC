@@ -24,6 +24,19 @@ class QTRenderer : public IRenderImages
       ImageViewer* viewer;
 };
 
+class QTHitImage : public HitImage
+{
+  
+  public:
+    QTHitImage(Point p, QWidget* widget) : HitImage(p), widget(widget)
+    {};
+
+    void OnHit(ObjectType type);
+
+  private:
+    QWidget* widget;
+};
+
 class CanvasWidget : public QWidget
 {
     public:
