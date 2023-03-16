@@ -46,15 +46,27 @@ namespace processing{
 
     };
 
-    class HitImage : public ICanvasOperator
+    /**
+     * Represents an image transformation (Scaling or translation)
+     * Represented by a focal point of the transformation (i.e. where the mouse clicked)
+     * and a deltax, and deltay how much the mouse move.
+     * 
+     * This is what determines whether it is a scale
+     * or a translation
+    */
+    class TransformImage : public ICanvasOperator
     {
         public:
-            HitImage(cv::Point pointToHit) : 
-                pointToHit(pointToHit)
+            TransformImage(cv::Point focalPoint, int dx, int dy) : 
+                focalPoint(focalPoint),
+                dx(dx),
+                dy(dy)
             {};
             
-            cv::Point pointToHit;
-            virtual void OnHit(ObjectType type) = 0;
+            cv::Point focalPoint;
+            int dx;
+            int dy;
+            virtual void OnHit(ObjectType type) {};
             void Operate(CompositeCanvas& canvas) override;
 
     };
@@ -92,7 +104,7 @@ namespace processing{
 
         public:
             CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer);
-            void QueueOperation(ICanvasOperator& op);
+            void QueueOperation(shared_ptr<ICanvasOperator> op);
 
 
         private:

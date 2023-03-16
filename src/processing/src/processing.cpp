@@ -398,64 +398,62 @@ ImageBorder CompositeCanvas::translate_to_canvas_coordindates(ImageBorder b)
     return ImageBorder(maskWidth, maskHeight, top_left);
 }
 
+
+void CompositeCanvas::scaleSelected(int dx, int dy)
+{
+    int sign = 1;
+
+    if(dx < 0 && dy < 0)
+        sign = -1;
+    
+    auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
+    auto deltaHeight = maskHeight + deltaPixels;
+    auto deltaWidth = maskWidth + deltaPixels;
+
+    auto maxWidth = backgroundImage == nullptr ? width : backgroundImage->size().width;
+    auto maxHeight = backgroundImage == nullptr ? height : backgroundImage->size().height;
+
+    if(deltaHeight >= maxHeight)
+        deltaHeight = maxHeight - 10;
+
+    if(deltaWidth >= maxWidth)
+        deltaWidth = maxWidth - 10;
+
+    if(deltaHeight < 10)
+        deltaHeight = 10;
+
+    if(deltaWidth < 10)
+        deltaWidth = 10;
+
+    maskWidth = deltaWidth;
+    maskHeight = deltaHeight; 
+
+    initPlacement();
+}
+
 void CompositeCanvas::cursorMoved(int dx, int dy)
 {
-    if(objectSelected == ObjectType::SizeCircle && originalMaskImage != nullptr)
-    {
-        int sign = 1;
+   
+    int mx_prime = mx + dx;
+    int my_prime = my + dy;
 
-        if(dx < 0 && dy < 0)
-            sign = -1;
-        
-        auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
-        auto deltaHeight = maskHeight + deltaPixels;
-        auto deltaWidth = maskWidth + deltaPixels;
+    if(mx_prime < 1)
+        mx = 5;
 
-        auto maxWidth = backgroundImage == nullptr ? width : backgroundImage->size().width;
-        auto maxHeight = backgroundImage == nullptr ? height : backgroundImage->size().height;
+    else if(backgroundImage != nullptr && mx_prime + originalMaskImage->size().width >= backgroundImage->size().width)
+        mx =  backgroundImage->size().width - originalMaskImage->size().width - 5;
 
-        if(deltaHeight >= maxHeight)
-            deltaHeight = maxHeight - 10;
+    else
+        mx = mx_prime;
 
-        if(deltaWidth >= maxWidth)
-            deltaWidth = maxWidth - 10;
+    if(my_prime < 1)
+        my = 5;
 
-        if(deltaHeight < 10)
-            deltaHeight = 10;
-
-        if(deltaWidth < 10)
-            deltaWidth = 10;
-
-        maskWidth = deltaWidth;
-        maskHeight = deltaHeight; 
-
-        initPlacement();
-    }
-
-    else if(objectSelected == ObjectType::Image)
-    {
-        int mx_prime = mx + dx;
-        int my_prime = my + dy;
-
-        if(mx_prime < 1)
-            mx = 5;
-
-        else if(backgroundImage != nullptr && mx_prime + originalMaskImage->size().width >= backgroundImage->size().width)
-            mx =  backgroundImage->size().width - originalMaskImage->size().width - 5;
-
-        else
-            mx = mx_prime;
-
-        if(my_prime < 1)
-            my = 5;
-
-        else if(backgroundImage != nullptr && my_prime + originalMaskImage->size().height >= backgroundImage->size().height)
-            my = backgroundImage->size().height - originalMaskImage->size().height - 5;
-        
-        else
-            my = my_prime;
-    }
-
+    else if(backgroundImage != nullptr && my_prime + originalMaskImage->size().height >= backgroundImage->size().height)
+        my = backgroundImage->size().height - originalMaskImage->size().height - 5;
+    
+    else
+        my = my_prime;
 }
 
 Mat CompositeCanvas::loadImage(string imagePath)

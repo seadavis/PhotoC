@@ -20,10 +20,15 @@ void TapImage::Operate(CompositeCanvas& compositeCanvas)
     compositeCanvas.tap(pointToTap);
 }
 
-void HitImage::Operate(CompositeCanvas& compositeCanvas)
+void TransformImage::Operate(CompositeCanvas& compositeCanvas)
 {
-    const auto objectType = compositeCanvas.hit(pointToHit);
+    const auto objectType = compositeCanvas.hit(focalPoint);
     OnHit(objectType);
+
+    if(objectType == ObjectType::SizeCircle)
+    {
+        compositeCanvas.scaleSelected(dx, dy);
+    }
 }
 
 void Resize::Operate(CompositeCanvas& compositeCanvas)
@@ -37,9 +42,9 @@ CanvasManager::CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer)
     this->canvas = canvas;
 }
 
-void CanvasManager::QueueOperation(ICanvasOperator& op)
+void CanvasManager::QueueOperation(shared_ptr<ICanvasOperator> op)
 {
-    op.Operate(*canvas);
+    op->Operate(*canvas);
     auto img = canvas->currentImg();
     this->renderer->RenderImage(img);
 }

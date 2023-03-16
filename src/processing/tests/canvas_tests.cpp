@@ -43,15 +43,15 @@ class TestRenderer : public IRenderImages{
 
 };
 
-class TestHitter : public HitImage
+class TestTransformer : public TransformImage
 {
   public:
-    TestHitter(Point p) : HitImage(p) {};
+    TestTransformer(Point p) :TransformImage(p, 0, 0) {};
     ObjectType hitType;
     void OnHit(ObjectType type) override;
 };
 
-void TestHitter::OnHit(ObjectType type)
+void TestTransformer::OnHit(ObjectType type)
 {
   hitType = type;
 }
@@ -235,16 +235,14 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
   
     auto canvas = CompositeCanvas();
     auto renderer = TestRenderer();
-    auto tap1 = TapImage(p1);
-    auto tap2 = TapImage(p2);
     auto canvasManager = CanvasManager(&canvas, &renderer);
 
     canvas.setSize(1300, 1300);    
     canvas.setBackground(backgroundImage);
     canvas.setComposite(maskPath, originalPath);
 
-    canvasManager.QueueOperation(tap1);
-    canvasManager.QueueOperation(tap2);
+    canvasManager.QueueOperation(make_shared<TapImage>(p1));
+    canvasManager.QueueOperation(make_shared<TapImage>(p2));
 
     Mat result = renderer.outputImage;
     auto outImage = "double_tap_" + to_string(p1.x) + "_" + to_string(p1.y) + ".png";
@@ -275,12 +273,12 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
     if(set_comp)
       canvas.setComposite(maskPath, originalPath);
   
-    auto hit = TestHitter(p);
+    auto hit = TestTransformer(p);
     auto tap = TapImage(p);
     auto testRenderer = TestRenderer();
     auto canvasManager = CanvasManager(&canvas, &testRenderer);
-    canvasManager.QueueOperation(hit);
-    canvasManager.QueueOperation(tap);
+    canvasManager.QueueOperation(make_shared<TestTransformer>(p));
+    canvasManager.QueueOperation(make_shared<TapImage>(p));
 
     Mat result = testRenderer.outputImage;
     ASSERT_EQ(hit.hitType, get<3>(args));
@@ -353,21 +351,21 @@ TEST_P(ScalingImage, ScaleTests){
   canvas.setBackground(backgroundImage);
   canvas.setComposite(mask, original);
 
+  auto testRenderer = TestRenderer();
+  auto canvasManager = CanvasManager(&canvas, &testRenderer);
   
   Point tapPoint_1 = get<2>(args);
   Point movePoint_1 = get<3>(args);
   Point tapPoint = get<4>(args);
   Point movePoint = get<5>(args);
 
-  canvas.tap(tapPoint_1);
-  canvas.cursorMoved(movePoint_1.x, movePoint_1.x);
-  canvas.tap(tapPoint);
-  canvas.cursorMoved(movePoint.x, movePoint.y);
+  canvasManager.QueueOperation(make_shared<TapImage>(tapPoint_1));
+  canvasManager.QueueOperation(make_shared<TransformImage>(tapPoint_1, movePoint_1.x, movePoint_1.y));
+  canvasManager.QueueOperation(make_shared<TapImage>(tapPoint));
+  canvasManager.QueueOperation(make_shared<TransformImage>(tapPoint, movePoint.x, movePoint.y));
+  canvasManager.QueueOperation(make_shared<TapImage>(Point(0, 0)));
 
-  //exit out of canvas
-  canvas.tap(Point(0, 0));
-
-  Mat result = canvas.currentImg();
+  Mat result = testRenderer.outputImage;
 
   auto fileName =  get<6>(args);
 
@@ -390,13 +388,10 @@ TEST_P(Composites, BasicComposite) {
   auto canvas = CompositeCanvas();
   auto renderer = TestRenderer();
   auto canvasManager = CanvasManager(&canvas, &renderer);
-  auto resize = Resize(get<2>(args), get<3>(args));
-  auto background = BackgroundImageUpdate(backgroundImage);
-  auto compUpdate = CompositeImageUpdate(original, mask);
 
-  canvasManager.QueueOperation(resize);
-  canvasManager.QueueOperation(background);
-  canvasManager.QueueOperation(compUpdate);
+  canvasManager.QueueOperation(make_shared<Resize>(get<2>(args), get<3>(args)));
+  canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
+  canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(original, mask));
   
   Mat result = renderer.outputImage;
 

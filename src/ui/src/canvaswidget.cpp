@@ -25,7 +25,7 @@ void QTRenderer::RenderImage(Mat& m)
     viewer->setImage(m);
 }
 
-void QTHitImage::OnHit(ObjectType type)
+void QTTransformImage::OnHit(ObjectType type)
 {
      if(type == ObjectType::Image)
     {
@@ -44,17 +44,11 @@ void QTHitImage::OnHit(ObjectType type)
 void CanvasWidget::handleMouseMoveOnImage(int x, int y)
 {
 
-    auto hit = QTHitImage(Point(x,y), this);
-    canvasManager->QueueOperation(hit);
-
     int delta_x = x - prev_mouse_x;
     int delta_y = y - prev_mouse_y;
-
+    canvasManager->QueueOperation(make_shared<QTTransformImage>(Point(x,y), delta_x, delta_y, this));
     prev_mouse_x = x;
     prev_mouse_y = y;
-
-    canvas->cursorMoved(delta_x, delta_y);
-    render();
 }
 
 void CanvasWidget::handleMouseReleaseOnImage(int x, int y)
@@ -101,7 +95,7 @@ void CanvasWidget::setOriginalPath(string path)
 void CanvasWidget::sendCompositeUpdate()
 {
     auto update = CompositeImageUpdate(originalPath, maskPath);
-    canvasManager->QueueOperation(update);
+    canvasManager->QueueOperation(make_shared<CompositeImageUpdate>(originalPath, maskPath));
 }
 
 void CanvasWidget::handleSnapButton()

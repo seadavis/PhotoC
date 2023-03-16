@@ -24,11 +24,11 @@ class QTRenderer : public IRenderImages
       ImageViewer* viewer;
 };
 
-class QTHitImage : public HitImage
+class QTTransformImage : public TransformImage
 {
   
   public:
-    QTHitImage(Point p, QWidget* widget) : HitImage(p), widget(widget)
+    QTTransformImage(Point p, int dx, int dy, QWidget* widget) : TransformImage(p, dx, dy), widget(widget)
     {};
 
     void OnHit(ObjectType type);

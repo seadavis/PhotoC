@@ -187,6 +187,11 @@ namespace processing{
             void cursorMoved(int dx, int dy);
 
             /**
+             * Scales whichever image is currently selected.
+            */
+            void scaleSelected(int dx, int dy);
+
+            /**
              * Releases the currently held object if it
              * exists. If no object is being held this does nothing.
              * 
