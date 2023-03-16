@@ -550,7 +550,14 @@ void CompositeCanvas::tap(Point p)
     {
         showBoundingRectangle = false;
         objectSelected = ObjectType::None;
-        setSupportingStructuresForComposites();
+
+        auto resizedSize = resizedMask->size();
+        
+        if(resizedSize.height != maskHeight || resizedSize.width != maskWidth)
+        {
+            setSupportingStructuresForComposites();
+        }
+
     }
     
 }
