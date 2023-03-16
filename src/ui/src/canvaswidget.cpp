@@ -54,22 +54,14 @@ void CanvasWidget::handleMouseMoveOnImage(int x, int y)
 void CanvasWidget::handleMouseReleaseOnImage(int x, int y)
 {
     setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    canvas->releaseObject();
-    render();
+    canvasManager->QueueOperation(make_shared<ReleaseImage>());
 }
 
 void CanvasWidget::handleMousePressOnImage(int x, int y)
 {
-    canvas->tap(Point(x, y));
-    render();
-
+    canvasManager->QueueOperation(make_shared<TapImage>(Point(x, y)));
     prev_mouse_x = x;
     prev_mouse_y = y;
-}
-
-void CanvasWidget::render()
-{
-    canvasViewer->setImage(canvas->currentImg());
 }
 
 void CanvasWidget::resizeEvent(QResizeEvent* event) 
@@ -103,8 +95,7 @@ void CanvasWidget::handleSnapButton()
     try
     {
         Mat img =  camera->snap_picture();
-        canvas->setBackground(img);
-        render();
+        canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
     }
     catch(const exception &ex)
     {

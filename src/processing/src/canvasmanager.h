@@ -71,6 +71,18 @@ namespace processing{
 
     };
 
+    /**
+     * Used to release
+     * the currently selected image
+     * on the canvas
+    */
+    class ReleaseImage : public ICanvasOperator
+    {
+        public:
+            ReleaseImage() {};
+            void Operate(CompositeCanvas& canvas) override;
+    };
+
     class BackgroundImageUpdate : public ICanvasOperator
     {
         public:

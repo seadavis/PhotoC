@@ -35,6 +35,11 @@ void TransformImage::Operate(CompositeCanvas& compositeCanvas)
     }
 }
 
+void ReleaseImage::Operate(CompositeCanvas& compositeCanvas)
+{
+    compositeCanvas.releaseObject();
+}
+
 void Resize::Operate(CompositeCanvas& compositeCanvas)
 {
     compositeCanvas.setSize(width, height);
