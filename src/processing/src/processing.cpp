@@ -427,10 +427,7 @@ void CompositeCanvas::cursorMoved(int dx, int dy)
             deltaWidth = 10;
 
         maskWidth = deltaWidth;
-        maskHeight = deltaHeight;   
-
-        if(deltaWidth > 0 || deltaHeight > 0)
-            setSupportingStructuresForComposites();
+        maskHeight = deltaHeight; 
 
         initPlacement();
     }
@@ -555,6 +552,7 @@ void CompositeCanvas::tap(Point p)
     {
         showBoundingRectangle = false;
         objectSelected = ObjectType::None;
+        setSupportingStructuresForComposites();
     }
     
 }
