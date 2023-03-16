@@ -184,7 +184,7 @@ namespace processing{
              * 
              * @param dy - the amount the cursor moved vertically
             */
-            void cursorMoved(int dx, int dy);
+            void translateSelected(int dx, int dy);
 
             /**
              * Scales whichever image is currently selected.

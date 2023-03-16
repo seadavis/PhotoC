@@ -29,6 +29,10 @@ void TransformImage::Operate(CompositeCanvas& compositeCanvas)
     {
         compositeCanvas.scaleSelected(dx, dy);
     }
+    else if(objectType == ObjectType::Image)
+    {
+        compositeCanvas.translateSelected(dx, dy);
+    }
 }
 
 void Resize::Operate(CompositeCanvas& compositeCanvas)

@@ -324,8 +324,12 @@ TEST_P(TranslationData, ValidTranslations) {
   canvas.setSize(get<2>(args), get<3>(args));
   canvas.setBackground(backgroundImage);
   canvas.setComposite(mask, original);
-  canvas.tap(get<4>(args));
-  canvas.cursorMoved(get<5>(args), get<6>(args));
+
+  auto testRenderer = TestRenderer();
+  auto canvasManager = CanvasManager(&canvas, &testRenderer);
+
+  canvasManager.QueueOperation(make_shared<TapImage>(get<4>(args)));
+  canvasManager.QueueOperation(make_shared<TransformImage>(get<4>(args), get<5>(args), get<6>(args)));
 
   Mat result = canvas.currentImg();
 

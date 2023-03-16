@@ -431,7 +431,7 @@ void CompositeCanvas::scaleSelected(int dx, int dy)
     initPlacement();
 }
 
-void CompositeCanvas::cursorMoved(int dx, int dy)
+void CompositeCanvas::translateSelected(int dx, int dy)
 {
    
     int mx_prime = mx + dx;
