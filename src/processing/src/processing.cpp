@@ -46,7 +46,6 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
         }
     }
 
-    auto s = variable_map.size();
     const unsigned int num_unknowns = (unsigned int)variable_map.size();
     unsigned int row = 0;
 
@@ -279,9 +278,7 @@ static Mat size_to_fit(Mat src, int width, int height)
     {
         auto width_factor = (float)width/(float)src.size().width;
         auto height_factor = (float)height/(float)src.size().height;
-
         auto greatest_factor = width_factor < height_factor ? width_factor : height_factor;
-
         auto new_width = greatest_factor*src.size().width;
         auto new_height = greatest_factor*src.size().height;
 
@@ -403,7 +400,7 @@ ImageBorder CompositeCanvas::translate_to_canvas_coordindates(ImageBorder b)
 
 void CompositeCanvas::cursorMoved(int dx, int dy)
 {
-    if(objectSelected == ObjectType::SizeCircle && maskImage != nullptr)
+    if(objectSelected == ObjectType::SizeCircle && originalMaskImage != nullptr)
     {
         int sign = 1;
 
@@ -411,7 +408,6 @@ void CompositeCanvas::cursorMoved(int dx, int dy)
             sign = -1;
         
         auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
-
         auto deltaHeight = maskHeight + deltaPixels;
         auto deltaWidth = maskWidth + deltaPixels;
 
@@ -433,6 +429,9 @@ void CompositeCanvas::cursorMoved(int dx, int dy)
         maskWidth = deltaWidth;
         maskHeight = deltaHeight;   
 
+        if(deltaWidth > 0 || deltaHeight > 0)
+            setSupportingStructuresForComposites();
+
         initPlacement();
     }
 
@@ -444,8 +443,8 @@ void CompositeCanvas::cursorMoved(int dx, int dy)
         if(mx_prime < 1)
             mx = 5;
 
-        else if(backgroundImage != nullptr && mx_prime + maskImage->size().width >= backgroundImage->size().width)
-            mx =  backgroundImage->size().width - maskImage->size().width - 5;
+        else if(backgroundImage != nullptr && mx_prime + originalMaskImage->size().width >= backgroundImage->size().width)
+            mx =  backgroundImage->size().width - originalMaskImage->size().width - 5;
 
         else
             mx = mx_prime;
@@ -453,8 +452,8 @@ void CompositeCanvas::cursorMoved(int dx, int dy)
         if(my_prime < 1)
             my = 5;
 
-        else if(backgroundImage != nullptr && my_prime + maskImage->size().height >= backgroundImage->size().height)
-            my = backgroundImage->size().height - maskImage->size().height - 5;
+        else if(backgroundImage != nullptr && my_prime + originalMaskImage->size().height >= backgroundImage->size().height)
+            my = backgroundImage->size().height - originalMaskImage->size().height - 5;
         
         else
             my = my_prime;
@@ -476,7 +475,7 @@ CompositeCanvas::CompositeCanvas()
     this->height = 0;
     this->width = 0;
     this->backgroundImage = nullptr;
-    this->maskImage = nullptr;
+    this->originalMaskImage = nullptr;
     this->originalImage = nullptr;
 }
 
@@ -491,7 +490,6 @@ void CompositeCanvas::setBackground(Mat backgrnd)
 {
    auto sizedBackground = size_to_fit(backgrnd, width, height);
    backgroundImage = unique_ptr<Mat>(new Mat(sizedBackground));
-
    initPlacement();
 }
 
@@ -499,25 +497,39 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
 {
     if(maskImgPath.length() > 0)
     {
-        maskImage = unique_ptr<Mat>(new Mat(loadImage(maskImgPath)));
-        maskHeight = maskImage->size().height;
-        maskWidth = maskImage->size().width;
-        border = ImageBorder(maskImage->size().width, maskImage->size().height, Point(0, 0));
-        auto sourceMatrix = form_matrix(*maskImage, variableMap);
-        solver.compute(sourceMatrix);
+        originalMaskImage = unique_ptr<Mat>(new Mat(loadImage(maskImgPath)));
+        resizedMask = make_unique<Mat>();
+        auto size = originalMaskImage->size();
+        maskHeight = size.height;
+        maskWidth = size.width;
+        border = ImageBorder(maskWidth, maskHeight, Point(0, 0));
     }
         
     if(originalImagePath.length() > 0)
     {
         originalImage = unique_ptr<Mat>(new Mat(loadImage(originalImagePath)));
+        resizedOriginal = make_unique<Mat>();
     }
     
+    setSupportingStructuresForComposites();
     initPlacement();
+}
+
+void CompositeCanvas::setSupportingStructuresForComposites()
+{
+    if(mask_and_original_available())
+    {
+        variableMap.clear();
+        resize(*originalMaskImage, *resizedMask, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+        resize(*originalImage, *resizedOriginal, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+        auto sourceMatrix = form_matrix(*resizedMask, variableMap);
+        solver.compute(sourceMatrix);
+    }
 }
 
 ObjectType CompositeCanvas::hit(Point p)
 {
-    if(maskImage == nullptr)
+    if(originalMaskImage == nullptr)
         return ObjectType::None;
 
     auto placedBorder = translate_to_canvas_coordindates(border);
@@ -555,19 +567,24 @@ void CompositeCanvas::releaseObject()
 bool CompositeCanvas::only_background_available()
 {
     return backgroundImage != nullptr && 
-            (maskImage == nullptr || originalImage == nullptr);
+            (originalMaskImage == nullptr || originalImage == nullptr);
 }
 
 bool CompositeCanvas::only_src_available()
 {
     return backgroundImage == nullptr && 
-            (maskImage != nullptr && originalImage != nullptr);
+            mask_and_original_available();
 }
 
 bool CompositeCanvas::src_and_background_available()
 {
-    return backgroundImage != nullptr && 
-            maskImage != nullptr && originalImage != nullptr;
+    return backgroundImage != nullptr && mask_and_original_available();
+}
+           
+
+bool CompositeCanvas::mask_and_original_available()
+{
+    return  originalMaskImage!= nullptr && originalImage != nullptr;
 }
 
 void CompositeCanvas::draw_adornments(Mat canvas)
@@ -611,12 +628,12 @@ void CompositeCanvas::initPlacement()
 
     else if(only_src_available())
     {
-        img = *maskImage;
+        img = *resizedMask;
     }
 
-    else if(originalImage != nullptr && maskImage != nullptr &&
-         originalImage->size().height < maskImage->size().height &&
-         originalImage->size().width < maskImage->size().width)
+    else if(resizedOriginal != nullptr && resizedMask != nullptr &&
+         resizedOriginal->size().height < resizedMask->size().height &&
+         resizedOriginal->size().width < resizedMask->size().width)
     {
         if(backgroundImage != nullptr)
             img = *backgroundImage;
@@ -625,27 +642,21 @@ void CompositeCanvas::initPlacement()
     else if(src_and_background_available())
     {
 
-        Mat mask = *maskImage;
-        Mat original = *originalImage;
         Mat background = *backgroundImage;
-
-        Mat resizedMask;
-        Mat resizedOriginal;
-
-        resize(mask, resizedMask, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
-        resize(original, resizedOriginal, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+        Mat resizedMask = *this->resizedMask;;
+        Mat resizedOriginal = *this->resizedOriginal;
 
         int tgt_height = background.size().height;
         int tgt_width = background.size().width;
 
         if(tgt_width < resizedMask.size().width || tgt_height < resizedMask.size().height)
         {
-            throw BackgroundResizedException(original.size().height,
-                                            original.size().width,
+            throw BackgroundResizedException(resizedOriginal.size().height,
+                                            resizedOriginal.size().width,
                                             background.size().width,
                                             background.size().height,
-                                            mask.size().width,
-                                            mask.size().height);
+                                            resizedMask.size().width,
+                                            resizedMask.size().height);
         }
 
         if(showBoundingRectangle)

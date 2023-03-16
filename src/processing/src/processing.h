@@ -205,6 +205,8 @@ namespace processing{
             bool only_background_available();
             bool only_src_available();
             bool src_and_background_available();
+            bool mask_and_original_available();
+            void setSupportingStructuresForComposites();
             ImageBorder translate_to_canvas_coordindates(ImageBorder b);
             Mat loadImage(string imagePath);
 
@@ -233,7 +235,10 @@ namespace processing{
             int scaleY = 1;
 
             unique_ptr<Mat> originalImage;
-            unique_ptr<Mat> maskImage;
+            unique_ptr<Mat> originalMaskImage;
+            unique_ptr<Mat> resizedMask;
+            unique_ptr<Mat> resizedOriginal;
+
             unique_ptr<Mat> backgroundImage;
             ImageBorder border;
     };

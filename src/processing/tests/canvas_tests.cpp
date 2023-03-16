@@ -2,7 +2,7 @@
 #include "canvasmanager.h"
 #include <iostream>
 #include <opencv2/core.hpp>
-
+#include <string_view>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
 
@@ -60,6 +60,8 @@ void TestRenderer::RenderImage(Mat& m)
 {
   m.copyTo(outputImage);
 }
+
+constexpr string_view ProcessingDirectory = "./src/processing/tests/";
 
 Mat loadBackgroundImage(string path);
 
@@ -351,6 +353,7 @@ TEST_P(ScalingImage, ScaleTests){
   canvas.setBackground(backgroundImage);
   canvas.setComposite(mask, original);
 
+  
   Point tapPoint_1 = get<2>(args);
   Point movePoint_1 = get<3>(args);
   Point tapPoint = get<4>(args);
