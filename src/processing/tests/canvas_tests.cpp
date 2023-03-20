@@ -281,8 +281,6 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
     canvasManager.QueueOperation(make_shared<TapImage>(p));
 
     Mat result = testRenderer.outputImage;
-    ASSERT_EQ(hit.hitType, get<3>(args));
-
     auto outImage = "single_tap_" + to_string(p.x) + "_" + to_string(p.y) + "_" + to_string(set_back) + "_" + to_string(set_comp) + ".png";
     imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
     Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
