@@ -1,4 +1,8 @@
 #include "processing.h"
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
 
 using namespace std;
 
@@ -86,11 +90,11 @@ namespace processing{
     class BackgroundImageUpdate : public ICanvasOperator
     {
         public:
-            BackgroundImageUpdate(Mat& backgroundImage) :
+            BackgroundImageUpdate(Mat backgroundImage) :
                 backgroundImage(backgroundImage)
             {};
 
-            Mat& backgroundImage;
+            Mat backgroundImage;
 
             void Operate(CompositeCanvas& canvas) override;
     };
@@ -120,8 +124,20 @@ namespace processing{
 
 
         private:
+            //variables
             CompositeCanvas* canvas;
             IRenderImages* renderer;
+            mutex queueMutex;
+            mutex conditionVariableMutex;
+            queue<shared_ptr<ICanvasOperator>> operationQueue;
+            condition_variable queueCV;
+            thread worker_thread;
+            unique_lock<mutex> cvLock;
+
+            //methods
+            shared_ptr<ICanvasOperator> DeQueueNextOperation();
+            void QueueWorker();
+
 
     };
 
