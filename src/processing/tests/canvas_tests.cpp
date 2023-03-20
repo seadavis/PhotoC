@@ -38,8 +38,11 @@ class TestRenderer : public IRenderImages{
   public:
     TestRenderer() {};
     void RenderImage(Mat& m) override;
-
+    Mat WaitUntilImageAvailable();
     Mat outputImage;
+
+   private:
+    atomic<bool> imgSet;
 
 };
 
@@ -49,7 +52,17 @@ class TestTransformer : public TransformImage
     TestTransformer(Point p) :TransformImage(p, 0, 0) {};
     ObjectType hitType;
     void OnHit(ObjectType type) override;
+  
 };
+
+Mat TestRenderer::WaitUntilImageAvailable()
+{
+  while(imgSet != true)
+  {
+    this_thread::sleep_for(std::chrono::milliseconds(5));
+  }
+  return outputImage;
+}
 
 void TestTransformer::OnHit(ObjectType type)
 {
@@ -58,6 +71,7 @@ void TestTransformer::OnHit(ObjectType type)
 
 void TestRenderer::RenderImage(Mat& m)
 {
+  imgSet = true;
   m.copyTo(outputImage);
 }
 
@@ -244,7 +258,7 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
     canvasManager.QueueOperation(make_shared<TapImage>(p1));
     canvasManager.QueueOperation(make_shared<TapImage>(p2));
 
-    Mat result = renderer.outputImage;
+    Mat result = renderer.WaitUntilImageAvailable();
     auto outImage = "double_tap_" + to_string(p1.x) + "_" + to_string(p1.y) + ".png";
     imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
     Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
@@ -280,7 +294,7 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
     canvasManager.QueueOperation(make_shared<TestTransformer>(p));
     canvasManager.QueueOperation(make_shared<TapImage>(p));
 
-    Mat result = testRenderer.outputImage;
+    Mat result = testRenderer.WaitUntilImageAvailable();
     auto outImage = "single_tap_" + to_string(p.x) + "_" + to_string(p.y) + "_" + to_string(set_back) + "_" + to_string(set_comp) + ".png";
     imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
     Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);

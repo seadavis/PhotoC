@@ -30,7 +30,8 @@
         "*.tcc": "cpp",
         "type_traits": "cpp",
         "orderingmethods": "cpp",
-        "sparsecholesky": "cpp"
+        "sparsecholesky": "cpp",
+        "thread": "cpp"
     },
     "files.exclude": {
         "**/build": true,
