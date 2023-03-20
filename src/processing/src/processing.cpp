@@ -401,59 +401,63 @@ ImageBorder CompositeCanvas::translate_to_canvas_coordindates(ImageBorder b)
 
 void CompositeCanvas::scaleSelected(int dx, int dy)
 {
-    int sign = 1;
+    if(objectSelected == ObjectType::SizeCircle)
+    {
+        int sign = 1;
 
-    if(dx < 0 && dy < 0)
-        sign = -1;
-    
-    auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
-    auto deltaHeight = maskHeight + deltaPixels;
-    auto deltaWidth = maskWidth + deltaPixels;
+        if(dx < 0 && dy < 0)
+            sign = -1;
+        
+        auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
+        auto deltaHeight = maskHeight + deltaPixels;
+        auto deltaWidth = maskWidth + deltaPixels;
 
-    auto maxWidth = backgroundImage == nullptr ? width : backgroundImage->size().width;
-    auto maxHeight = backgroundImage == nullptr ? height : backgroundImage->size().height;
+        auto maxWidth = backgroundImage == nullptr ? width : backgroundImage->size().width;
+        auto maxHeight = backgroundImage == nullptr ? height : backgroundImage->size().height;
 
-    if(deltaHeight >= maxHeight)
-        deltaHeight = maxHeight - 10;
+        if(deltaHeight >= maxHeight)
+            deltaHeight = maxHeight - 10;
 
-    if(deltaWidth >= maxWidth)
-        deltaWidth = maxWidth - 10;
+        if(deltaWidth >= maxWidth)
+            deltaWidth = maxWidth - 10;
 
-    if(deltaHeight < 10)
-        deltaHeight = 10;
+        if(deltaHeight < 10)
+            deltaHeight = 10;
 
-    if(deltaWidth < 10)
-        deltaWidth = 10;
+        if(deltaWidth < 10)
+            deltaWidth = 10;
 
-    maskWidth = deltaWidth;
-    maskHeight = deltaHeight; 
-
-    initPlacement();
+        maskWidth = deltaWidth;
+        maskHeight = deltaHeight; 
+        alignMaskSize();
+    }
 }
 
 void CompositeCanvas::translateSelected(int dx, int dy)
 {
-   
-    int mx_prime = mx + dx;
-    int my_prime = my + dy;
+    if(objectSelected == ObjectType::Image)
+    {
+        int mx_prime = mx + dx;
+        int my_prime = my + dy;
 
-    if(mx_prime < 1)
-        mx = 5;
+        if(mx_prime < 1)
+            mx = 5;
 
-    else if(backgroundImage != nullptr && mx_prime + originalMaskImage->size().width >= backgroundImage->size().width)
-        mx =  backgroundImage->size().width - originalMaskImage->size().width - 5;
+        else if(backgroundImage != nullptr && mx_prime + originalMaskImage->size().width >= backgroundImage->size().width)
+            mx =  backgroundImage->size().width - originalMaskImage->size().width - 5;
 
-    else
-        mx = mx_prime;
+        else
+            mx = mx_prime;
 
-    if(my_prime < 1)
-        my = 5;
+        if(my_prime < 1)
+            my = 5;
 
-    else if(backgroundImage != nullptr && my_prime + originalMaskImage->size().height >= backgroundImage->size().height)
-        my = backgroundImage->size().height - originalMaskImage->size().height - 5;
-    
-    else
-        my = my_prime;
+        else if(backgroundImage != nullptr && my_prime + originalMaskImage->size().height >= backgroundImage->size().height)
+            my = backgroundImage->size().height - originalMaskImage->size().height - 5;
+        
+        else
+            my = my_prime;
+    }
 }
 
 Mat CompositeCanvas::loadImage(string imagePath)
@@ -510,13 +514,18 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
     initPlacement();
 }
 
+void CompositeCanvas::alignMaskSize()
+{
+    resize(*originalMaskImage, *resizedMask, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+    resize(*originalImage, *resizedOriginal, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+}
+
 void CompositeCanvas::setSupportingStructuresForComposites()
 {
     if(mask_and_original_available())
     {
         variableMap.clear();
-        resize(*originalMaskImage, *resizedMask, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
-        resize(*originalImage, *resizedOriginal, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+        alignMaskSize();
         auto sourceMatrix = form_matrix(*resizedMask, variableMap);
         solver.compute(sourceMatrix);
     }
@@ -551,13 +560,16 @@ void CompositeCanvas::tap(Point p)
         showBoundingRectangle = false;
         objectSelected = ObjectType::None;
 
-        auto resizedSize = resizedMask->size();
-        
-        if(resizedSize.height != maskHeight || resizedSize.width != maskWidth)
+        if(resizedMask != nullptr)
         {
-            setSupportingStructuresForComposites();
+            auto resizedSize = resizedMask->size();
+        
+            if(resizedSize.height != maskHeight || resizedSize.width != maskWidth)
+            {
+                setSupportingStructuresForComposites();
+            }
         }
-
+    
     }
     
 }
