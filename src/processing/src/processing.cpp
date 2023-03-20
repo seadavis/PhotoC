@@ -405,7 +405,7 @@ void CompositeCanvas::scaleSelected(int dx, int dy)
     {
         int sign = 1;
 
-        if(dx < 0 && dy < 0)
+        if((dx < 0 && dy == 0) || (dy < 0 && dx == 0) || (dx < 0 && dy < 0))
             sign = -1;
         
         auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
@@ -562,12 +562,7 @@ void CompositeCanvas::tap(Point p)
 
         if(resizedMask != nullptr)
         {
-            auto resizedSize = resizedMask->size();
-        
-            if(resizedSize.height != maskHeight || resizedSize.width != maskWidth)
-            {
-                setSupportingStructuresForComposites();
-            }
+            setSupportingStructuresForComposites();
         }
     
     }
