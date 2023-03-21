@@ -31,7 +31,8 @@
         "type_traits": "cpp",
         "orderingmethods": "cpp",
         "sparsecholesky": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "functional": "cpp"
     },
     "files.exclude": {
         "**/build": true,

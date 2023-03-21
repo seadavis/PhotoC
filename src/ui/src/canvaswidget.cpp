@@ -134,6 +134,12 @@ void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
     connectButton->setEnabled(!isConnecting);
 }
 
+void CanvasWidget::handleLiveViewButton()
+{
+    auto f = mem_fn(&CanvasWidget::displayLiveView);
+    camera->StartLiveView();
+}
+
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
     verticalLayout = new QVBoxLayout(this);
@@ -150,8 +156,10 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 
     snapButton = new QPushButton("Snap!");
     connectButton = new QPushButton("Connect");
+    liveViewButton = new QPushButton("Live View");
     buttonLayout->addWidget(snapButton);
     buttonLayout->addWidget(connectButton);
+    buttonLayout->addWidget(liveViewButton);
 
     canvasViewer->setFixedSize(0, 0);
     canvasGrid->addWidget(backLabel, 0, 0);
@@ -163,6 +171,8 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     renderer = unique_ptr<QTRenderer>(new QTRenderer(canvasViewer));
     canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), renderer.get()));
     snapButton->setEnabled(false);
+
+    connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);
     connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
     connect(connectButton, &QPushButton::released, this, &CanvasWidget::handleConnectButton);
     connect(canvasViewer, &ImageViewer::mouseMoved, this, &CanvasWidget::handleMouseMoveOnImage);

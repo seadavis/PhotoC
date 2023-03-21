@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <QMouseEvent>
+#include <functional>
 #include "ImageViewer.h"
 #include "canvasmanager.h"
 #include "camera.h"
@@ -56,6 +57,7 @@ class CanvasWidget : public QWidget
       void handleMouseMoveOnImage(int x, int y);
       void handleMousePressOnImage(int x, int y);
       void handleMouseReleaseOnImage(int x, int y);
+      void handleLiveViewButton();
 
     private:
         unique_ptr<CanvasManager> canvasManager;
@@ -68,6 +70,7 @@ class CanvasWidget : public QWidget
         QLabel* backLabel;
         QPushButton* snapButton;  
         QPushButton* connectButton; 
+        QPushButton* liveViewButton;
         ICamera *camera;
         int canvasWidth;
         int canvasHeight;
@@ -77,6 +80,7 @@ class CanvasWidget : public QWidget
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;
 
+        void displayLiveView(Mat m);
         void sendCompositeUpdate();
         void cameraConnectingStatusChanged(bool isConnecting);
         void render();

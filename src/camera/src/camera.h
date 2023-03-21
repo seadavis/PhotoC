@@ -4,6 +4,8 @@
 #include <opencv2/imgproc.hpp>
 #include <gphoto2/gphoto2.h>
 #include <gphoto2/gphoto2-camera.h>
+#include <functional>
+#include <thread>
 
 using namespace cv;
 using namespace std;
@@ -43,6 +45,9 @@ class ICamera
         snaps a picutre and returns the snapped picture in an OpenCV matrix.
         */
         virtual Mat snap_picture() = 0;
+
+        template<class T>
+        virtual void StartLiveView(_Mem_fn<void (T::*)(cv::Mat m)> f) = 0;
 };
 
 
@@ -53,6 +58,9 @@ class FakeCamera : public ICamera
 		int connect() override;
 		Mat snap_picture() override;
 
+        template<class T>
+        void StartLiveView(_Mem_fn<void (T::*)(cv::Mat m)> f) override;
+
     private:
         string pic_path;
 };
@@ -62,15 +70,18 @@ class RemoteCamera : public ICamera
 	public:
         RemoteCamera();
 		int connect() override;
-
 		Mat snap_picture() override;
+        void StartLiveView(_Mem_fn<void (T::*)(cv::Mat m)> f) override;
+
         ~RemoteCamera();
 
     private:
         Camera	*camera;
         CameraFile *camera_file;
         GPContext *context;
-        char *buffer;
-        unsigned long buffer_size;
+        thread workerThread;
+
+        template <class T>
+        void ViewThreadWorker(_Mem_fn<void (T::*)(cv::Mat m)> f);
 
 };

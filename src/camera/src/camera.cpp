@@ -64,7 +64,6 @@ RemoteCamera::RemoteCamera()
 {
 	context = create_context();
 	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
-	buffer_size = 0;
 	gp_camera_new(&camera); 
 }
 
@@ -88,12 +87,8 @@ int RemoteCamera::connect()
 
 Mat RemoteCamera::snap_picture()
 {
-	if(buffer_size > 0)
-	{
-		buffer_size = 0;
-		delete buffer;
-	}
-
+	char* buffer;
+	unsigned long buffer_size = 0;
 	CameraFilePath camera_file_path;
 	printf("Capturing To Memory\n");
 	capture_to_memory(camera, context, &camera_file_path, camera_file, (const char**)&buffer, &buffer_size);
@@ -104,7 +99,35 @@ Mat RemoteCamera::snap_picture()
     auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
 	Mat img;
 	cvtColor(m, img, CV_BGR2BGRA);
-	return img;
+	auto clonedImage = img.clone();
+	delete buffer;
+	return clonedImage;
+}
+
+template<class T>
+void RemoteCamera::StartLiveView(_Mem_fn<void (T::*)(cv::Mat m)> display)
+{
+	camera_eosviewfinder(camera, context, 1);
+	workerThread = thread(&RemoteCamera::ViewThreadWorker, display, this);
+}
+
+template<class T>
+void RemoteCamera::ViewThreadWorker(_Mem_fn<void (T::*)(cv::Mat m)> display)
+{
+	while(true)
+	{
+		char* buffer;
+		unsigned long buffer_size = 0;
+		capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
+		auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
+		Mat img;
+		cvtColor(m, img, CV_BGR2BGRA);
+		auto clonedImage = img.clone();
+		delete buffer;
+		display(img);
+
+		this_thread::sleep_for (std::chrono::milliseconds(17));
+	}
 }
 
 RemoteCamera::~RemoteCamera()
@@ -128,6 +151,11 @@ Mat FakeCamera::snap_picture()
 int FakeCamera::connect()
 {
 	return 1;
+}
+
+void FakeCamera::StartLiveView(function<void(Mat)> f)
+{
+	
 }
 
 

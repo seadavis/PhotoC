@@ -87,8 +87,17 @@ namespace processing{
             void Operate(CompositeCanvas& canvas) override;
     };
 
+
     class BackgroundImageUpdate : public ICanvasOperator
     {
+        /**
+         * When passed in a mat, assumes 
+         * that Mat does not actually own the data.
+         * Which it doesn't since the mat comes from
+         * the camera.
+         * 
+         * So this manually destructs the data on destruction
+        */
         public:
             BackgroundImageUpdate(Mat backgroundImage) :
                 backgroundImage(backgroundImage)
@@ -97,6 +106,9 @@ namespace processing{
             Mat backgroundImage;
 
             void Operate(CompositeCanvas& canvas) override;
+
+           ~BackgroundImageUpdate();
+
     };
 
     class Resize : public ICanvasOperator
