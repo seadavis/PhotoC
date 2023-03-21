@@ -101,7 +101,7 @@ namespace processing{
 
     class Resize : public ICanvasOperator
     {
-           public:
+        public:
             Resize(int width, int height) :
                 width(width), height(height)
             {};
