@@ -69,7 +69,6 @@ RemoteCamera::RemoteCamera()
 
 int RemoteCamera::connect()
 {
-
 	int retval = gp_camera_init(camera, context);
 
 	if(retval == GP_ERROR_IO_USB_CLAIM)
