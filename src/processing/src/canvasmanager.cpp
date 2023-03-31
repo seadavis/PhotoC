@@ -54,10 +54,8 @@ CanvasManager::CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer)
 
 void CanvasManager::QueueOperation(shared_ptr<ICanvasOperator> op)
 {
-    lock_guard<mutex> lk(conditionVariableMutex);
     lock_guard<mutex> queueLock(queueMutex);
     operationQueue.push(op);
-    queueCV.notify_one();
 }
 
 shared_ptr<ICanvasOperator> CanvasManager::DeQueueNextOperation()
@@ -79,7 +77,8 @@ void CanvasManager::QueueWorker()
     {
         try
         {
-            unique_lock<mutex> lk(conditionVariableMutex);
+          
+            auto start = chrono::high_resolution_clock::now();
             shared_ptr<ICanvasOperator> op;
             while((op = DeQueueNextOperation()) != nullptr)
             {
@@ -90,9 +89,13 @@ void CanvasManager::QueueWorker()
             if(img.size().area() > 0)
             {
                 this->renderer->RenderImage(img);
-                queueCV.wait(lk);
             }
+            auto finish = chrono::high_resolution_clock::now();
+            auto milliseconds = chrono::duration_cast<std::chrono::milliseconds>(finish-start);
+            auto remaining = chrono::milliseconds(16) - milliseconds;
 
+            if(remaining.count() > 0)
+                this_thread::sleep_for(remaining);
         }
         catch(const std::exception& e)
         {

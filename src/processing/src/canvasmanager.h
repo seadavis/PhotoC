@@ -138,9 +138,7 @@ namespace processing{
             CompositeCanvas* canvas;
             IRenderImages* renderer;
             mutex queueMutex;
-            mutex conditionVariableMutex;
             queue<shared_ptr<ICanvasOperator>> operationQueue;
-            condition_variable queueCV;
             thread worker_thread;
             unique_lock<mutex> cvLock;
 
