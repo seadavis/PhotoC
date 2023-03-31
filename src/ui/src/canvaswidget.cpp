@@ -133,6 +133,7 @@ void CanvasWidget::handleConnectButton()
 void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
 {   
     connectButton->setEnabled(!isConnecting);
+    liveViewButton->setEnabled(!isConnecting);
 }
 
 void CanvasWidget::handleLiveViewButton()
@@ -176,6 +177,7 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     renderer = unique_ptr<QTRenderer>(new QTRenderer(canvasViewer));
     canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), renderer.get()));
     snapButton->setEnabled(false);
+    liveViewButton->setEnabled(false);
 
     connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);
     connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
