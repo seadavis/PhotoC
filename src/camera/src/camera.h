@@ -55,6 +55,8 @@ class ICamera
 
         virtual void StartLiveView() = 0;
 
+        virtual void StopLiveView() = 0;
+
         void SetReceiver(IReceiveImages* receiver)
         {
             this->receiver = receiver;
@@ -72,6 +74,7 @@ class FakeCamera : public ICamera
 		int connect() override;
 		Mat snap_picture() override;
         void StartLiveView() override;
+        void StopLiveView() override;
 
     private:
         string pic_path;
@@ -84,6 +87,7 @@ class RemoteCamera : public ICamera
 		int connect() override;
 		Mat snap_picture() override;
         void StartLiveView() override;
+        void StopLiveView() override;
 
         ~RemoteCamera();
 

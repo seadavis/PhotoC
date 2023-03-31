@@ -7,6 +7,7 @@
 #include <string.h>
 #include <iostream>
 #include <memory>
+#include <pthread.h>
 #include "camera.h"
 
 
@@ -108,9 +109,23 @@ void RemoteCamera::StartLiveView()
 	int status = camera_eosviewfinder(camera, context, 1);
 	if(status < GP_OK)
 	{
-		throw CameraOperationException("live view");
+		throw CameraOperationException("start live view");
 	}
 	workerThread = thread(&RemoteCamera::ViewThreadWorker,this);
+}
+
+void RemoteCamera::StopLiveView()
+{
+	auto handle = workerThread.native_handle();
+
+	/* ToDo - this code is platform specific */
+	pthread_cancel(handle);
+	int status = camera_eosviewfinder(camera, context, 0);
+
+	if(status < GP_OK)
+	{
+		throw CameraOperationException("stop live view");
+	}
 }
 
 void RemoteCamera::ViewThreadWorker()
@@ -155,6 +170,11 @@ int FakeCamera::connect()
 }
 
 void FakeCamera::StartLiveView()
+{
+	
+}
+
+void FakeCamera::StopLiveView()
 {
 	
 }
@@ -222,8 +242,6 @@ camera_eosviewfinder(Camera *camera, GPContext *context, int onoff) {
 		goto out;
 	}
 
-
-	
 	ret = gp_widget_get_value (child, &val);
 	if (ret < GP_OK) {
 		fprintf (stderr, "could not get widget value: %d\n", ret);

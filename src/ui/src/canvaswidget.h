@@ -77,6 +77,7 @@ class CanvasWidget : public QWidget, public IReceiveImages
         int canvasHeight;
         string maskPath;
         string originalPath;
+        bool isInLiveView;
 
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;

@@ -145,7 +145,19 @@ void CanvasWidget::handleLiveViewButton()
 {
     try
     {
-        camera->StartLiveView();
+        if(isInLiveView)
+        {
+            camera->StopLiveView();
+            liveViewButton->setText("Live View");
+            isInLiveView = false;
+        }
+        else
+        {
+            camera->StartLiveView();
+            liveViewButton->setText("Stop Live View");
+            isInLiveView = true;
+        }
+       
     }
     catch(const exception &ex)
     {
@@ -190,6 +202,7 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), renderer.get()));
     snapButton->setEnabled(false);
     liveViewButton->setEnabled(false);
+    isInLiveView = false;
 
     connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);
     connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
