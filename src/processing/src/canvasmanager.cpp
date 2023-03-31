@@ -7,12 +7,6 @@ void BackgroundImageUpdate::Operate(CompositeCanvas& compositeCanvas)
     compositeCanvas.setBackground(backgroundImage);
 }
 
-BackgroundImageUpdate::~BackgroundImageUpdate()
-{
-    uchar* ptr = backgroundImage.data;
-    delete ptr;
-}
-
 void CompositeImageUpdate::Operate(CompositeCanvas& compositeCanvas)
 {
     if(maskPath.length() != 0 && originalImagePath.length() != 0)

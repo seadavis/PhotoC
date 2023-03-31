@@ -38,12 +38,13 @@ class QTTransformImage : public TransformImage
     QWidget* widget;
 };
 
-class CanvasWidget : public QWidget
+class CanvasWidget : public QWidget, public IReceiveImages
 {
     public:
       CanvasWidget(QWidget *parent, ICamera* camera);
       void setMaskPath(string path);
       void setOriginalPath(string path);
+      void Receive(Mat m);
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;

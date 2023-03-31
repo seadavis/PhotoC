@@ -107,8 +107,6 @@ namespace processing{
 
             void Operate(CompositeCanvas& canvas) override;
 
-           ~BackgroundImageUpdate();
-
     };
 
     class Resize : public ICanvasOperator

@@ -29,6 +29,13 @@ using namespace std;
     
     };
 
+
+class IReceiveImages
+{
+    public:
+        virtual void Receive(Mat m) = 0;
+};
+
 class ICamera
 {
 
@@ -46,8 +53,15 @@ class ICamera
         */
         virtual Mat snap_picture() = 0;
 
-        template<class T>
-        virtual void StartLiveView(_Mem_fn<void (T::*)(cv::Mat m)> f) = 0;
+        virtual void StartLiveView() = 0;
+
+        void SetReceiver(IReceiveImages* receiver)
+        {
+            this->receiver = receiver;
+        }
+
+    protected:
+        IReceiveImages* receiver;
 };
 
 
@@ -57,9 +71,7 @@ class FakeCamera : public ICamera
         FakeCamera(string pic_path);
 		int connect() override;
 		Mat snap_picture() override;
-
-        template<class T>
-        void StartLiveView(_Mem_fn<void (T::*)(cv::Mat m)> f) override;
+        void StartLiveView() override;
 
     private:
         string pic_path;
@@ -71,7 +83,7 @@ class RemoteCamera : public ICamera
         RemoteCamera();
 		int connect() override;
 		Mat snap_picture() override;
-        void StartLiveView(_Mem_fn<void (T::*)(cv::Mat m)> f) override;
+        void StartLiveView() override;
 
         ~RemoteCamera();
 
@@ -81,7 +93,6 @@ class RemoteCamera : public ICamera
         GPContext *context;
         thread workerThread;
 
-        template <class T>
-        void ViewThreadWorker(_Mem_fn<void (T::*)(cv::Mat m)> f);
+        void ViewThreadWorker();
 
 };

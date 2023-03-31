@@ -112,6 +112,7 @@ void CanvasWidget::handleConnectButton()
         cameraConnectingStatusChanged(true);
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         camera->connect();
+        camera->SetReceiver(this);
         auto msg = new QMessageBox(this);
         msg->setWindowTitle("Success!");
         msg->setText("Successfully connected camera");
@@ -136,8 +137,12 @@ void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
 
 void CanvasWidget::handleLiveViewButton()
 {
-    auto f = mem_fn(&CanvasWidget::displayLiveView);
     camera->StartLiveView();
+}
+
+void CanvasWidget::Receive(Mat img)
+{
+    canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
 }
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
