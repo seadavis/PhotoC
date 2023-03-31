@@ -105,7 +105,11 @@ Mat RemoteCamera::snap_picture()
 
 void RemoteCamera::StartLiveView()
 {
-	camera_eosviewfinder(camera, context, 1);
+	int status = camera_eosviewfinder(camera, context, 1);
+	if(status < GP_OK)
+	{
+		throw CameraOperationException("live view");
+	}
 	workerThread = thread(&RemoteCamera::ViewThreadWorker,this);
 }
 
@@ -123,7 +127,7 @@ void RemoteCamera::ViewThreadWorker()
 		delete buffer;
 		receiver->Receive(img);
 
-		this_thread::sleep_for (std::chrono::milliseconds(17));
+		this_thread::sleep_for (chrono::milliseconds(17));
 	}
 }
 

@@ -81,6 +81,7 @@ class CanvasWidget : public QWidget, public IReceiveImages
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;
 
+        void showErrorMessage(const exception& ex);
         void displayLiveView(Mat m);
         void sendCompositeUpdate();
         void cameraConnectingStatusChanged(bool isConnecting);

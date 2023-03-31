@@ -99,9 +99,7 @@ void CanvasWidget::handleSnapButton()
     }
     catch(const exception &ex)
     {
-        auto msg = new QErrorMessage(this);
-        auto what = ex.what();
-        msg->showMessage(QString(what));
+        showErrorMessage(ex);
     }
 }
 
@@ -136,9 +134,23 @@ void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
     liveViewButton->setEnabled(!isConnecting);
 }
 
+void CanvasWidget::showErrorMessage(const exception& ex)
+{
+    auto msg = new QErrorMessage(this);
+    auto what = ex.what();
+    msg->showMessage(QString(what));
+}
+
 void CanvasWidget::handleLiveViewButton()
 {
-    camera->StartLiveView();
+    try
+    {
+        camera->StartLiveView();
+    }
+    catch(const exception &ex)
+    {
+       showErrorMessage(ex);
+    }
 }
 
 void CanvasWidget::Receive(Mat img)
