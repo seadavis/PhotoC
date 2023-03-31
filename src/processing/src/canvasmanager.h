@@ -3,6 +3,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <atomic>
 
 using namespace std;
 
@@ -131,7 +132,7 @@ namespace processing{
         public:
             CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer);
             void QueueOperation(shared_ptr<ICanvasOperator> op);
-
+            void KillThreads();
 
         private:
             //variables
@@ -141,6 +142,7 @@ namespace processing{
             queue<shared_ptr<ICanvasOperator>> operationQueue;
             thread worker_thread;
             unique_lock<mutex> cvLock;
+            atomic<bool> isKilled;
 
             //methods
             shared_ptr<ICanvasOperator> DeQueueNextOperation();

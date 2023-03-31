@@ -50,6 +50,13 @@ CanvasManager::CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer)
     this->renderer = renderer;
     this->canvas = canvas;
     this->worker_thread = thread(&CanvasManager::QueueWorker, this);
+    isKilled = false;
+}
+
+void CanvasManager::KillThreads()
+{
+    isKilled = true;
+    this->worker_thread.join();
 }
 
 void CanvasManager::QueueOperation(shared_ptr<ICanvasOperator> op)
@@ -73,7 +80,7 @@ shared_ptr<ICanvasOperator> CanvasManager::DeQueueNextOperation()
         
 void CanvasManager::QueueWorker()
 {
-    while(true)
+    while(!isKilled)
     {
         try
         {

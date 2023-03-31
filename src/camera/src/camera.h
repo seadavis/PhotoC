@@ -6,28 +6,29 @@
 #include <gphoto2/gphoto2-camera.h>
 #include <functional>
 #include <thread>
+#include <atomic>
 
 using namespace cv;
 using namespace std;
 
  
-    class CameraOperationException : public runtime_error {
-        public:
-            CameraOperationException(string operation_name) : runtime_error("Unable to perform a:  " + operation_name + ". Check camera connection.") {};
-    
-    };
+class CameraOperationException : public runtime_error {
+    public:
+        CameraOperationException(string operation_name) : runtime_error("Unable to perform a:  " + operation_name + ". Check camera connection.") {};
 
-     class CameraUSBClaimException : public runtime_error {
-        public:
-            CameraUSBClaimException() : runtime_error("Unable to claim USB for camera. You may already be connected.") {};
-    
-    };
+};
 
-    class CameraConnectionException : public runtime_error {
-        public:
-            CameraConnectionException() : runtime_error("Unable to connect to USB camera. Check your cables.") {};
-    
-    };
+    class CameraUSBClaimException : public runtime_error {
+    public:
+        CameraUSBClaimException() : runtime_error("Unable to claim USB for camera. You may already be connected.") {};
+
+};
+
+class CameraConnectionException : public runtime_error {
+    public:
+        CameraConnectionException() : runtime_error("Unable to connect to USB camera. Check your cables.") {};
+
+};
 
 
 class IReceiveImages
@@ -96,7 +97,7 @@ class RemoteCamera : public ICamera
         CameraFile *camera_file;
         GPContext *context;
         thread workerThread;
-
+        atomic<bool> isLiveViewThreadOpen;
         void ViewThreadWorker();
 
 };

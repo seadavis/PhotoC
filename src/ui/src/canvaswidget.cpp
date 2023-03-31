@@ -170,6 +170,11 @@ void CanvasWidget::Receive(Mat img)
     canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
 }
 
+CanvasWidget::~CanvasWidget()
+{
+    canvasManager->KillThreads();
+}
+
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
     verticalLayout = new QVBoxLayout(this);

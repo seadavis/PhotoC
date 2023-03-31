@@ -65,6 +65,7 @@ RemoteCamera::RemoteCamera()
 	context = create_context();
 	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
 	gp_camera_new(&camera); 
+	isLiveViewThreadOpen = false;
 }
 
 int RemoteCamera::connect()
@@ -105,6 +106,7 @@ Mat RemoteCamera::snap_picture()
 
 void RemoteCamera::StartLiveView()
 {
+	isLiveViewThreadOpen = true;
 	int status = camera_eosviewfinder(camera, context, 1);
 	if(status < GP_OK)
 	{
@@ -115,10 +117,8 @@ void RemoteCamera::StartLiveView()
 
 void RemoteCamera::StopLiveView()
 {
-	auto handle = workerThread.native_handle();
-
-	/* ToDo - this code is platform specific */
-	pthread_cancel(handle);
+	isLiveViewThreadOpen = false;
+	workerThread.join();
 	int status = camera_eosviewfinder(camera, context, 0);
 
 	if(status < GP_OK)
@@ -129,7 +129,7 @@ void RemoteCamera::StopLiveView()
 
 void RemoteCamera::ViewThreadWorker()
 {
-	while(true)
+	while(isLiveViewThreadOpen)
 	{
 		char* buffer;
 		unsigned long buffer_size = 0;

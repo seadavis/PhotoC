@@ -46,6 +46,8 @@ class CanvasWidget : public QWidget, public IReceiveImages
       void setOriginalPath(string path);
       void Receive(Mat m);
 
+      ~CanvasWidget();
+
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
 
