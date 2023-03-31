@@ -77,7 +77,6 @@ void CanvasManager::QueueWorker()
     {
         try
         {
-          
             auto start = chrono::high_resolution_clock::now();
             shared_ptr<ICanvasOperator> op;
             while((op = DeQueueNextOperation()) != nullptr)
