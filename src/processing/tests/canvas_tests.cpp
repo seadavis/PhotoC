@@ -260,7 +260,6 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
     canvasManager.QueueOperation(make_shared<TapImage>(p1));
     canvasManager.QueueOperation(make_shared<TapImage>(p2));
     Mat result = renderer.WaitUntilImageAvailable();
-    canvasManager.KillThreads();
     auto outImage = "double_tap_" + to_string(p1.x) + "_" + to_string(p1.y) + ".png";
     imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
     Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
@@ -304,7 +303,6 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
     Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
     bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
     ASSERT_TRUE(equal);
-    canvasManager.KillThreads();
 }
 
 TEST_P(CompositeMissingOneImage, MissingOrMismatching)
@@ -386,7 +384,7 @@ TEST_P(ScalingImage, ScaleTests){
   canvasManager.QueueOperation(make_shared<TransformImage>(tapPoint, movePoint.x, movePoint.y));
   canvasManager.QueueOperation(make_shared<TapImage>(Point(0, 0)));
 
-  Mat result = testRenderer.outputImage;
+  Mat result = testRenderer.WaitUntilImageAvailable();
 
   auto fileName =  get<6>(args);
 

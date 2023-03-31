@@ -53,6 +53,11 @@ CanvasManager::CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer)
     isKilled = false;
 }
 
+CanvasManager::~CanvasManager()
+{
+    this->KillThreads();
+}
+
 void CanvasManager::KillThreads()
 {
     isKilled = true;

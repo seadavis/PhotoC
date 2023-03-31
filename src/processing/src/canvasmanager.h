@@ -132,7 +132,7 @@ namespace processing{
         public:
             CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer);
             void QueueOperation(shared_ptr<ICanvasOperator> op);
-            void KillThreads();
+            ~CanvasManager();           
 
         private:
             //variables
@@ -147,7 +147,7 @@ namespace processing{
             //methods
             shared_ptr<ICanvasOperator> DeQueueNextOperation();
             void QueueWorker();
-
+             void KillThreads();
 
     };
 
