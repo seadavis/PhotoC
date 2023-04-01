@@ -448,6 +448,11 @@ TEST(LongExposures, ShortExposure){
   for (const auto & entry : filesystem::directory_iterator(path))
   {
       Mat img = imread(entry.path().c_str());
+
+      // we can't just add as that makes everything much too bright
+      // we'll have to come up with some more intelligent stacking algorithms.
+      // and they all need to be wicked fast.
+      // which will then turn this into a problem.
       total_image = total_image + img*0.25;
   }
 
