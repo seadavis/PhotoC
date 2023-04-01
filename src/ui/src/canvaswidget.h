@@ -15,16 +15,6 @@ using namespace cv;
 using namespace std;
 using namespace processing;
 
-class QTRenderer : public IRenderImages
-{
-    public:
-      QTRenderer(ImageViewer* viewer);
-      void RenderImage(Mat& m) override;
-
-    private:
-      ImageViewer* viewer;
-};
-
 class QTTransformImage : public TransformImage
 {
   
@@ -38,13 +28,14 @@ class QTTransformImage : public TransformImage
     QWidget* widget;
 };
 
-class CanvasWidget : public QWidget, public IReceiveImages
+class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
 {
     public:
       CanvasWidget(QWidget *parent, ICamera* camera);
       void setMaskPath(string path);
       void setOriginalPath(string path);
       void Receive(Mat m);
+      void RenderImage(Mat &m);
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
@@ -63,7 +54,6 @@ class CanvasWidget : public QWidget, public IReceiveImages
     private:
         unique_ptr<CanvasManager> canvasManager;
         unique_ptr<CompositeCanvas> canvas;
-        unique_ptr<QTRenderer> renderer;
         QVBoxLayout* verticalLayout;
         QHBoxLayout* buttonLayout;
         QGridLayout* canvasGrid;

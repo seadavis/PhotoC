@@ -15,16 +15,6 @@
 
 constexpr double SIZE_FACTOR = 0.65;
 
-QTRenderer::QTRenderer(ImageViewer* viewer)
-{
-    this->viewer = viewer;
-}
-
-void QTRenderer::RenderImage(Mat& m)
-{
-    viewer->setImage(m);
-}
-
 void QTTransformImage::OnHit(ObjectType type)
 {
      if(type == ObjectType::Image)
@@ -170,6 +160,10 @@ void CanvasWidget::Receive(Mat img)
     canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
 }
 
+void CanvasWidget::RenderImage(Mat& img)
+{
+    canvasViewer->setImage(img);
+}
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
@@ -199,8 +193,7 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     verticalLayout->addLayout(buttonLayout);
     buttonLayout->setAlignment(Qt::AlignCenter);
     canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
-    renderer = unique_ptr<QTRenderer>(new QTRenderer(canvasViewer));
-    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), renderer.get()));
+    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), this));
     snapButton->setEnabled(false);
     liveViewButton->setEnabled(false);
     isInLiveView = false;
