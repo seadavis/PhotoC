@@ -255,7 +255,7 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
 
     canvasManager.QueueOperation(make_shared<Resize>(1300, 1300));
     canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
-    canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(maskPath, originalPath));
+    canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(originalPath, maskPath));
     canvasManager.QueueOperation(make_shared<TapImage>(p1));
     canvasManager.QueueOperation(make_shared<TapImage>(p2));
 
@@ -335,16 +335,12 @@ TEST_P(TranslationData, ValidTranslations) {
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
 
   auto canvas = CompositeCanvas();
-  canvas.setSize(get<2>(args), get<3>(args));
-  canvas.setBackground(backgroundImage);
-  canvas.setComposite(mask, original);
-
   auto testRenderer = TestRenderer();
   auto canvasManager = CanvasManager(&canvas, &testRenderer);
 
   canvasManager.QueueOperation(make_shared<Resize>(get<2>(args), get<3>(args)));
   canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
-  canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(mask, original));
+  canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(original, mask));
   canvasManager.QueueOperation(make_shared<TapImage>(get<4>(args)));
   canvasManager.QueueOperation(make_shared<TransformImage>(get<4>(args), get<5>(args), get<6>(args)));
 
@@ -378,7 +374,7 @@ TEST_P(ScalingImage, ScaleTests){
 
   canvasManager.QueueOperation(make_shared<Resize>(800, 547));
   canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
-  canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(mask, original));
+  canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(original, mask));
   canvasManager.QueueOperation(make_shared<TapImage>(tapPoint_1));
   canvasManager.QueueOperation(make_shared<TransformImage>(tapPoint_1, movePoint_1.x, movePoint_1.y));
   canvasManager.QueueOperation(make_shared<TapImage>(tapPoint));
