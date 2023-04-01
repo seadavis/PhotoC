@@ -5,6 +5,7 @@
 #include <string_view>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
+#include <filesystem>
 
 using namespace std;
 using namespace processing;
@@ -415,6 +416,44 @@ TEST_P(Composites, BasicComposite) {
   Mat expectedMat = imread("./src/processing/tests/target_composites/" + targetFileName);
   bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
   ASSERT_TRUE(equal);
+}
+
+string type2str(int type) {
+  string r;
+
+  uchar depth = type & CV_MAT_DEPTH_MASK;
+  uchar chans = 1 + (type >> CV_CN_SHIFT);
+
+  switch ( depth ) {
+    case CV_8U:  r = "8U"; break;
+    case CV_8S:  r = "8S"; break;
+    case CV_16U: r = "16U"; break;
+    case CV_16S: r = "16S"; break;
+    case CV_32S: r = "32S"; break;
+    case CV_32F: r = "32F"; break;
+    case CV_64F: r = "64F"; break;
+    default:     r = "User"; break;
+  }
+
+  r += "C";
+  r += (chans+'0');
+
+  return r;
+}
+
+TEST(LongExposures, ShortExposure){
+
+  std::string path = "./src/processing/tests/long_exposure/5Photos_10Seconds";
+  Mat total_image = Mat(cv::Size(4496, 3000), CV_8UC3, Scalar(0)); 
+  for (const auto & entry : filesystem::directory_iterator(path))
+  {
+      Mat img = imread(entry.path().c_str());
+      total_image = total_image + img*0.25;
+  }
+
+  total_image = total_image;
+        
+  imwrite("./src/processing/tests/long_exposure_tests/5Photos_10Seconds/test.png", total_image);
 }
 
 Mat loadBackgroundImage(string path)
