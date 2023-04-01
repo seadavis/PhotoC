@@ -253,19 +253,18 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
     auto renderer = TestRenderer();
     auto canvasManager = CanvasManager(&canvas, &renderer);
 
-    canvas.setSize(1300, 1300);    
-    canvas.setBackground(backgroundImage);
-    canvas.setComposite(maskPath, originalPath);
-
+    canvasManager.QueueOperation(make_shared<Resize>(1300, 1300));
+    canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
+    canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(maskPath, originalPath));
     canvasManager.QueueOperation(make_shared<TapImage>(p1));
     canvasManager.QueueOperation(make_shared<TapImage>(p2));
+
     Mat result = renderer.WaitUntilImageAvailable();
     auto outImage = "double_tap_" + to_string(p1.x) + "_" + to_string(p1.y) + ".png";
     imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
     Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
     bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
     ASSERT_TRUE(equal);
-
 }
 
 TEST_P(BoundingRectangleHitData, SingleStepTests)
@@ -343,10 +342,13 @@ TEST_P(TranslationData, ValidTranslations) {
   auto testRenderer = TestRenderer();
   auto canvasManager = CanvasManager(&canvas, &testRenderer);
 
+  canvasManager.QueueOperation(make_shared<Resize>(get<2>(args), get<3>(args)));
+  canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
+  canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(mask, original));
   canvasManager.QueueOperation(make_shared<TapImage>(get<4>(args)));
   canvasManager.QueueOperation(make_shared<TransformImage>(get<4>(args), get<5>(args), get<6>(args)));
 
-  Mat result = canvas.currentImg();
+  Mat result = testRenderer.WaitUntilImageAvailable();
 
   auto fileName =  get<0>(args) + "_" + get<1>(args) + "_" + to_string(get<5>(args)) + "_" + to_string(get<6>(args)) + ".png";
 
@@ -366,10 +368,6 @@ TEST_P(ScalingImage, ScaleTests){
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
 
   auto canvas = CompositeCanvas();
-  canvas.setSize(800, 547);
-  canvas.setBackground(backgroundImage);
-  canvas.setComposite(mask, original);
-
   auto testRenderer = TestRenderer();
   auto canvasManager = CanvasManager(&canvas, &testRenderer);
   
@@ -378,6 +376,9 @@ TEST_P(ScalingImage, ScaleTests){
   Point tapPoint = get<4>(args);
   Point movePoint = get<5>(args);
 
+  canvasManager.QueueOperation(make_shared<Resize>(800, 547));
+  canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
+  canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(mask, original));
   canvasManager.QueueOperation(make_shared<TapImage>(tapPoint_1));
   canvasManager.QueueOperation(make_shared<TransformImage>(tapPoint_1, movePoint_1.x, movePoint_1.y));
   canvasManager.QueueOperation(make_shared<TapImage>(tapPoint));
@@ -412,7 +413,7 @@ TEST_P(Composites, BasicComposite) {
   canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
   canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(original, mask));
   
-  Mat result = renderer.outputImage;
+  Mat result = renderer.WaitUntilImageAvailable();
 
   imwrite( "./src/processing/tests/test_composites/" + targetFileName, result);
   Mat expectedMat = imread("./src/processing/tests/target_composites/" + targetFileName);
