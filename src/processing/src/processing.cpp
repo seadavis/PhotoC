@@ -9,6 +9,8 @@ using namespace std;
 using namespace processing;
 
 constexpr int Radius = 5;
+constexpr int AbsMaxHeight = 500;
+constexpr int AbsMaxWidth = 500;
 
 const Scalar SelectionColor = Scalar(0, 255, 0, 255);
 
@@ -411,10 +413,28 @@ void CompositeCanvas::scaleSelected(int dx, int dy)
         auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
         auto deltaHeight = maskHeight + deltaPixels;
         auto deltaWidth = maskWidth + deltaPixels;
+        
+        int maxHeight;
+        int maxWidth;
 
-        auto maxWidth = backgroundImage == nullptr ? width : backgroundImage->size().width;
-        auto maxHeight = backgroundImage == nullptr ? height : backgroundImage->size().height;
-
+        if(backgroundImage == nullptr)
+        {
+            maxHeight = AbsMaxHeight;
+            maxWidth = AbsMaxWidth;
+        }
+        else
+        {
+            if(backgroundImage->size().width < AbsMaxWidth)
+                maxWidth = backgroundImage->size().width;
+            else
+                maxWidth = AbsMaxWidth;
+            
+            if(backgroundImage->size().height < AbsMaxHeight)
+                maxHeight = backgroundImage->size().height;
+            else
+                maxHeight = AbsMaxHeight;
+        }
+        
         if(deltaHeight >= maxHeight)
             deltaHeight = maxHeight - 10;
 
