@@ -165,6 +165,11 @@ void CanvasWidget::RenderImage(Mat& img)
     canvasViewer->setImage(img);
 }
 
+void CanvasWidget::NotifyLongRender()
+{
+    cout << "Long Render \n";
+}
+
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
     verticalLayout = new QVBoxLayout(this);

@@ -40,6 +40,7 @@ class TestRenderer : public IRenderImages{
       imgSet = false;
     };
     void RenderImage(Mat& m) override;
+    void NotifyLongRender(){};
     Mat WaitUntilImageAvailable();
     Mat outputImage;
 

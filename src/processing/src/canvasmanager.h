@@ -5,6 +5,8 @@
 #include <queue>
 #include <atomic>
 
+typedef std::chrono::_V2::system_clock::time_point time_point;
+
 using namespace std;
 
 namespace processing{
@@ -16,6 +18,7 @@ namespace processing{
     {
         public:
             virtual void RenderImage(Mat& m) = 0;
+            virtual void NotifyLongRender() = 0;
     };
 
     class ICanvasOperator
@@ -141,13 +144,17 @@ namespace processing{
             mutex queueMutex;
             queue<shared_ptr<ICanvasOperator>> operationQueue;
             thread worker_thread;
-            unique_lock<mutex> cvLock;
+            thread renderMonitorThread;
             atomic<bool> isKilled;
+            mutex renderingTimeMutex;
+            bool isRendering;
+            time_point renderingStartTime;
 
             //methods
             shared_ptr<ICanvasOperator> DeQueueNextOperation();
             void QueueWorker();
-             void KillThreads();
+            void RenderingTimeMonitor();
+            void KillThreads();
 
     };
 

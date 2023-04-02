@@ -47,10 +47,12 @@ void Resize::Operate(CompositeCanvas& compositeCanvas)
 
 CanvasManager::CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer)
 {
+    isKilled = false;
+    isRendering = false;
     this->renderer = renderer;
     this->canvas = canvas;
     this->worker_thread = thread(&CanvasManager::QueueWorker, this);
-    isKilled = false;
+    renderMonitorThread = thread(&CanvasManager::RenderingTimeMonitor, this);
 }
 
 CanvasManager::~CanvasManager()
@@ -62,6 +64,7 @@ void CanvasManager::KillThreads()
 {
     isKilled = true;
     this->worker_thread.join();
+    this->renderMonitorThread.join();
 }
 
 void CanvasManager::QueueOperation(shared_ptr<ICanvasOperator> op)
@@ -82,6 +85,40 @@ shared_ptr<ICanvasOperator> CanvasManager::DeQueueNextOperation()
 
     return element;
 }
+
+void CanvasManager::RenderingTimeMonitor()
+{
+    while(!isKilled)
+    {
+        bool isRendering = true;
+        time_point renderingStartTime;
+
+        while(!isKilled)
+        {
+            {
+                lock_guard<mutex> lk(renderingTimeMutex);
+                isRendering = this->isRendering;
+                renderingStartTime = this->renderingStartTime;
+            }   
+
+            if(isRendering)
+            {
+                auto now = chrono::high_resolution_clock::now();
+                auto ms =  chrono::duration_cast<std::chrono::milliseconds>(now - renderingStartTime).count();
+                if(ms > 300)
+                    renderer->NotifyLongRender();
+
+                this_thread::sleep_for(chrono::milliseconds(50));
+            }
+
+            else{
+                break;
+            }
+        }
+       
+        this_thread::sleep_for(chrono::milliseconds(250));
+    }
+}
         
 void CanvasManager::QueueWorker()
 {
@@ -91,16 +128,35 @@ void CanvasManager::QueueWorker()
         {
             auto start = chrono::high_resolution_clock::now();
             shared_ptr<ICanvasOperator> op;
+            int opCount = 0;
+
             while((op = DeQueueNextOperation()) != nullptr)
             {
                 op->Operate(*canvas);
+                opCount++;
             }
-            auto img = canvas->currentImg();
 
-            if(img.size().area() > 0)
+            if(opCount > 0)
             {
-                this->renderer->RenderImage(img);
+                {
+                    lock_guard<mutex> lk(renderingTimeMutex);
+                    renderingStartTime = chrono::high_resolution_clock::now();
+                    isRendering = true;
+                }
+
+                auto img = canvas->currentImg();
+                if(img.size().area() > 0)
+                {
+                    this->renderer->RenderImage(img);
+                }
+
+                {
+                    lock_guard<mutex> lk(renderingTimeMutex);
+                    isRendering = false;
+                }
+
             }
+            
             auto finish = chrono::high_resolution_clock::now();
             auto milliseconds = chrono::duration_cast<std::chrono::milliseconds>(finish-start);
             auto remaining = chrono::milliseconds(16) - milliseconds;

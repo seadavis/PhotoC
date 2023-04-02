@@ -36,10 +36,11 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
       void setOriginalPath(string path);
       void Receive(Mat m);
       void RenderImage(Mat &m);
+      void NotifyLongRender();
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
-      
+
     private slots:
       void handleSnapButton();
       void handleConnectButton();     
