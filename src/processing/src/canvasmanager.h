@@ -18,7 +18,8 @@ namespace processing{
     {
         public:
             virtual void RenderImage(Mat& m) = 0;
-            virtual void NotifyLongRender() = 0;
+            virtual void RenderStarted() = 0;
+            virtual void RenderStopped() = 0;
     };
 
     class ICanvasOperator
@@ -144,7 +145,6 @@ namespace processing{
             mutex queueMutex;
             queue<shared_ptr<ICanvasOperator>> operationQueue;
             thread worker_thread;
-            thread renderMonitorThread;
             atomic<bool> isKilled;
             mutex renderingTimeMutex;
             bool isRendering;

@@ -6,10 +6,16 @@
 #include <memory>
 #include <vector>
 #include <QMouseEvent>
+#include <QMessageBox>
 #include <functional>
+#include <atomic>
+#include <thread>
+#include <mutex>
 #include "ImageViewer.h"
 #include "canvasmanager.h"
 #include "camera.h"
+
+#pragma once
 
 using namespace cv;
 using namespace std;
@@ -30,13 +36,22 @@ class QTTransformImage : public TransformImage
 
 class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
 {
+    Q_OBJECT
+
     public:
       CanvasWidget(QWidget *parent, ICamera* camera);
       void setMaskPath(string path);
       void setOriginalPath(string path);
       void Receive(Mat m);
       void RenderImage(Mat &m);
-      void NotifyLongRender();
+      void RenderStarted();
+      void RenderStopped();
+
+      ~CanvasWidget();
+
+    public slots:
+      void displayLoadingWindow();
+      void hideLoadingWindow();
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
@@ -66,6 +81,11 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
         string maskPath;
         string originalPath;
         bool isInLiveView;
+        QMessageBox* longRenderMessageBox;
+        atomic<bool> msgBoxDisplayed;
+        atomic<bool> isKilled;
+        ulong currentRenderNumber;
+        mutex renderNumberMutex;
 
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;
@@ -74,6 +94,8 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
         void displayLiveView(Mat m);
         void sendCompositeUpdate();
         void cameraConnectingStatusChanged(bool isConnecting);
+        void renderTimeMonitor();
+        std::thread renderTimeMonitorThread;
         void render();
 
 };
