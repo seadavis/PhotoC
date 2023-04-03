@@ -9,66 +9,49 @@
 #include <sstream>
 #include <QCursor>
 #include <QErrorMessage>
-
+#include <QCoreApplication>
 #include "canvaswidget.h"
 
 constexpr double SIZE_FACTOR = 0.65;
+constexpr auto RenderMonitorSleepMS = chrono::milliseconds(500);
 
-void CanvasWidget::setCompositesIfAvailable()
+void QTTransformImage::OnHit(ObjectType type)
 {
-    if(maskPath.length() != 0 && originalPath.length() != 0)
+    if(type == ObjectType::Image)
     {
-        canvas->setComposite(maskPath, originalPath);
-        render();
+        widget->setCursor(QCursor(Qt::CursorShape::SizeAllCursor));
+    }
+    else if (type == ObjectType::SizeCircle)
+    {
+        widget->setCursor(QCursor(Qt::CursorShape::SizeFDiagCursor));
+    }
+    else if(type == ObjectType::None)
+    {
+        widget->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
     }
 }
 
 void CanvasWidget::handleMouseMoveOnImage(int x, int y)
 {
-    auto hitType = canvas->hit(Point(x, y));
-
-    if(hitType == ObjectType::Image)
-    {
-        setCursor(QCursor(Qt::CursorShape::SizeAllCursor));
-    }
-    else if (hitType == ObjectType::SizeCircle)
-    {
-        setCursor(QCursor(Qt::CursorShape::SizeFDiagCursor));
-    }
-    else if(hitType == ObjectType::None)
-    {
-        setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    }
 
     int delta_x = x - prev_mouse_x;
     int delta_y = y - prev_mouse_y;
-
+    canvasManager->QueueOperation(make_shared<QTTransformImage>(Point(x,y), delta_x, delta_y, this));
     prev_mouse_x = x;
     prev_mouse_y = y;
-
-    canvas->cursorMoved(delta_x, delta_y);
-    render();
 }
 
 void CanvasWidget::handleMouseReleaseOnImage(int x, int y)
 {
     setCursor(QCursor(Qt::CursorShape::ArrowCursor));
-    canvas->releaseObject();
-    render();
+    canvasManager->QueueOperation(make_shared<ReleaseImage>());
 }
 
 void CanvasWidget::handleMousePressOnImage(int x, int y)
 {
-    canvas->tap(Point(x, y));
-    render();
-
+    canvasManager->QueueOperation(make_shared<TapImage>(Point(x, y)));
     prev_mouse_x = x;
     prev_mouse_y = y;
-}
-
-void CanvasWidget::render()
-{
-    canvasViewer->setImage(canvas->currentImg());
 }
 
 void CanvasWidget::resizeEvent(QResizeEvent* event) 
@@ -82,34 +65,176 @@ void CanvasWidget::resizeEvent(QResizeEvent* event)
 void CanvasWidget::setMaskPath(string path)
 {
     maskPath = path;
-    setCompositesIfAvailable();
+    sendCompositeUpdate();
 }
 
 void CanvasWidget::setOriginalPath(string path)
 {
     originalPath = path;
-    setCompositesIfAvailable();
+    sendCompositeUpdate();
 }
 
-void CanvasWidget::handleButton()
+void CanvasWidget::sendCompositeUpdate()
+{
+    auto update = CompositeImageUpdate(originalPath, maskPath);
+    canvasManager->QueueOperation(make_shared<CompositeImageUpdate>(originalPath, maskPath));
+}
+
+void CanvasWidget::handleSnapButton()
 {  
     try
     {
         Mat img =  camera->snap_picture();
-        canvas->setBackground(img);
-        render();
+        canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
     }
     catch(const exception &ex)
     {
-        auto msg = new QErrorMessage(this);
+        showErrorMessage(ex);
+    }
+}
+
+void CanvasWidget::handleConnectButton()
+{
+    try
+    {   
+        cameraConnectingStatusChanged(true);
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+        camera->connect();
+        camera->SetReceiver(this);
+        auto msg = new QMessageBox(this);
+        msg->setWindowTitle("Success!");
+        msg->setText("Successfully connected camera");
+        msg->show();
+        cameraConnectingStatusChanged(false);
+        snapButton->setEnabled(true);
+    }
+    catch(const exception &ex)
+    {
+        cameraConnectingStatusChanged(false);
+        auto msg = new QErrorMessage(this);	
         auto what = ex.what();
         msg->showMessage(QString(what));
+        snapButton->setEnabled(false);		
     }
+}
+
+void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
+{   
+    connectButton->setEnabled(!isConnecting);
+    liveViewButton->setEnabled(!isConnecting);
+}
+
+void CanvasWidget::showErrorMessage(const exception& ex)
+{
+    auto msg = new QErrorMessage(this);
+    auto what = ex.what();
+    msg->showMessage(QString(what));
+}
+
+void CanvasWidget::handleLiveViewButton()
+{
+    try
+    {
+        if(isInLiveView)
+        {
+            camera->StopLiveView();
+            liveViewButton->setText("Live View");
+            isInLiveView = false;
+        }
+        else
+        {
+            camera->StartLiveView();
+            liveViewButton->setText("Stop Live View");
+            isInLiveView = true;
+        }
+       
+    }
+    catch(const exception &ex)
+    {
+       showErrorMessage(ex);
+    }
+}
+
+void CanvasWidget::Receive(Mat img)
+{
+    canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
+}
+
+void CanvasWidget::RenderImage(Mat& img)
+{
+    canvasViewer->setImage(img);
+}
+
+void CanvasWidget::RenderStarted()
+{
+    lock_guard<mutex> lk(renderNumberMutex);
+    currentRenderNumber = currentRenderNumber + 1;
+    //cout << "Render Started Current Render Number: " << currentRenderNumber << "\n";
+}
+
+void CanvasWidget::RenderStopped()
+{
+    //cout << "Render Stopped Current Render Number: " << currentRenderNumber << "\n";
+    QMetaObject::invokeMethod(this,"hideLoadingWindow", Qt::AutoConnection );
+}
+
+void CanvasWidget::displayLoadingWindow()
+{
+    if(!msgBoxDisplayed)
+    {
+        longRenderMessageBox->exec();
+        msgBoxDisplayed = true;
+    }
+}
+
+void CanvasWidget::hideLoadingWindow()
+{
+    if(msgBoxDisplayed)
+    {
+        longRenderMessageBox->done(0);
+        msgBoxDisplayed = false;
+    }
+}
+
+void CanvasWidget::renderTimeMonitor()
+{
+    while(!isKilled)
+    {
+        ulong lastSeenRenderNumber;
+
+        {
+            lock_guard<mutex> lk(renderNumberMutex);
+            lastSeenRenderNumber = this->currentRenderNumber;
+        }
+
+        //cout << "Current Render Number Pre Sleep: " << lastSeenRenderNumber << "\n";
+        std::this_thread::sleep_for(RenderMonitorSleepMS);
+        //cout << "Current Render Number Post Sleep: " << lastSeenRenderNumber << "\n";
+
+        bool hasRenderNumberChanged = false;
+
+        {
+            lock_guard<mutex> lk(renderNumberMutex);
+            hasRenderNumberChanged = lastSeenRenderNumber != this->currentRenderNumber;
+        }
+
+        if(!hasRenderNumberChanged)
+        {
+            QMetaObject::invokeMethod(this,"displayLoadingWindow", Qt::AutoConnection );
+        }
+    }
+}
+
+CanvasWidget::~CanvasWidget()
+{
+    isKilled = true;
+    renderTimeMonitorThread.join();
 }
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
     verticalLayout = new QVBoxLayout(this);
+    buttonLayout = new QHBoxLayout(this);
     this->camera = camera;
     canvasGrid = new QGridLayout(parent);
     backLabel = new QLabel;
@@ -120,15 +245,35 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 
     canvasViewer = new ImageViewer;
 
-    button = new QPushButton("Snap!");
+    snapButton = new QPushButton("Snap!");
+    connectButton = new QPushButton("Connect");
+    liveViewButton = new QPushButton("Live View");
+    buttonLayout->addWidget(snapButton);
+    buttonLayout->addWidget(connectButton);
+    buttonLayout->addWidget(liveViewButton);
+
     canvasViewer->setFixedSize(0, 0);
     canvasGrid->addWidget(backLabel, 0, 0);
     canvasGrid->addWidget(canvasViewer, 0, 0, Qt::AlignCenter);
     verticalLayout->addLayout(canvasGrid);
-    verticalLayout->addWidget(button);
+    verticalLayout->addLayout(buttonLayout);
+    buttonLayout->setAlignment(Qt::AlignCenter);
     canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
-    
-    connect(button, &QPushButton::released, this, &CanvasWidget::handleButton);
+    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), this));
+    snapButton->setEnabled(false);
+    liveViewButton->setEnabled(false);
+    isInLiveView = false;
+    msgBoxDisplayed = false;
+    isKilled = false;
+    currentRenderNumber = 0;
+    renderTimeMonitorThread = std::thread(&CanvasWidget::renderTimeMonitor, this);
+    longRenderMessageBox = new QMessageBox(QMessageBox::Icon::Critical, 
+                                            "Loading", 
+                                            "Xposed is taking a long time to render. Please wait until rendering operation is complete");
+
+    connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);
+    connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
+    connect(connectButton, &QPushButton::released, this, &CanvasWidget::handleConnectButton);
     connect(canvasViewer, &ImageViewer::mouseMoved, this, &CanvasWidget::handleMouseMoveOnImage);
     connect(canvasViewer, &ImageViewer::mousePressed, this, &CanvasWidget::handleMousePressOnImage);
     connect(canvasViewer, &ImageViewer::mouseReleased, this, &CanvasWidget::handleMouseReleaseOnImage);

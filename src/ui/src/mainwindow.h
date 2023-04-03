@@ -15,14 +15,13 @@ class MainWindow : public QMainWindow
       MainWindow(ICamera* camera);
 
    private:
-      ICamera* camera;
       CanvasWidget* canvas;
       QPushButton* button;   
       QDockWidget* leftDock;
       CompositeSelection* compositeSelection;
 
       void updateOriginalPhotoPath(string path);
-
+      void updateCameraConnectingStatus(bool isConnecting);
       void updateMaskPhotoPath(string path);
 
 };

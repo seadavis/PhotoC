@@ -3,11 +3,12 @@ cmake_minimum_required(VERSION 3.16)
 project(field_of_view VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_DEBUG_POSTFIX d)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
 set(RESOURCE_FILES ./ui/src/app_resources.qrc)
+set(BENCHMARK_ENABLE_LIBPFM ON)
 
 find_package( Qt5Core REQUIRED )
 find_package( Qt5Widgets REQUIRED )
@@ -15,6 +16,7 @@ find_package( Qt5Gui REQUIRED )
 find_package(OpenCV REQUIRED )
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(benchmark REQUIRED)
+find_package(Threads REQUIRED)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -29,7 +31,6 @@ add_subdirectory(./camera/src)
 add_subdirectory(./ui/src)
 add_subdirectory(./processing/src)
 
-
 set(SOURCES main.cpp)
 qt5_add_resources(SOURCES ./ui/src/app_resources.qrc)
 add_executable(field_of_view
@@ -37,7 +38,6 @@ add_executable(field_of_view
 )
 
 target_link_libraries(field_of_view PUBLIC processing camera ui Qt5::Widgets ${OpenCV_LIBS})
-
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/camera/src/"

@@ -1,12 +1,16 @@
-#include <opencv2/core.hpp>
-#include <opencv2/opencv.hpp>
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
 #include <opencv2/imgcodecs.hpp>
 #include <memory>
 #include <string>
+#include "utilities.h"
 
-using namespace cv;
 using namespace std;
+using namespace Eigen;
+
+typedef SparseMatrix<float> SpMat;
+typedef Eigen::Triplet<float> MatTriplet;
+typedef Eigen::SimplicialLDLT<SpMat> Solver;
 
 namespace processing{
 
@@ -180,7 +184,12 @@ namespace processing{
              * 
              * @param dy - the amount the cursor moved vertically
             */
-            void cursorMoved(int dx, int dy);
+            void translateSelected(int dx, int dy);
+
+            /**
+             * Scales whichever image is currently selected.
+            */
+            void scaleSelected(int dx, int dy);
 
             /**
              * Releases the currently held object if it
@@ -201,8 +210,15 @@ namespace processing{
             bool only_background_available();
             bool only_src_available();
             bool src_and_background_available();
+            bool mask_and_original_available();
+            void setSupportingStructuresForComposites();
             ImageBorder translate_to_canvas_coordindates(ImageBorder b);
             Mat loadImage(string imagePath);
+
+            void alignMaskSize();
+
+            Solver solver;
+            map<unsigned int, unsigned int> variableMap;
 
             void initPlacement();
 
@@ -226,7 +242,10 @@ namespace processing{
             int scaleY = 1;
 
             unique_ptr<Mat> originalImage;
-            unique_ptr<Mat> maskImage;
+            unique_ptr<Mat> originalMaskImage;
+            unique_ptr<Mat> resizedMask;
+            unique_ptr<Mat> resizedOriginal;
+
             unique_ptr<Mat> backgroundImage;
             ImageBorder border;
     };

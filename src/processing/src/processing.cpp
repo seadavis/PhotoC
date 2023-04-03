@@ -1,19 +1,16 @@
 #include "processing.h"
-#include <eigen3/Eigen/Sparse>
 #include <algorithm>
+#include <future>
 #include <opencv2/imgcodecs.hpp>
 #include <vector>
-#include <cmath>
+#include <chrono>
 
 using namespace std;
-using namespace Eigen;
 using namespace processing;
 
-typedef SparseMatrix<float> SpMat;
-typedef Eigen::Triplet<float> MatTriplet;
-
-constexpr float GAMMA = 2.2f;
 constexpr int Radius = 5;
+constexpr int AbsMaxHeight = 450;
+constexpr int AbsMaxWidth = 450;
 
 const Scalar SelectionColor = Scalar(0, 255, 0, 255);
 
@@ -27,32 +24,9 @@ static bool is_mask_pixel(Mat& m, unsigned int x, unsigned int y)
     return m.at<Vec4b>(cv::Point(x, y))[3] > 0;
 }
 
-static unsigned int flatten(Mat& m, unsigned int x, unsigned int y) 
+static inline unsigned int flatten(Mat& m, unsigned int x, unsigned int y) 
 {
 	return  m.size().width * y + x;
-}
-
-
-static float clamp(float x) {
-	if (x > 1.0) {
-		return 1.0;
-	}
-	else if (x < 0.0) {
-		return 0.0;
-	}
-	else {
-		return x;
-	}
-}
-
-static inline float in_pixel(float pixel)
-{
-    return pow(pixel/255.0f, 1.0f/GAMMA);
-}
-
-static inline float out_pixel(float pixel)
-{
-    return pow(clamp(pixel), GAMMA)*255.0f;
 }
 
 static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
@@ -79,7 +53,7 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
 
     // we assign the matrix into a triplet so what we can put it into a 
     // sparse matrix
-    vector<MatTriplet> mt;
+    vector<MatTriplet> mt(size.height*size.width);
 
     for(unsigned int y = 0; y < size.height; y++)
     {
@@ -115,33 +89,6 @@ static SpMat form_matrix(Mat& m, map<unsigned int, unsigned int>& variable_map)
 }
 
 /**
- * Convers the given open cv matrix to 
- * 3 eigen matrices green, blue and red
- **/
-static vector<Eigen::MatrixXf> cv_to_eigen_channels(Mat m)
-{
-    auto const size = m.size();
-    vector<Eigen::MatrixXf> mat_list(3);
-
-    mat_list[0] = Eigen::MatrixXf(size.height, size.width);
-    mat_list[1] = Eigen::MatrixXf(size.height, size.width);
-    mat_list[2] = Eigen::MatrixXf(size.height, size.width);
-
-    for(unsigned int y = 0; y < size.height; y++)
-    {
-        for(unsigned int x = 0; x < size.width; x++)
-        {
-            auto v = m.at<Vec4b>(cv::Point(x, y));
-            mat_list[0](y, x) = in_pixel((float)v[0]);
-            mat_list[1](y, x) = in_pixel((float)v[1]);
-            mat_list[2](y, x) = in_pixel((float)v[2]);
-        }
-    }
-    
-    return mat_list;
-}
-
-/**
  * Forms a b vector for the given matrix 
  * and the given channel number.
  * Channel referring to BGR (due to OpenCV implementation quirk).
@@ -153,63 +100,101 @@ static vector<Eigen::MatrixXf> cv_to_eigen_channels(Mat m)
  * @param my - the position of source into target, relative to the upper left hand corner of both
  * @param channel_number the color channel we are solving for.
  **/
-static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat& target_image, unsigned int mx, unsigned int my, unsigned int num_unknowns, Eigen::SimplicialCholesky<SpMat>& solver)
+static inline VectorXf form_target_slns_for_channel(Mat* mask_image, 
+                                                        Mat* source_image, 
+                                                        Mat* target_image, 
+                                                        unsigned int mx, 
+                                                        unsigned int my,
+                                                        unsigned int num_unknowns, 
+                                                        Solver* solver,
+                                                        int channel_number)
 {
-    auto size = source_image.size();
-    int h = target_image.size().height;
-    int w = target_image.size().width;
+    auto size = source_image->size();
+    int h = target_image->size().height;
+    int w = target_image->size().width;
 
-    auto source_channels = cv_to_eigen_channels(source_image);
-    auto target_channels = cv_to_eigen_channels(target_image);
+    unsigned int row = 0;
+    VectorXf b(num_unknowns);
 
-    vector<VectorXf> solution_channels(3);
-
-    for(int channel_number = 0; channel_number < 3; channel_number++)
+    for(unsigned int y = 0; y < size.height; y++)
     {
-        unsigned int row = 0;
-        VectorXf b(num_unknowns);
-
-        for(unsigned int y = 0; y < size.height; y++)
+        for(unsigned int x = 0; x < size.width; x++)
         {
-            for(unsigned int x = 0; x < size.width; x++)
+            if(is_mask_pixel(*mask_image, x, y))
             {
-                if(is_mask_pixel(mask_image, x, y))
-                {
-                  
-                    float pixel = source_channels[channel_number](y, x);
                 
-                    float grad = 
-                        pixel -  source_channels[channel_number](y - 1,x) + 
-                        pixel -  source_channels[channel_number](y,x-1)+ 
-                        pixel -  source_channels[channel_number](y+1,x) + 
-                        pixel - source_channels[channel_number](y,x+1);
+                float pixel =  get_matrix_channel(*source_image,  x, y, channel_number);
+            
+                float grad = 
+                    pixel -  get_matrix_channel(*source_image,  x, y-1, channel_number) + 
+                    pixel -  get_matrix_channel(*source_image,  x-1, y, channel_number) + 
+                    pixel -  get_matrix_channel(*source_image,  x, y+1, channel_number) + 
+                    pixel - get_matrix_channel(*source_image,  x + 1, y, channel_number);
 
-                    b[row] = grad;
+                b[row] = grad;
 
-                    if(!is_mask_pixel(mask_image, x, y - 1)){
-                        b[row] += target_channels[channel_number](y + my - 1, x + mx);
-                    }
-
-                    if(!is_mask_pixel(mask_image, x - 1, y)){
-                        b[row] += target_channels[channel_number](y + my, x - 1 + mx);
-                    }
-
-                    if(!is_mask_pixel(mask_image, x, y + 1)){
-                        b[row] += target_channels[channel_number](y + 1 + my, x + mx);
-                    }
-
-                    if(!is_mask_pixel(mask_image, x + 1, y )){
-                        b[row] += target_channels[channel_number](y + my, x + mx +1);
-                    }
-                    row++;
+                if(!is_mask_pixel(*mask_image, x, y - 1)){
+                    b[row] += get_matrix_channel(*target_image,  x + mx, y + my - 1, channel_number);
                 }
+
+                if(!is_mask_pixel(*mask_image, x - 1, y)){
+                    
+                    b[row] += get_matrix_channel(*target_image, x - 1 + mx, y + my, channel_number);
+                }
+
+                if(!is_mask_pixel(*mask_image, x, y + 1)){                     
+                    b[row] +=  get_matrix_channel(*target_image, x + mx, y + 1 + my, channel_number);
+                }
+
+                if(!is_mask_pixel(*mask_image, x + 1, y )){
+                    b[row] += get_matrix_channel(*target_image, x + mx +1, y + my, channel_number);
+                }
+                row++;
             }
         }
-
-        solution_channels[channel_number] = solver.solve(b);
     }
 
-    return solution_channels;
+    return solver->solve(b);
+}
+
+static void write_slns_to_img(Mat *outputImg, 
+                            Mat *src, 
+                            Mat *mask, 
+                            map<unsigned int, unsigned int> *variableMap, 
+                            VectorXf& solution, 
+                            unsigned int mx, 
+                            unsigned int my, 
+                            int solutionChannel)
+{
+    for(int y = 0; y < src->rows; y++)
+    {
+        for(int x = 0; x < src->cols; x++)
+        {
+           
+            if(is_mask_pixel(*mask, x, y))
+            {
+                unsigned int variableNumber = (*variableMap)[flatten(*mask, x, y)];
+                const float raw = solution[variableNumber];
+                const auto pixelValue = (int)(out_pixel(raw));
+                const auto p = Point(x + mx, y + my);
+                
+                outputImg->at<Vec4b>(p)[solutionChannel] = pixelValue;
+            }
+        }
+    }
+}
+
+static void solve_for_channel(Mat* outputImg, 
+                            Mat* src, 
+                            Mat* mask, 
+                            Solver* solver,
+                            map<unsigned int, unsigned int>* variableMap, 
+                            unsigned int mx, 
+                            unsigned int my, 
+                            int solutionChannel)
+{
+    auto v = form_target_slns_for_channel(mask, src, outputImg, mx, my, (unsigned int)variableMap->size(), solver, solutionChannel);
+    write_slns_to_img(outputImg, src, mask, variableMap, v, mx, my, solutionChannel);
 }
 
  /**
@@ -234,47 +219,26 @@ static vector<VectorXf> form_target_slns(Mat& mask_image, Mat& source_image, Mat
  * @param dy specifies in pixel space how far vertically
  * we want to start pasting the image, upper most pixel is 0.
  */
-static Mat composite(Mat mask, Mat src, Mat tgt, unsigned int mx, unsigned int my)
+static Mat composite(Mat& mask, 
+                    Mat& src, 
+                    Mat& tgt, 
+                    Solver& solver, 
+                    map<unsigned int, unsigned int>& variableMap,  
+                    unsigned int mx, 
+                    unsigned int my)
 {
+
+    Mat outputImg = tgt.clone();
+
+    auto channel1 = async(solve_for_channel, &outputImg, &src, &mask, &solver, &variableMap, mx, my, 0);
+    auto channel2 = async(solve_for_channel, &outputImg,&src, &mask, &solver, &variableMap, mx, my, 1);
+    auto channel3 = async(solve_for_channel, &outputImg,&src, &mask, &solver, &variableMap, mx, my, 2);
+
+    channel1.wait();
+    channel2.wait();
+    channel3.wait();
     
-    Mat output_img(Size(tgt.size().width, tgt.size().height), tgt.type());
-    map<unsigned int, unsigned int> variable_map;
-
-    auto matrix = form_matrix(mask, variable_map);
-    SimplicialCholesky<SpMat> solver;
-    solver.compute(matrix);
-
-    vector<VectorXf> solution_channels = form_target_slns(mask, src, tgt, mx, my, (unsigned int)variable_map.size(), solver);
-    
-    // put the solved channels into the output matrix
-    for(int y = 0; y < src.rows; y++)
-    {
-        for(int x = 0; x < src.cols; x++)
-        {
-           
-            if(is_mask_pixel(mask, x, y))
-            {
-                unsigned int variable_number = variable_map[flatten(mask, x, y)];
-                const float b_raw = solution_channels[0][variable_number];
-                const float g_raw = solution_channels[1][variable_number];
-                const float r_raw = solution_channels[2][variable_number]; 
-
-                auto b = (int)(out_pixel(b_raw));
-                auto g = (int)(out_pixel(g_raw));
-                auto r = (int)(out_pixel(r_raw));
-
-                auto p = Point(x + mx, y + my);
-                
-                output_img.at<Vec4b>(p)[0] = b;
-                output_img.at<Vec4b>(p)[1] = g; 
-                output_img.at<Vec4b>(p)[2] = r; 
-            }
-            
-            
-        }
-    }
-
-    return output_img;
+    return outputImg;
 }
 
 static Mat naive_composite(Mat mask, Mat src, Mat tgt,  unsigned int mx, unsigned int my)
@@ -316,9 +280,7 @@ static Mat size_to_fit(Mat src, int width, int height)
     {
         auto width_factor = (float)width/(float)src.size().width;
         auto height_factor = (float)height/(float)src.size().height;
-
         auto greatest_factor = width_factor < height_factor ? width_factor : height_factor;
-
         auto new_width = greatest_factor*src.size().width;
         auto new_height = greatest_factor*src.size().height;
 
@@ -438,22 +400,40 @@ ImageBorder CompositeCanvas::translate_to_canvas_coordindates(ImageBorder b)
     return ImageBorder(maskWidth, maskHeight, top_left);
 }
 
-void CompositeCanvas::cursorMoved(int dx, int dy)
+
+void CompositeCanvas::scaleSelected(int dx, int dy)
 {
-    if(objectSelected == ObjectType::SizeCircle && maskImage != nullptr)
+    if(objectSelected == ObjectType::SizeCircle)
     {
         int sign = 1;
 
-        if(dx < 0 && dy < 0)
+        if((dx < 0 && dy == 0) || (dy < 0 && dx == 0) || (dx < 0 && dy < 0))
             sign = -1;
         
         auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
-
         auto deltaHeight = maskHeight + deltaPixels;
         auto deltaWidth = maskWidth + deltaPixels;
+        
+        int maxHeight;
+        int maxWidth;
 
-        auto maxWidth = backgroundImage == nullptr ? width : backgroundImage->size().width;
-        auto maxHeight = backgroundImage == nullptr ? height : backgroundImage->size().height;
+        if(backgroundImage == nullptr)
+        {
+            maxHeight = AbsMaxHeight;
+            maxWidth = AbsMaxWidth;
+        }
+        else
+        {
+            if(backgroundImage->size().width < AbsMaxWidth)
+                maxWidth = backgroundImage->size().width;
+            else
+                maxWidth = AbsMaxWidth;
+            
+            if(backgroundImage->size().height < AbsMaxHeight)
+                maxHeight = backgroundImage->size().height;
+            else
+                maxHeight = AbsMaxHeight;
+        }
 
         if(deltaHeight >= maxHeight)
             deltaHeight = maxHeight - 10;
@@ -468,12 +448,14 @@ void CompositeCanvas::cursorMoved(int dx, int dy)
             deltaWidth = 10;
 
         maskWidth = deltaWidth;
-        maskHeight = deltaHeight;   
-
-        initPlacement();
+        maskHeight = deltaHeight; 
+        alignMaskSize();
     }
+}
 
-    else if(objectSelected == ObjectType::Image)
+void CompositeCanvas::translateSelected(int dx, int dy)
+{
+    if(objectSelected == ObjectType::Image)
     {
         int mx_prime = mx + dx;
         int my_prime = my + dy;
@@ -481,8 +463,8 @@ void CompositeCanvas::cursorMoved(int dx, int dy)
         if(mx_prime < 1)
             mx = 5;
 
-        else if(backgroundImage != nullptr && mx_prime + maskImage->size().width >= backgroundImage->size().width)
-            mx =  backgroundImage->size().width - maskImage->size().width - 5;
+        else if(backgroundImage != nullptr && mx_prime + originalMaskImage->size().width >= backgroundImage->size().width)
+            mx =  backgroundImage->size().width - originalMaskImage->size().width - 5;
 
         else
             mx = mx_prime;
@@ -490,13 +472,12 @@ void CompositeCanvas::cursorMoved(int dx, int dy)
         if(my_prime < 1)
             my = 5;
 
-        else if(backgroundImage != nullptr && my_prime + maskImage->size().height >= backgroundImage->size().height)
-            my = backgroundImage->size().height - maskImage->size().height - 5;
+        else if(backgroundImage != nullptr && my_prime + originalMaskImage->size().height >= backgroundImage->size().height)
+            my = backgroundImage->size().height - originalMaskImage->size().height - 5;
         
         else
             my = my_prime;
     }
-
 }
 
 Mat CompositeCanvas::loadImage(string imagePath)
@@ -513,7 +494,7 @@ CompositeCanvas::CompositeCanvas()
     this->height = 0;
     this->width = 0;
     this->backgroundImage = nullptr;
-    this->maskImage = nullptr;
+    this->originalMaskImage = nullptr;
     this->originalImage = nullptr;
 }
 
@@ -528,7 +509,6 @@ void CompositeCanvas::setBackground(Mat backgrnd)
 {
    auto sizedBackground = size_to_fit(backgrnd, width, height);
    backgroundImage = unique_ptr<Mat>(new Mat(sizedBackground));
-
    initPlacement();
 }
 
@@ -536,21 +516,44 @@ void CompositeCanvas::setComposite(const string& maskImgPath, const string& orig
 {
     if(maskImgPath.length() > 0)
     {
-        maskImage = unique_ptr<Mat>(new Mat(loadImage(maskImgPath)));
-        maskHeight = maskImage->size().height;
-        maskWidth = maskImage->size().width;
-        border = ImageBorder(maskImage->size().width, maskImage->size().height, Point(0, 0));
+        originalMaskImage = unique_ptr<Mat>(new Mat(loadImage(maskImgPath)));
+        resizedMask = make_unique<Mat>();
+        auto size = originalMaskImage->size();
+        maskHeight = size.height;
+        maskWidth = size.width;
+        border = ImageBorder(maskWidth, maskHeight, Point(0, 0));
     }
         
     if(originalImagePath.length() > 0)
+    {
         originalImage = unique_ptr<Mat>(new Mat(loadImage(originalImagePath)));
-
+        resizedOriginal = make_unique<Mat>();
+    }
+    
+    setSupportingStructuresForComposites();
     initPlacement();
+}
+
+void CompositeCanvas::alignMaskSize()
+{
+    resize(*originalMaskImage, *resizedMask, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+    resize(*originalImage, *resizedOriginal, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+}
+
+void CompositeCanvas::setSupportingStructuresForComposites()
+{
+    if(mask_and_original_available())
+    {
+        variableMap.clear();
+        alignMaskSize();
+        auto sourceMatrix = form_matrix(*resizedMask, variableMap);
+        solver.compute(sourceMatrix);
+    }
 }
 
 ObjectType CompositeCanvas::hit(Point p)
 {
-    if(maskImage == nullptr)
+    if(originalMaskImage == nullptr)
         return ObjectType::None;
 
     auto placedBorder = translate_to_canvas_coordindates(border);
@@ -576,6 +579,12 @@ void CompositeCanvas::tap(Point p)
     {
         showBoundingRectangle = false;
         objectSelected = ObjectType::None;
+
+        if(resizedMask != nullptr)
+        {
+            setSupportingStructuresForComposites();
+        }
+    
     }
     
 }
@@ -588,19 +597,24 @@ void CompositeCanvas::releaseObject()
 bool CompositeCanvas::only_background_available()
 {
     return backgroundImage != nullptr && 
-            (maskImage == nullptr || originalImage == nullptr);
+            (originalMaskImage == nullptr || originalImage == nullptr);
 }
 
 bool CompositeCanvas::only_src_available()
 {
     return backgroundImage == nullptr && 
-            (maskImage != nullptr && originalImage != nullptr);
+            mask_and_original_available();
 }
 
 bool CompositeCanvas::src_and_background_available()
 {
-    return backgroundImage != nullptr && 
-            maskImage != nullptr && originalImage != nullptr;
+    return backgroundImage != nullptr && mask_and_original_available();
+}
+           
+
+bool CompositeCanvas::mask_and_original_available()
+{
+    return  originalMaskImage!= nullptr && originalImage != nullptr;
 }
 
 void CompositeCanvas::draw_adornments(Mat canvas)
@@ -644,11 +658,12 @@ void CompositeCanvas::initPlacement()
 
     else if(only_src_available())
     {
-        img = *maskImage;
+        img = *resizedMask;
     }
 
-    else if(originalImage != nullptr && maskImage != nullptr &&
-         originalImage->size() != maskImage->size())
+    else if(resizedOriginal != nullptr && resizedMask != nullptr &&
+         resizedOriginal->size().height < resizedMask->size().height &&
+         resizedOriginal->size().width < resizedMask->size().width)
     {
         if(backgroundImage != nullptr)
             img = *backgroundImage;
@@ -657,27 +672,21 @@ void CompositeCanvas::initPlacement()
     else if(src_and_background_available())
     {
 
-        Mat mask = *maskImage;
-        Mat original = *originalImage;
         Mat background = *backgroundImage;
-
-        Mat resizedMask;
-        Mat resizedOriginal;
-
-        resize(mask, resizedMask, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
-        resize(original, resizedOriginal, Size(maskWidth, maskHeight), 0.0, 0.0, INTER_LINEAR);
+        Mat resizedMask = *this->resizedMask;;
+        Mat resizedOriginal = *this->resizedOriginal;
 
         int tgt_height = background.size().height;
         int tgt_width = background.size().width;
 
         if(tgt_width < resizedMask.size().width || tgt_height < resizedMask.size().height)
         {
-            throw BackgroundResizedException(original.size().height,
-                                            original.size().width,
+            throw BackgroundResizedException(resizedOriginal.size().height,
+                                            resizedOriginal.size().width,
                                             background.size().width,
                                             background.size().height,
-                                            mask.size().width,
-                                            mask.size().height);
+                                            resizedMask.size().width,
+                                            resizedMask.size().height);
         }
 
         if(showBoundingRectangle)
@@ -686,7 +695,7 @@ void CompositeCanvas::initPlacement()
         }
         else
         {
-            img = composite(resizedMask, resizedOriginal, background, mx, my);
+            img = composite(resizedMask, resizedOriginal, background, solver, variableMap, mx, my);
         }
        
     }

@@ -12,16 +12,6 @@
 using namespace processing;
 using namespace std;
 
-static bool is_mask_pixel(Mat& m, unsigned int x, unsigned int y)
-{   
-    auto size = m.size();
-    if(x <= 0 || y <= 0) return false;
-
-    if(x >= size.width - 1 || y >= size.height - 1) return false;
-
-    return m.at<Vec4b>(cv::Point(x, y))[3] > 0;
-}
-
 Mat loadBackgroundImage(string path)
 {
   auto backgroundImageRGB = imread(path, CV_LOAD_IMAGE_UNCHANGED);
@@ -31,86 +21,52 @@ Mat loadBackgroundImage(string path)
   return backgroundImage;
 }
 
-static void BM_CompositeCalculations(benchmark::State& state) {
+template <class ...Args>
+static void BM_CompositeCalculations(benchmark::State& state, Args&&... args) {
 
-    auto backgroundImagePath = "./src/processing/tests/target_images/beach_large.png";
+    auto args_tuple = make_tuple(move(args)...);
+    string backgroundImagePath = "./src/processing/tests/benchmark_data/background/" + string(get<2>(args_tuple));
     auto backgroundImage = loadBackgroundImage(backgroundImagePath);
 
-    auto mask = "./src/processing/tests/masks/eagle_mask_large.png";
-    auto original = "./src/processing/tests/original_source_images/eagle_large.png";
+    auto mask = "./src/processing/tests/benchmark_data/masks/" + string(get<0>(args_tuple));
+    auto original = "./src/processing/tests/benchmark_data/source/" + string(get<1>(args_tuple));
 
     auto canvas = CompositeCanvas();
-    canvas.setSize(2400, 1600);
+    canvas.setSize(backgroundImage.size().width, backgroundImage.size().height);
     canvas.setBackground(backgroundImage);
     canvas.setComposite(mask, original);
 
     Mat result;
 
     for (auto _ : state) {
-        // This code gets timed
         result = canvas.currentImg();
     }
 
     result = canvas.currentImg();
-    string fileName =  "large_eagle_results.png";
-    imwrite( "./src/processing/tests/benchmark_results/" + fileName, result);
+    string fileName =   "./src/processing/tests/benchmark_results/" + string(get<3>(args_tuple));
+    imwrite( fileName, result);
 
 }
 
-static void BM_IsMaskSpeed(benchmark::State& state)
-{
-  auto mask = "./src/processing/tests/masks/eagle_mask_large.png";
-  auto img = loadBackgroundImage(mask);
+BENCHMARK_CAPTURE(BM_CompositeCalculations, 238x193, "eagle_238x193.png", "eagle_238x193.png", "beach_894x596.png", "result_238x192.png" )->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_CompositeCalculations, 300x243, "eagle_300x243.png", "eagle_300x243.png", "beach_894x596.png", "result_300x243.png" )->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_CompositeCalculations, 500x405, "eagle_500x405.png", "eagle_500x405.png", "beach_1500x1000.png", "result_500x405.png" )->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_CompositeCalculations, 700x567, "eagle_700x567.png", "eagle_700x567.png", "beach_1500x1000.png", "result_700x567.png" )->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_CompositeCalculations, 900x729, "eagle_900x729.png", "eagle_900x729.png", "beach_2500x1667.png", "result_900x729.png" )->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(BM_CompositeCalculations, 1200x973, "eagle_1200x972.png", "eagle_1200x973.png", "beach_2500x1667.png", "result_1200x973.png" )->Unit(benchmark::kMillisecond);
 
-  random_device rd; // obtain a random number from hardware
-  mt19937 gen(rd()); // seed the generator
-  uniform_int_distribution<> distrX(0, img.size().width - 1); // define the range
-  uniform_int_distribution<> distrY(0, img.size().height - 1); // define the range
+static void BM_Clone(benchmark::State& state) {
 
+    auto backgroundImagePath = "./src/processing/tests/target_images/beach_large.png";
+    auto backgroundImage = loadBackgroundImage(backgroundImagePath);
 
-  for(auto _ : state)
-  {
-   
-    auto isMask = is_mask_pixel(img, distrX(gen), distrY(gen));
-    
-  }
-
-}
-
-static void BM_MapSpeed(benchmark::State& state)
-{
-  auto mask = "./src/processing/tests/masks/eagle_mask_large.png";
-  auto img = loadBackgroundImage(mask);
-
-  random_device rd; // obtain a random number from hardware
-  mt19937 gen(rd()); // seed the generator
-  uniform_int_distribution<> distrX(0, img.size().width - 1); // define the range
-  uniform_int_distribution<> distrY(0, img.size().width - 1); // define the range
-
-  map<tuple<int, int>, bool> m;
-
-  for(int x = 0; x < img.size().width; x++)
-  {
-    for(int y = 0; y < img.size().height; y++)
-    {
-      auto isMask = is_mask_pixel(img, distrX(gen), distrY(gen));
-      m[make_tuple(x, y)] = isMask;
+    for (auto _ : state) {
+        auto clone = backgroundImage.clone();
     }
-  }
-
-  for(auto _ : state)
-  {
-   
-    auto isMask =m[make_tuple(distrX(gen), distrY(gen))];
-    
-  }
 
 }
 
-BENCHMARK(BM_MapSpeed);
-BENCHMARK(BM_IsMaskSpeed);
-// Register the function as a benchmark
-BENCHMARK(BM_CompositeCalculations);
+BENCHMARK(BM_Clone)->Unit(benchmark::kMillisecond);
 
 
 BENCHMARK_MAIN();

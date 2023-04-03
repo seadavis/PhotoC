@@ -27,7 +27,12 @@
         "array": "cpp",
         "tuple": "cpp",
         "utility": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "type_traits": "cpp",
+        "orderingmethods": "cpp",
+        "sparsecholesky": "cpp",
+        "thread": "cpp",
+        "functional": "cpp"
     },
     "files.exclude": {
         "**/build": true,

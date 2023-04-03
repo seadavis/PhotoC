@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -8,6 +7,7 @@
 #include <string.h>
 #include <iostream>
 #include <memory>
+#include <pthread.h>
 #include "camera.h"
 
 
@@ -20,14 +20,10 @@ extern "C" {
 
 extern int sample_autodetect (CameraList *list, GPContext *context);
 extern int sample_open_camera (Camera ** camera, const char *model, const char *port, GPContext *context);
-
-
 extern int get_config_value_string (Camera *, const char *, char **, GPContext *);
 extern int set_config_value_string (Camera *, const char *, const char *, GPContext *);
 int canon_enable_capture (Camera *camera, int onoff, GPContext *context);
-
 extern int camera_auto_focus (Camera *list, GPContext *context, int onoff);
-
 extern int camera_manual_focus (Camera *list, int tgt, GPContext *context);
 
 #if !defined (O_BINARY)
@@ -61,7 +57,6 @@ capture_to_memory(Camera *camera,
 
 static GPContext* create_context(void);
 
-
 using namespace cv;
 using namespace std;
 
@@ -69,18 +64,22 @@ RemoteCamera::RemoteCamera()
 {
 	context = create_context();
 	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
-	buffer_size = 0;
+	gp_camera_new(&camera); 
+	isLiveViewThreadOpen = false;
 }
 
 int RemoteCamera::connect()
 {
-		
-	gp_camera_new(&camera); 
-	printf("Camera init.  Takes about 10 seconds.\n");
 	int retval = gp_camera_init(camera, context);
-	if (retval != GP_OK) {
-		printf("  Retval of gp_camera_init: %d\n", retval);
-		return 0;
+
+	if(retval == GP_ERROR_IO_USB_CLAIM)
+	{
+		throw CameraUSBClaimException();
+	}
+
+	else if (retval != GP_OK) 
+	{
+		throw CameraConnectionException();
 	}
 
 	return 1;
@@ -88,12 +87,8 @@ int RemoteCamera::connect()
 
 Mat RemoteCamera::snap_picture()
 {
-	if(buffer_size > 0)
-	{
-		buffer_size = 0;
-		delete buffer;
-	}
-
+	char* buffer;
+	unsigned long buffer_size = 0;
 	CameraFilePath camera_file_path;
 	printf("Capturing To Memory\n");
 	capture_to_memory(camera, context, &camera_file_path, camera_file, (const char**)&buffer, &buffer_size);
@@ -104,7 +99,50 @@ Mat RemoteCamera::snap_picture()
     auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
 	Mat img;
 	cvtColor(m, img, CV_BGR2BGRA);
-	return img;
+	auto clonedImage = img.clone();
+	delete buffer;
+	return clonedImage;
+}
+
+void RemoteCamera::StartLiveView()
+{
+	isLiveViewThreadOpen = true;
+	int status = camera_eosviewfinder(camera, context, 1);
+	if(status < GP_OK)
+	{
+		throw CameraOperationException("start live view");
+	}
+	workerThread = thread(&RemoteCamera::ViewThreadWorker,this);
+}
+
+void RemoteCamera::StopLiveView()
+{
+	isLiveViewThreadOpen = false;
+	workerThread.join();
+	int status = camera_eosviewfinder(camera, context, 0);
+
+	if(status < GP_OK)
+	{
+		throw CameraOperationException("stop live view");
+	}
+}
+
+void RemoteCamera::ViewThreadWorker()
+{
+	while(isLiveViewThreadOpen)
+	{
+		char* buffer;
+		unsigned long buffer_size = 0;
+		capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
+		auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
+		Mat img;
+		cvtColor(m, img, CV_BGR2BGRA);
+		auto clonedImage = img.clone();
+		delete buffer;
+		receiver->Receive(img);
+
+		this_thread::sleep_for (chrono::milliseconds(17));
+	}
 }
 
 RemoteCamera::~RemoteCamera()
@@ -128,6 +166,16 @@ Mat FakeCamera::snap_picture()
 int FakeCamera::connect()
 {
 	return 1;
+}
+
+void FakeCamera::StartLiveView()
+{
+	
+}
+
+void FakeCamera::StopLiveView()
+{
+	
 }
 
 
@@ -193,8 +241,6 @@ camera_eosviewfinder(Camera *camera, GPContext *context, int onoff) {
 		goto out;
 	}
 
-
-	
 	ret = gp_widget_get_value (child, &val);
 	if (ret < GP_OK) {
 		fprintf (stderr, "could not get widget value: %d\n", ret);
@@ -229,25 +275,21 @@ static void capture_to_memory(Camera *camera, GPContext *context, CameraFilePath
 	int retval;
 	
 
-	printf("Capturing.\n");
-
 	/* NOP: This gets overridden in the library to /capt0000.jpg */
 	strcpy(camera_file_path->folder, "/");
 	strcpy(camera_file_path->name, "foo.jpg");
 
 	retval = gp_camera_capture(camera, GP_CAPTURE_IMAGE, camera_file_path, context);
-	printf("  Retval: %d\n", retval);
 
-	printf("Pathname on the camera: %s/%s\n", camera_file_path->folder, 
-                                                camera_file_path->name);
+	if(retval < 0)
+	{
+		throw CameraOperationException("snap picture");
+	}
 
 	retval = gp_file_new(&file);
-	printf("  Retval: %d\n", retval);
 	retval = gp_camera_file_get(camera, camera_file_path->folder, camera_file_path->name,
 		     GP_FILE_TYPE_NORMAL, file, context);
-	printf("  Retval: %d\n", retval);
 
-  
 	gp_file_get_data_and_size (file, ptr, size);
 
 	/*gp_file_free(file); */
@@ -263,24 +305,9 @@ static void capture_preview_to_memory(Camera *camera, GPContext *context, const 
     camera_eosviewfinder(camera, context, 1);
 
     retval = gp_file_new(&file);
-    printf(" Retval From file new: %d\n", retval);
     retval = gp_file_set_name(file, "preview.jpg");
    
 	retval = gp_camera_capture_preview(camera, file, context);
-	printf(" Retval From Capture preview: %d\n", retval);
 
-	printf("Pathname on the camera: %s/%s\n", camera_file_path.folder, camera_file_path.name);
-
-	for(int i = 0; i < 100; i++)
-	{
-		gp_file_get_data_and_size (file, ptr, size);
-		printf("Got Data of Size %lu\n", *size);
-	}
-	
-
-	printf("Deleting.\n");
-	retval = gp_camera_file_delete(camera, camera_file_path.folder, camera_file_path.name,
-			context);
-	printf("  Retval: %d\n", retval);
-	/*gp_file_free(file); */
+	gp_file_get_data_and_size (file, ptr, size);
 }
