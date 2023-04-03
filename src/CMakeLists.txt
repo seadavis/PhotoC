@@ -10,7 +10,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
 set(RESOURCE_FILES ./ui/src/app_resources.qrc)
 set(BENCHMARK_ENABLE_LIBPFM ON)
 
-
 find_package( Qt5Core REQUIRED )
 find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Gui REQUIRED )
@@ -32,7 +31,6 @@ add_subdirectory(./camera/src)
 add_subdirectory(./ui/src)
 add_subdirectory(./processing/src)
 
-
 set(SOURCES main.cpp)
 qt5_add_resources(SOURCES ./ui/src/app_resources.qrc)
 add_executable(field_of_view
@@ -40,7 +38,6 @@ add_executable(field_of_view
 )
 
 target_link_libraries(field_of_view PUBLIC processing camera ui Qt5::Widgets ${OpenCV_LIBS})
-
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
