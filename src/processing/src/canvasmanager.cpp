@@ -1,7 +1,8 @@
 #include "canvasmanager.h"
 
-
 using namespace processing;
+
+constexpr auto TimePerFrame = chrono::milliseconds(16);
 
 void BackgroundImageUpdate::Operate(CompositeCanvas& compositeCanvas)
 {
@@ -109,7 +110,7 @@ void CanvasManager::QueueWorker()
             this->renderer->RenderStopped();
             auto finish = chrono::high_resolution_clock::now();
             auto milliseconds = chrono::duration_cast<std::chrono::milliseconds>(finish-start);
-            auto remaining = chrono::milliseconds(16) - milliseconds;
+            auto remaining = chrono::milliseconds(TimePerFrame) - milliseconds;
 
             if(remaining.count() > 0)
                 this_thread::sleep_for(remaining);
