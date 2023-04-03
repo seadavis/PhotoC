@@ -18,7 +18,17 @@ namespace processing{
     {
         public:
             virtual void RenderImage(Mat& m) = 0;
+
+            /**
+             * Used by canvas Manager that rendering
+             * has started.
+            */
             virtual void RenderStarted() = 0;
+
+            /**
+             * Used by canvas manager
+             * that rendering has stopped
+            */
             virtual void RenderStopped() = 0;
     };
 
