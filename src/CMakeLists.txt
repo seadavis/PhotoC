@@ -14,7 +14,7 @@ find_package( Qt5Core REQUIRED )
 find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Gui REQUIRED )
 find_package(OpenCV REQUIRED )
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(benchmark REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -30,6 +30,7 @@ FetchContent_MakeAvailable(googletest)
 add_subdirectory(./camera/src)
 add_subdirectory(./ui/src)
 add_subdirectory(./processing/src)
+add_subdirectory(./io/src)
 
 set(SOURCES main.cpp)
 qt5_add_resources(SOURCES ./ui/src/app_resources.qrc)
@@ -37,21 +38,23 @@ add_executable(field_of_view
     ${SOURCES}
 )
 
-target_link_libraries(field_of_view PUBLIC processing camera ui Qt5::Widgets ${OpenCV_LIBS})
+target_link_libraries(field_of_view PUBLIC processing camera ui io Qt5::Widgets ${OpenCV_LIBS})
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/ui/src/"
+                          "${PROJECT_SOURCE_DIR}/io/src/"
                           )
 
 enable_testing()
 add_executable(
   unit_tests
   ./processing/tests/canvas_tests.cpp
+  ./io/tests/filetests.cpp
 )
 target_link_libraries(
   unit_tests
-  processing GTest::gtest_main ${OpenCV_LIBS}
+  io processing GTest::gtest_main ${OpenCV_LIBS}
 )
 
 target_include_directories(unit_tests PUBLIC

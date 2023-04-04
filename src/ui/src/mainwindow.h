@@ -7,12 +7,14 @@
 
 class MainWindow : public QMainWindow
 {
-
    Q_OBJECT
 
    public:
   
       MainWindow(ICamera* camera);
+
+   private slots:
+      void save();
 
    private:
       CanvasWidget* canvas;
@@ -23,7 +25,6 @@ class MainWindow : public QMainWindow
       void updateOriginalPhotoPath(string path);
       void updateCameraConnectingStatus(bool isConnecting);
       void updateMaskPhotoPath(string path);
-
 };
 
 #endif // WINDOW_H
