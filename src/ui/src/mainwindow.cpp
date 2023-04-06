@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include <QtWidgets>
 #include <QToolBar>
-#include <QFileDialog>
 #include "files.h"
+#include "utilities.h"
 
 void MainWindow::updateOriginalPhotoPath(string path)
 {
@@ -17,18 +17,26 @@ void MainWindow::updateMaskPhotoPath(string path)
 
 void MainWindow::save()
 {
-    QFileDialog f = QFileDialog();
-    f.setAcceptMode(QFileDialog::AcceptSave);
-    f.exec();
+  matToSave = canvas->getLastRenderedImage();
+  fileDialog->open();
+}
 
-    QString fileSelected;
-    f.fileSelected(fileSelected);
+void MainWindow::saveDialogAccepted(const QString& fileSelected)
+{
 
-    auto s = fileSelected.toStdString();
-    int test = 5;
+  try
+  {
+    if(fileSelected.length() > 0)
+    {
+      io::save(matToSave, fileSelected.toStdString());
+    }
 
-    //Mat m;
-    //auto result = io::save(m, "", true);
+  }
+  catch(const exception &ex)
+  {
+    showErrorMessage(this, ex);
+  }
+
 }
 
 MainWindow::MainWindow(ICamera* camera) 
@@ -39,6 +47,10 @@ MainWindow::MainWindow(ICamera* camera)
   
   canvas = new CanvasWidget(this, camera);
   setCentralWidget(canvas);
+
+  fileDialog = new QFileDialog();
+  fileDialog->setAcceptMode(QFileDialog::AcceptSave);
+  connect(fileDialog, &QFileDialog::fileSelected, this, &MainWindow::saveDialogAccepted);
 
   leftDock = new QDockWidget(tr("Composite Files"), this);
   leftDock->setMinimumWidth(0.4*this->geometry().width());

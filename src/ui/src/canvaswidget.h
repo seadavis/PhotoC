@@ -14,6 +14,7 @@
 #include "ImageViewer.h"
 #include "canvasmanager.h"
 #include "camera.h"
+#include "utilities.h"
 
 #pragma once
 
@@ -46,6 +47,7 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
       void RenderImage(Mat &m);
       void RenderStarted();
       void RenderStopped();
+      Mat getLastRenderedImage();
 
       ~CanvasWidget();
 
@@ -86,11 +88,12 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
         atomic<bool> isKilled;
         ulong currentRenderNumber;
         mutex renderNumberMutex;
+        mutex copyRenderMutex;
+        Mat lastRenderedImage;
 
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;
-
-        void showErrorMessage(const exception& ex);
+        
         void displayLiveView(Mat m);
         void sendCompositeUpdate();
         void cameraConnectingStatusChanged(bool isConnecting);
