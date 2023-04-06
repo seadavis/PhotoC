@@ -54,11 +54,14 @@ add_executable(
 )
 target_link_libraries(
   unit_tests
-  io processing GTest::gtest_main ${OpenCV_LIBS}
+  io 
+  processing 
+  GTest::gtest_main ${OpenCV_LIBS}
 )
 
 target_include_directories(unit_tests PUBLIC
-                          "${PROJECT_SOURCE_DIR}/processing/src/"
+                          "${PROJECT_SOURCE_DIR}/processing/src/" 
+                          "${PROJECT_SOURCE_DIR}/io/src/"
 )
 
 include(GoogleTest)

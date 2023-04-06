@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include <QtWidgets>
 #include <QToolBar>
+#include <QFileDialog>
 #include "files.h"
 
 void MainWindow::updateOriginalPhotoPath(string path)
@@ -16,8 +17,18 @@ void MainWindow::updateMaskPhotoPath(string path)
 
 void MainWindow::save()
 {
-    Mat m;
-    auto result = io::save(m, "", true);
+    QFileDialog f = QFileDialog();
+    f.setAcceptMode(QFileDialog::AcceptSave);
+    f.exec();
+
+    QString fileSelected;
+    f.fileSelected(fileSelected);
+
+    auto s = fileSelected.toStdString();
+    int test = 5;
+
+    //Mat m;
+    //auto result = io::save(m, "", true);
 }
 
 MainWindow::MainWindow(ICamera* camera) 
