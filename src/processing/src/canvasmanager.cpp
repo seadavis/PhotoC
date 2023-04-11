@@ -27,11 +27,13 @@ void TransformImage::Operate(CompositeCanvas& compositeCanvas)
     const auto objectType = compositeCanvas.hit(focalPoint);
     OnHit(objectType);
 
-    if(objectType == ObjectType::SizeCircle)
+    const auto currentlySelected = compositeCanvas.getCurrentlySelected();
+
+    if(currentlySelected == ObjectType::SizeCircle)
     {
         compositeCanvas.scaleSelected(dx, dy);
     }
-    else if(objectType == ObjectType::Image)
+    else if(currentlySelected == ObjectType::Image)
     {
         compositeCanvas.translateSelected(dx, dy);
     }
