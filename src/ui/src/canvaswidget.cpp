@@ -8,7 +8,6 @@
 #include <string>
 #include <sstream>
 #include <QCursor>
-#include <QErrorMessage>
 #include <QCoreApplication>
 #include "canvaswidget.h"
 
@@ -89,7 +88,7 @@ void CanvasWidget::handleSnapButton()
     }
     catch(const exception &ex)
     {
-        showErrorMessage(ex);
+        showErrorMessage(this, ex);
     }
 }
 
@@ -124,13 +123,6 @@ void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
     liveViewButton->setEnabled(!isConnecting);
 }
 
-void CanvasWidget::showErrorMessage(const exception& ex)
-{
-    auto msg = new QErrorMessage(this);
-    auto what = ex.what();
-    msg->showMessage(QString(what));
-}
-
 void CanvasWidget::handleLiveViewButton()
 {
     try
@@ -151,7 +143,7 @@ void CanvasWidget::handleLiveViewButton()
     }
     catch(const exception &ex)
     {
-       showErrorMessage(ex);
+       showErrorMessage(this, ex);
     }
 }
 
@@ -162,7 +154,24 @@ void CanvasWidget::Receive(Mat img)
 
 void CanvasWidget::RenderImage(Mat& img)
 {
+    {
+        lock_guard<mutex> lk(copyRenderMutex);
+        img.copyTo(lastRenderedImage);
+    }
+
     canvasViewer->setImage(img);
+}
+
+Mat CanvasWidget::getLastRenderedImage()
+{
+    Mat copy;
+
+    {
+        lock_guard<mutex> lk(copyRenderMutex);
+        lastRenderedImage.copyTo(copy);
+    }
+
+    return copy;
 }
 
 void CanvasWidget::RenderStarted()
