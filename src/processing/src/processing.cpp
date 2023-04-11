@@ -269,12 +269,6 @@ static Mat naive_composite(Mat mask, Mat src, Mat tgt,  unsigned int mx, unsigne
     return output_img;
 }
 
-static Mat size_to_fit(Mat src, int width, int height)
-{
-    Mat sized_src;
-    resize(src, sized_src, Size(width, height), INTER_AREA);
-    return sized_src;
-}
 
 static Mat fill_in_canvas(Mat src, int width, int height)
 {
@@ -471,8 +465,7 @@ Mat CompositeCanvas::loadImage(string imagePath)
     Mat img = imread(imagePath, CV_LOAD_IMAGE_UNCHANGED);
     Mat tgt;
     cvtColor(img, tgt, CV_BGR2BGRA);
-    auto sizedTgt = size_to_fit(tgt, width, height);
-    return sizedTgt;
+    return tgt;
 }
 
 CompositeCanvas::CompositeCanvas()
@@ -493,7 +486,8 @@ void CompositeCanvas::setSize(int width, int height)
 
 void CompositeCanvas::setBackground(Mat backgrnd)
 {
-   auto sizedBackground = size_to_fit(backgrnd, width, height);
+   Mat sizedBackground;
+   resize(backgrnd, sizedBackground, Size(width, height), 0.0, 0.0, INTER_LINEAR);
    backgroundImage = unique_ptr<Mat>(new Mat(sizedBackground));
    initPlacement();
 }
