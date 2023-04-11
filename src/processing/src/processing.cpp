@@ -385,14 +385,8 @@ void CompositeCanvas::scaleSelected(int dx, int dy)
 {
     if(objectSelected == ObjectType::SizeCircle)
     {
-        int sign = 1;
-
-        if((dx < 0 && dy == 0) || (dy < 0 && dx == 0) || (dx < 0 && dy < 0))
-            sign = -1;
-        
-        auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
-        auto deltaHeight = maskHeight + deltaPixels;
-        auto deltaWidth = maskWidth + deltaPixels;
+        auto deltaHeight = maskHeight + dy;
+        auto deltaWidth = maskWidth + dx;
         
         int maxHeight;
         int maxWidth;
@@ -564,9 +558,12 @@ void CompositeCanvas::tap(Point p)
         {
             setSupportingStructuresForComposites();
         }
-    
     }
-    
+}
+
+ObjectType CompositeCanvas::getCurrentlySelected()
+{
+    return objectSelected;
 }
 
 void CompositeCanvas::releaseObject()

@@ -178,12 +178,10 @@ void CanvasWidget::RenderStarted()
 {
     lock_guard<mutex> lk(renderNumberMutex);
     currentRenderNumber = currentRenderNumber + 1;
-    //cout << "Render Started Current Render Number: " << currentRenderNumber << "\n";
 }
 
 void CanvasWidget::RenderStopped()
 {
-    //cout << "Render Stopped Current Render Number: " << currentRenderNumber << "\n";
     QMetaObject::invokeMethod(this,"hideLoadingWindow", Qt::AutoConnection );
 }
 
