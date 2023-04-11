@@ -443,8 +443,8 @@ void CompositeCanvas::translateSelected(int dx, int dy)
         if(mx_prime < 1)
             mx = 5;
 
-        else if(backgroundImage != nullptr && mx_prime + originalMaskImage->size().width >= backgroundImage->size().width)
-            mx =  backgroundImage->size().width - originalMaskImage->size().width - 5;
+        else if(backgroundImage != nullptr && mx_prime + resizedMask->size().width >= backgroundImage->size().width)
+            mx =  backgroundImage->size().width - resizedMask->size().width - 5;
 
         else
             mx = mx_prime;
@@ -452,8 +452,8 @@ void CompositeCanvas::translateSelected(int dx, int dy)
         if(my_prime < 1)
             my = 5;
 
-        else if(backgroundImage != nullptr && my_prime + originalMaskImage->size().height >= backgroundImage->size().height)
-            my = backgroundImage->size().height - originalMaskImage->size().height - 5;
+        else if(backgroundImage != nullptr && my_prime + resizedMask->size().height >= backgroundImage->size().height)
+            my = backgroundImage->size().height - resizedMask->size().height - 5;
         
         else
             my = my_prime;
