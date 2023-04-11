@@ -272,21 +272,7 @@ static Mat naive_composite(Mat mask, Mat src, Mat tgt,  unsigned int mx, unsigne
 static Mat size_to_fit(Mat src, int width, int height)
 {
     Mat sized_src;
-    if(src.size().width <= width && src.size().height <= height)
-    {
-        sized_src = src;
-    }
-    else if(src.size().width > width || src.size().height >=height)
-    {
-        auto width_factor = (float)width/(float)src.size().width;
-        auto height_factor = (float)height/(float)src.size().height;
-        auto greatest_factor = width_factor < height_factor ? width_factor : height_factor;
-        auto new_width = greatest_factor*src.size().width;
-        auto new_height = greatest_factor*src.size().height;
-
-        resize(src, sized_src, Size(new_width, new_height), INTER_AREA);
-    }
-
+    resize(src, sized_src, Size(width, height), INTER_AREA);
     return sized_src;
 }
 

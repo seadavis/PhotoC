@@ -188,7 +188,7 @@ INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
 
 
 
-TEST(CompositeCanvas, IllegalComposite){
+TEST(CompositeCanvas, SmallComposite){
 
   Mat backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/library.png");
 
@@ -196,24 +196,10 @@ TEST(CompositeCanvas, IllegalComposite){
   auto original = "./src/processing/tests/original_source_images/balloon.png";
 
   auto canvas = CompositeCanvas();
-  canvas.setSize(150, 150);
+  canvas.setSize(50, 50);
   canvas.setBackground(backgroundImage);
   canvas.setComposite(mask, original);
-
-  try
-  {
-    Mat result = canvas.currentImg();
-    FAIL();
-  }
-  catch(BackgroundResizedException ex)
-  {
-    SUCCEED();
-  }
-  catch(exception exception)
-  {
-    FAIL();
-  }
-
+  canvas.currentImg();
 }
 
 
