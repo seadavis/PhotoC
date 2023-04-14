@@ -134,12 +134,16 @@ void RemoteCamera::ViewThreadWorker()
 		char* buffer;
 		unsigned long buffer_size = 0;
 		capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
-		auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
-		Mat img;
-		cvtColor(m, img, CV_BGR2BGRA);
-		auto clonedImage = img.clone();
-		delete buffer;
-		receiver->Receive(img);
+
+		if(buffer_size > 0)
+		{
+			auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
+			Mat img;
+			cvtColor(m, img, CV_BGR2BGRA);
+			auto clonedImage = img.clone();
+			delete buffer;
+			receiver->Receive(img);
+		}
 
 		this_thread::sleep_for (chrono::milliseconds(17));
 	}
