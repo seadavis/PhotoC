@@ -6,7 +6,7 @@
 using namespace cv;
 using namespace std;
 
-namespace processing
+namespace common::normalization
 {
     float clamp(float x);
 
@@ -14,5 +14,5 @@ namespace processing
 
     float out_pixel(float pixel);
 
-    float get_matrix_channel(Mat& m, int x, int y, int channel_number);
+    float get_normalized_matrix_channel(Mat& m, int x, int y, int channel_number);
 }

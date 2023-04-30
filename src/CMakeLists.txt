@@ -30,8 +30,8 @@ FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(./camera/src)
 add_subdirectory(./ui/src)
+add_subdirectory(./common/src)
 add_subdirectory(./processing/src)
-
 
 set(SOURCES main.cpp)
 qt5_add_resources(SOURCES ./ui/src/app_resources.qrc)
@@ -39,12 +39,13 @@ add_executable(field_of_view
     ${SOURCES}
 )
 
-target_link_libraries(field_of_view PUBLIC processing camera ui Qt5::Widgets ${OpenCV_LIBS})
+target_link_libraries(field_of_view PUBLIC common processing camera ui Qt5::Widgets ${OpenCV_LIBS})
 
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/ui/src/"
+                          "${PROJECT_SOURCE_DIR}/common/src/"
                           )
 
 enable_testing()

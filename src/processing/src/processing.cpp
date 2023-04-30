@@ -7,6 +7,7 @@
 
 using namespace std;
 using namespace processing;
+using namespace common::normalization;
 
 constexpr int Radius = 5;
 constexpr int AbsMaxHeight = 450;
@@ -123,31 +124,31 @@ static inline VectorXf form_target_slns_for_channel(Mat* mask_image,
             if(is_mask_pixel(*mask_image, x, y))
             {
                 
-                float pixel =  get_matrix_channel(*source_image,  x, y, channel_number);
+                float pixel =  get_normalized_matrix_channel(*source_image,  x, y, channel_number);
             
                 float grad = 
-                    pixel -  get_matrix_channel(*source_image,  x, y-1, channel_number) + 
-                    pixel -  get_matrix_channel(*source_image,  x-1, y, channel_number) + 
-                    pixel -  get_matrix_channel(*source_image,  x, y+1, channel_number) + 
-                    pixel - get_matrix_channel(*source_image,  x + 1, y, channel_number);
+                    pixel -  get_normalized_matrix_channel(*source_image,  x, y-1, channel_number) + 
+                    pixel -  get_normalized_matrix_channel(*source_image,  x-1, y, channel_number) + 
+                    pixel -  get_normalized_matrix_channel(*source_image,  x, y+1, channel_number) + 
+                    pixel - get_normalized_matrix_channel(*source_image,  x + 1, y, channel_number);
 
                 b[row] = grad;
 
                 if(!is_mask_pixel(*mask_image, x, y - 1)){
-                    b[row] += get_matrix_channel(*target_image,  x + mx, y + my - 1, channel_number);
+                    b[row] += get_normalized_matrix_channel(*target_image,  x + mx, y + my - 1, channel_number);
                 }
 
                 if(!is_mask_pixel(*mask_image, x - 1, y)){
                     
-                    b[row] += get_matrix_channel(*target_image, x - 1 + mx, y + my, channel_number);
+                    b[row] += get_normalized_matrix_channel(*target_image, x - 1 + mx, y + my, channel_number);
                 }
 
                 if(!is_mask_pixel(*mask_image, x, y + 1)){                     
-                    b[row] +=  get_matrix_channel(*target_image, x + mx, y + 1 + my, channel_number);
+                    b[row] +=  get_normalized_matrix_channel(*target_image, x + mx, y + 1 + my, channel_number);
                 }
 
                 if(!is_mask_pixel(*mask_image, x + 1, y )){
-                    b[row] += get_matrix_channel(*target_image, x + mx +1, y + my, channel_number);
+                    b[row] += get_normalized_matrix_channel(*target_image, x + mx +1, y + my, channel_number);
                 }
                 row++;
             }

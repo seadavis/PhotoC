@@ -3,7 +3,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <memory>
 #include <string>
-#include "utilities.h"
+#include "normalization.h"
 
 using namespace std;
 using namespace Eigen;
