@@ -41,13 +41,14 @@ add_executable(field_of_view
     ${SOURCES}
 )
 
-target_link_libraries(field_of_view PUBLIC common processing camera ui Qt5::Widgets ${OpenCV_LIBS})
+target_link_libraries(field_of_view PUBLIC common blending processing camera ui Qt5::Widgets ${OpenCV_LIBS})
 
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/ui/src/"
                           "${PROJECT_SOURCE_DIR}/common/src/"
+                          "${PROJECT_SOURCE_DIR}/blending/src/"
                           )
 
 enable_testing()

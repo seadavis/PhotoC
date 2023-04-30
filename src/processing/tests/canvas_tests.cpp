@@ -187,7 +187,7 @@ INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
 
 TEST(CompositeCanvas, IllegalComposite){
 
-  Mat backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/library.png");
+  Mat backgroundImage = loadStdImage("./src/processing/tests/target_images/library.png");
 
   auto mask = "./src/processing/tests/masks/balloon.png";
   auto original = "./src/processing/tests/original_source_images/balloon.png";
@@ -216,7 +216,7 @@ TEST(CompositeCanvas, IllegalComposite){
 
 TEST(CompositeCanvas, OnlyCompositesSet)
 {
-    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/liberty.png");
+    auto backgroundImage = loadStdImage("./src/processing/tests/target_images/liberty.png");
     auto canvas = CompositeCanvas();
     canvas.setSize(800, 450);
     canvas.setComposite("./src/processing/tests/masks/moon.png", "./src/processing/tests/original_source_images/moon.png");
@@ -228,7 +228,7 @@ TEST(CompositeCanvas, OnlyCompositesSet)
 
 TEST(CompositeCanvas, OnlyBackgroundSet)
 {
-    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/liberty.png");
+    auto backgroundImage = loadStdImage("./src/processing/tests/target_images/liberty.png");
     auto canvas = CompositeCanvas();
     canvas.setSize(800, 450);
     canvas.setBackground(backgroundImage);
@@ -244,7 +244,7 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
     auto args = GetParam();
     Point p1 = get<0>(args);
     Point p2 = get<1>(args);
-    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/gothenburg.png");
+    auto backgroundImage = loadStdImage("./src/processing/tests/target_images/gothenburg.png");
     auto maskPath = "./src/processing/tests/masks/kitten.png";
     auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
   
@@ -270,7 +270,7 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
 {
     auto args = GetParam();
     auto p = get<0>(args);
-    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/gothenburg.png");
+    auto backgroundImage = loadStdImage("./src/processing/tests/target_images/gothenburg.png");
     auto maskPath = "./src/processing/tests/masks/kitten.png";
     auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
        
@@ -306,7 +306,7 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
 TEST_P(CompositeMissingOneImage, MissingOrMismatching)
 {
     auto args = GetParam();
-    auto backgroundImage = loadBackgroundImage(get<0>(args));
+    auto backgroundImage = loadStdImage(get<0>(args));
     auto maskPath = get<1>(args);
     auto originalPath = get<2>(args);
   
@@ -328,7 +328,7 @@ TEST_P(TranslationData, ValidTranslations) {
 
   auto args = GetParam();
   auto backgroundImagePath = "./src/processing/tests/target_images/" + get<1>(args) + ".png";
-  auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+  auto backgroundImage = loadStdImage(backgroundImagePath);
 
   auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
@@ -357,7 +357,7 @@ TEST_P(ScalingImage, ScaleTests){
   
   auto args = GetParam();
   auto backgroundImagePath = "./src/processing/tests/target_images/" + get<1>(args) + ".png";
-  auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+  auto backgroundImage = loadStdImage(backgroundImagePath);
 
   auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
@@ -394,7 +394,7 @@ TEST_P(Composites, BasicComposite) {
 
   auto args = GetParam();
   auto backgroundImagePath = "./src/processing/tests/target_images/" + get<1>(args) + ".png";
-  auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+  auto backgroundImage = loadStdImage(backgroundImagePath);
 
   auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";

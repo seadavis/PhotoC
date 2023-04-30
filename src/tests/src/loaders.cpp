@@ -1,6 +1,6 @@
 #include "loaders.h"
 
-Mat common::tests::loadBackgroundImage(string path)
+Mat common::tests::loadStdImage(string path)
 {
   auto backgroundImageRGB = imread(path, CV_LOAD_IMAGE_UNCHANGED);
   Mat backgroundImage;

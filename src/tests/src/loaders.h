@@ -12,5 +12,5 @@ namespace common::tests
      * bgra format
      * 
     */
-    Mat loadBackgroundImage(string path);
+    Mat loadStdImage(string path);
 }

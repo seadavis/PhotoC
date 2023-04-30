@@ -1,1 +1,1 @@
-add_library(blending MeanStacker.cpp)
+add_library(blending MeanStacker.cpp MedianStacker.cpp)
