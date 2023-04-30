@@ -1,0 +1,1 @@
+add_library(blending MeanStacker.cpp)

@@ -32,6 +32,8 @@ add_subdirectory(./camera/src)
 add_subdirectory(./ui/src)
 add_subdirectory(./common/src)
 add_subdirectory(./processing/src)
+add_subdirectory(./blending/src)
+add_subdirectory(./tests/src)
 
 set(SOURCES main.cpp)
 qt5_add_resources(SOURCES ./ui/src/app_resources.qrc)
@@ -52,14 +54,22 @@ enable_testing()
 add_executable(
   unit_tests
   ./processing/tests/canvas_tests.cpp
+  ./blending/tests/stacking_tests.cpp
 )
 target_link_libraries(
   unit_tests
-  processing GTest::gtest_main ${OpenCV_LIBS}
+  processing 
+  common 
+  common_tests
+  blending 
+  GTest::gtest_main 
+  ${OpenCV_LIBS}
 )
 
 target_include_directories(unit_tests PUBLIC
                           "${PROJECT_SOURCE_DIR}/processing/src/"
+                          "${PROJECT_SOURCE_DIR}/blending/src/"
+                          "${PROJECT_SOURCE_DIR}/tests/src/"
 )
 
 include(GoogleTest)
