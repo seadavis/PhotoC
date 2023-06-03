@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "MeanStacker.h"
 #include "MedianStacker.h"
+#include "BrightenStacker.h"
 #include "loaders.h"
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -18,7 +19,7 @@ class LongExposureData :
 
 INSTANTIATE_TEST_SUITE_P(LongExposures,
                          LongExposureData,
-                         testing::Values("5Photos_10Seconds", "10Photos_5Seconds", "20Photos_2.5Seconds"));
+                         testing::Values("5Photos_10Seconds", "10Photos_5Seconds", "20Photos_2.5Seconds", "90Photos_2Seconds_Trails"));
 
 TEST_P(LongExposureData, MeanExposure){
 
@@ -51,4 +52,23 @@ TEST_P(LongExposureData, MedianExposure){
   auto total_image = m.GetCurrentBlend();
         
   imwrite(string(LongExposureResultsDirectory) + args + "_median.png", total_image);
+}
+
+TEST_P(LongExposureData, BrightenExposure){
+
+  auto args = GetParam();
+  std::string folder = string(LongExposureDirectory) + args;
+  BrightenStacker b;
+  int img_count = 0;
+  for (const auto & entry : filesystem::directory_iterator(folder))
+  {
+      Mat img = loadStdImage(entry.path().c_str());
+      cout << "Adding Image: " << img_count << "To Stack \n";
+      b.AddToStack(img);
+      img_count ++;
+  }   
+
+  auto total_image = b.GetCurrentBlend();
+        
+  imwrite(string(LongExposureResultsDirectory) + args + "_brighten.png", total_image);
 }
