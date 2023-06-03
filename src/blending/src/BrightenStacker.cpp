@@ -1,34 +1,7 @@
 #include "BrightenStacker.h"
 #include <cmath>
 #include <algorithm>
-
-struct PixelBrightnessMeasure
-{
-    int index;
-    double measure;
-
-    PixelBrightnessMeasure(int index, double measure) : index(index), measure(measure){};
-
-    PixelBrightnessMeasure(){};
-};
-
-static double pixel_brightness(Vec4b& v)
-{
-    return sqrt(pow(v[0], 2) + pow(v[1], 2) + pow(v[2], 2));
-}
-
-struct less_than_key
-{
-    inline bool operator() (const PixelBrightnessMeasure& struct1, const PixelBrightnessMeasure& struct2)
-    {
-        return (struct1.measure < struct2.measure);
-    }
-};
-
-static void in_place_sort(vector<PixelBrightnessMeasure>& original) {
-    sort(original.begin(), original.end(), less_than_key());
-}
-
+#include "common.h"
 
 BrightenStacker::BrightenStacker()
 {

@@ -5,22 +5,19 @@
 using namespace cv;
 using namespace std;
 
-constexpr int NumberOfChannels = 4;
-
-typedef array<vector<uchar>, NumberOfChannels> SeperatedChannels;
-
 class MedianStacker
 {
 
     public:
-        MedianStacker(int width, int height);
+        MedianStacker();
         void AddToStack(Mat img);
         Mat GetCurrentBlend();
 
     private:
-        vector<vector<SeperatedChannels>> seperatedMat;
+        vector<vector<vector<Vec4b>>> stack;
         int width;
         int height;
         int Index(int x, int y);
+        void init(Mat);
 
 };

@@ -42,7 +42,7 @@ TEST_P(LongExposureData, MedianExposure){
 
   auto args = GetParam();
   std::string folder = string(LongExposureDirectory) + args;
-  MedianStacker m(4496, 3000);
+  MedianStacker m;
   for (const auto & entry : filesystem::directory_iterator(folder))
   {
       Mat img = loadStdImage(entry.path().c_str());

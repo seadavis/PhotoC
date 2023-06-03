@@ -1,46 +1,48 @@
 #include "MedianStacker.h"
 #include <cmath>
 #include <algorithm>
+#include "common.h"
 
-static vector<uchar> not_in_place_sort(vector<uchar> original) {
-    sort(original.begin(), original.end());
-    return original;
+MedianStacker::MedianStacker()
+{
+    width = -1;
+    height = -1;
 }
 
-MedianStacker::MedianStacker(int width, int height)
+void MedianStacker::init(Mat img)
 {
-    this->width = width;
-    this->height = height;
-    seperatedMat = vector<vector<SeperatedChannels>>();
+    width = img.size().width;
+    height = img.size().height;
+    stack = vector<vector<vector<Vec4b>>>(width);
 
     for(int x = 0; x < width; x++)
     {
-        auto columnVector = vector<SeperatedChannels>();
+        auto columnVector = vector<vector<Vec4b>>(height);
+
         for(int y = 0; y < height; y++)
         {
-            SeperatedChannels channelVector;
-
-            for(int c = 0; c < NumberOfChannels; c++)
-            {
-                channelVector[c] = vector<uchar>();
-            }
-
-            columnVector.push_back(channelVector);
+            columnVector[y] = vector<Vec4b>();
         }
-        seperatedMat.push_back(columnVector);
+
+        stack[x] = columnVector;
     }
 }
 
 void MedianStacker::AddToStack(Mat img)
 {
+
+    if(height == -1 && width == -1)
+    {
+        init(img);
+    }
+
     for(int x = 0; x < width; x++)
     {
         for(int y = 0; y < height; y++)
         {
-            for(int c = 0; c < NumberOfChannels; c++)
-            {
-                seperatedMat[x][y][c].push_back(img.at<Vec4b>(cv::Point(x, y))[c]);
-            }
+            
+            stack[x][y].push_back(img.at<Vec4b>(cv::Point(x, y)));
+            
         }
     }
 }
@@ -52,15 +54,19 @@ Mat MedianStacker::GetCurrentBlend()
     {
         for(int y = 0; y < height; y++)
         {
-            auto channelVector = seperatedMat[x][y];
-            for(int c = 0; c < NumberOfChannels; c++)
+            auto channelVector = stack[x][y];
+            auto pixelMeasures = vector<PixelBrightnessMeasure>(channelVector.size());
+
+            for(int c = 0; c < pixelMeasures.size(); c++)
             {
-                auto pixelValues = channelVector[c];
-                vector<uchar> sortedPixels = not_in_place_sort(pixelValues);
-                double n = pixelValues.size();
-                int medianIndex = ceil(n/2.0);
-                blended.at<Vec4b>(cv::Point(x, y))[c] = sortedPixels[medianIndex];
+                pixelMeasures[c] = PixelBrightnessMeasure(c, pixel_brightness(channelVector[c]));
             }
+
+
+            in_place_sort(pixelMeasures);
+            double n = ceil(channelVector.size()/2);
+            blended.at<Vec4b>(cv::Point(x, y)) = channelVector[pixelMeasures[n].index];
+            
         }
     }
 
