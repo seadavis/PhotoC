@@ -82,9 +82,13 @@ add_executable(
 )
 target_link_libraries(
   benchmarks
-  processing benchmark::benchmark ${OpenCV_LIBS}
+  processing 
+  common_tests 
+  benchmark::benchmark 
+  ${OpenCV_LIBS}
 )
-target_include_directories(benchmarks PUBLIC
+target_include_directories(benchmarks PUBLIC 
+                          "${PROJECT_SOURCE_DIR}/tests/src/"
                           "${PROJECT_SOURCE_DIR}/processing/src/"
 )
 

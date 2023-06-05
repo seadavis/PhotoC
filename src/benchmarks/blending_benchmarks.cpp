@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 #include "processing.h"
+#include "common_tests.h"
 #include <iostream>
 #include <string>
 #include <opencv2/core.hpp>
@@ -11,22 +12,14 @@
 
 using namespace processing;
 using namespace std;
-
-Mat loadBackgroundImage(string path)
-{
-  auto backgroundImageRGB = imread(path, CV_LOAD_IMAGE_UNCHANGED);
-
-  Mat backgroundImage;
-  cvtColor(backgroundImageRGB, backgroundImage, CV_BGR2BGRA);
-  return backgroundImage;
-}
+using namespace common::tests;
 
 template <class ...Args>
 static void BM_CompositeCalculations(benchmark::State& state, Args&&... args) {
 
     auto args_tuple = make_tuple(move(args)...);
     string backgroundImagePath = "./src/benchmarks/benchmark_data/background/" + string(get<2>(args_tuple));
-    auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+    auto backgroundImage = loadStdImage(backgroundImagePath);
 
     auto mask = "./src/benchmarks/benchmark_data/masks/" + string(get<0>(args_tuple));
     auto original = "./src/benchmarks/benchmark_data/source/" + string(get<1>(args_tuple));
@@ -58,7 +51,7 @@ BENCHMARK_CAPTURE(BM_CompositeCalculations, 1200x973, "eagle_1200x972.png", "eag
 static void BM_Clone(benchmark::State& state) {
 
     auto backgroundImagePath = "./src/processing/tests/target_images/beach_large.png";
-    auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+    auto backgroundImage = loadStdImage(backgroundImagePath);
 
     for (auto _ : state) {
         auto clone = backgroundImage.clone();
