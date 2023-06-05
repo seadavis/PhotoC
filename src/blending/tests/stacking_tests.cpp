@@ -9,8 +9,9 @@
 
 using namespace common::tests;
 
-constexpr string_view LongExposureDirectory = "./src/blending/tests/long_exposure/";
-constexpr string_view LongExposureResultsDirectory = "./src/blending/tests/long_exposure_results/";
+constexpr string_view LongExposureDirectory = "./src/blending/tests/long_exposure_data/";
+constexpr string_view LongExposureTargetDirectory = "./src/blending/tests/target_long_exposure/";
+constexpr string_view LongExposureTestResultsDirectory = "./src/blending/tests/test_long_exposure/";
 
 class LongExposureData :
     public testing::TestWithParam<string> {
@@ -32,8 +33,11 @@ TEST_P(LongExposureData, MeanExposure){
   }   
 
   auto total_image = m.GetCurrentBlend();
-        
-  imwrite(string(LongExposureResultsDirectory) + args + "_mean.png", total_image);
+
+  auto resultPath = string(LongExposureTestResultsDirectory) + args + "_mean.png";
+  auto targetPath = string(LongExposureTargetDirectory) + args + "_mean.png";
+
+  ASSERT_TRUE(compareImages(targetPath, resultPath, total_image));
 }
 
 TEST_P(LongExposureData, BrightenExposure){
@@ -51,5 +55,8 @@ TEST_P(LongExposureData, BrightenExposure){
 
   auto total_image = b.GetCurrentBlend();
         
-  imwrite(string(LongExposureResultsDirectory) + args + "_brighten.png", total_image);
+  auto resultPath = string(LongExposureTestResultsDirectory) + args + "_brighten.png";
+  auto targetPath = string(LongExposureTargetDirectory) + args + "_brighten.png";
+
+  ASSERT_TRUE(compareImages(targetPath, resultPath, total_image));
 }
