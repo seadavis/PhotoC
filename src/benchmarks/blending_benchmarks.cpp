@@ -25,11 +25,11 @@ template <class ...Args>
 static void BM_CompositeCalculations(benchmark::State& state, Args&&... args) {
 
     auto args_tuple = make_tuple(move(args)...);
-    string backgroundImagePath = "./src/processing/tests/benchmark_data/background/" + string(get<2>(args_tuple));
+    string backgroundImagePath = "./src/benchmarks/benchmark_data/background/" + string(get<2>(args_tuple));
     auto backgroundImage = loadBackgroundImage(backgroundImagePath);
 
-    auto mask = "./src/processing/tests/benchmark_data/masks/" + string(get<0>(args_tuple));
-    auto original = "./src/processing/tests/benchmark_data/source/" + string(get<1>(args_tuple));
+    auto mask = "./src/benchmarks/benchmark_data/masks/" + string(get<0>(args_tuple));
+    auto original = "./src/benchmarks/benchmark_data/source/" + string(get<1>(args_tuple));
 
     auto canvas = CompositeCanvas();
     canvas.setSize(backgroundImage.size().width, backgroundImage.size().height);

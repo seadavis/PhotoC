@@ -78,7 +78,7 @@ gtest_discover_tests(unit_tests)
 
 add_executable(
   benchmarks
-  ./processing/tests/benchmarks/blending_benchmarks.cpp
+  ./benchmarks/blending_benchmarks.cpp
 )
 target_link_libraries(
   benchmarks
