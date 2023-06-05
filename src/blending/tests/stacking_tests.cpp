@@ -46,7 +46,6 @@ TEST_P(LongExposureData, BrightenExposure){
   for (const auto & entry : filesystem::directory_iterator(folder))
   {
       Mat img = loadStdImage(entry.path().c_str());
-      cout << "Adding Image: " << img_count << "To Stack \n";
       b.AddToStack(img);
       img_count ++;
   }   
