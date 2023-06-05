@@ -48,18 +48,6 @@ BENCHMARK_CAPTURE(BM_CompositeCalculations, 700x567, "eagle_700x567.png", "eagle
 BENCHMARK_CAPTURE(BM_CompositeCalculations, 900x729, "eagle_900x729.png", "eagle_900x729.png", "beach_2500x1667.png", "result_900x729.png" )->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(BM_CompositeCalculations, 1200x973, "eagle_1200x972.png", "eagle_1200x973.png", "beach_2500x1667.png", "result_1200x973.png" )->Unit(benchmark::kMillisecond);
 
-static void BM_Clone(benchmark::State& state) {
-
-    auto backgroundImagePath = "./src/processing/tests/target_images/beach_large.png";
-    auto backgroundImage = loadStdImage(backgroundImagePath);
-
-    for (auto _ : state) {
-        auto clone = backgroundImage.clone();
-    }
-
-}
-
-BENCHMARK(BM_Clone)->Unit(benchmark::kMillisecond);
 
 
 BENCHMARK_MAIN();
