@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 #include "MeanStacker.h"
-#include "MedianStacker.h"
 #include "BrightenStacker.h"
-#include "loaders.h"
+#include "common_tests.h"
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <string_view>

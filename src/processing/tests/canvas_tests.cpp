@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "canvasmanager.h"
-#include "loaders.h"
+#include "common_tests.h"
 #include <iostream>
 #include <opencv2/core.hpp>
 #include <string_view>
@@ -238,7 +238,6 @@ TEST(CompositeCanvas, OnlyBackgroundSet)
     imwrite("./src/processing/tests/target_missing_images/only_background_set.png", result);
 }
 
-
 TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
 {
     auto args = GetParam();
@@ -260,10 +259,10 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
 
     Mat result = renderer.WaitUntilImageAvailable();
     auto outImage = "double_tap_" + to_string(p1.x) + "_" + to_string(p1.y) + ".png";
-    imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
-    Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
-    bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
-    ASSERT_TRUE(equal);
+
+    ASSERT_TRUE(compareImages("./src/processing/tests/target_hit_data/" + outImage, 
+                              "./src/processing/tests/test_hit_data/" + outImage,
+                              result));
 }
 
 TEST_P(BoundingRectangleHitData, SingleStepTests)
@@ -297,10 +296,9 @@ TEST_P(BoundingRectangleHitData, SingleStepTests)
     Mat result = testRenderer.WaitUntilImageAvailable();
 
     auto outImage = "single_tap_" + to_string(p.x) + "_" + to_string(p.y) + "_" + to_string(set_back) + "_" + to_string(set_comp) + ".png";
-    imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
-    Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
-    bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
-    ASSERT_TRUE(equal);
+    ASSERT_TRUE(compareImages("./src/processing/tests/target_hit_data/" + outImage, 
+                              "./src/processing/tests/test_hit_data/" + outImage,
+                              result));
 }
 
 TEST_P(CompositeMissingOneImage, MissingOrMismatching)
@@ -317,12 +315,10 @@ TEST_P(CompositeMissingOneImage, MissingOrMismatching)
 
     Mat result = canvas.currentImg();
 
-    imwrite("./src/processing/tests/test_missing_images/" + get<5>(args), result);
-    Mat expectedImg = imread("./src/processing/tests/target_missing_images/" + get<5>(args), CV_LOAD_IMAGE_UNCHANGED);
-    bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
-    ASSERT_TRUE(equal);
+    ASSERT_TRUE(compareImages("./src/processing/tests/target_missing_images/" + get<5>(args), 
+                              "./src/processing/tests/test_missing_images/" + get<5>(args),
+                              result));
 }
-
 
 TEST_P(TranslationData, ValidTranslations) {
 
@@ -347,10 +343,9 @@ TEST_P(TranslationData, ValidTranslations) {
 
   auto fileName =  get<0>(args) + "_" + get<1>(args) + "_" + to_string(get<5>(args)) + "_" + to_string(get<6>(args)) + ".png";
 
-  imwrite( "./src/processing/tests/test_translations/" + fileName, result);
-  Mat expectedMat = imread("./src/processing/tests/target_translations/" + fileName);
-  bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);
+  ASSERT_TRUE(compareImages("./src/processing/tests/target_translations/" + fileName, 
+                              "./src/processing/tests/test_translations/" + fileName,
+                              result));
 }
 
 TEST_P(ScalingImage, ScaleTests){
@@ -384,10 +379,9 @@ TEST_P(ScalingImage, ScaleTests){
 
   auto fileName =  get<6>(args);
 
-  imwrite( "./src/processing/tests/test_scaling/" + fileName, result);
-  Mat expectedMat = imread("./src/processing/tests/target_scaling/" + fileName);
-  bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);
+  ASSERT_TRUE(compareImages("./src/processing/tests/target_scaling/" + fileName, 
+                            "./src/processing/tests/test_scaling/" + fileName,
+                            result));
 }
 
 TEST_P(Composites, BasicComposite) {
@@ -410,8 +404,7 @@ TEST_P(Composites, BasicComposite) {
   
   Mat result = renderer.WaitUntilImageAvailable();
 
-  imwrite( "./src/processing/tests/test_composites/" + targetFileName, result);
-  Mat expectedMat = imread("./src/processing/tests/target_composites/" + targetFileName);
-  bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);
+  ASSERT_TRUE(compareImages("./src/processing/tests/target_composites/" + targetFileName, 
+                            "./src/processing/tests/test_composites/" + targetFileName,
+                            result));
 }

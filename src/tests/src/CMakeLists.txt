@@ -1,1 +1,1 @@
-add_library(common_tests loaders.cpp)
+add_library(common_tests common_tests.cpp)
