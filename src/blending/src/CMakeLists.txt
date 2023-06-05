@@ -1,1 +1,1 @@
-add_library(blending MeanStacker.cpp MedianStacker.cpp BrightenStacker.cpp common.cpp)
+add_library(blending MeanStacker.cpp BrightenStacker.cpp common.cpp)
