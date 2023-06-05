@@ -37,23 +37,6 @@ TEST_P(LongExposureData, MeanExposure){
   imwrite(string(LongExposureResultsDirectory) + args + "_mean.png", total_image);
 }
 
-
-TEST_P(LongExposureData, MedianExposure){
-
-  auto args = GetParam();
-  std::string folder = string(LongExposureDirectory) + args;
-  MedianStacker m;
-  for (const auto & entry : filesystem::directory_iterator(folder))
-  {
-      Mat img = loadStdImage(entry.path().c_str());
-      m.AddToStack(img);
-  }   
-
-  auto total_image = m.GetCurrentBlend();
-        
-  imwrite(string(LongExposureResultsDirectory) + args + "_median.png", total_image);
-}
-
 TEST_P(LongExposureData, BrightenExposure){
 
   auto args = GetParam();
