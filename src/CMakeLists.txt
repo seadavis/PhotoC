@@ -84,11 +84,13 @@ target_link_libraries(
   benchmarks
   processing 
   common_tests 
+  blending
   benchmark::benchmark 
   ${OpenCV_LIBS}
 )
 target_include_directories(benchmarks PUBLIC 
                           "${PROJECT_SOURCE_DIR}/tests/src/"
+                          "${PROJECT_SOURCE_DIR}/blending/src/"
                           "${PROJECT_SOURCE_DIR}/processing/src/"
 )
 

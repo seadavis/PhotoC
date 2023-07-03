@@ -1,6 +1,8 @@
 #include <benchmark/benchmark.h>
 #include "processing.h"
 #include "common_tests.h"
+#include "MeanStacker.h"
+#include "BrightenStacker.h"
 #include <iostream>
 #include <string>
 #include <opencv2/core.hpp>
@@ -9,6 +11,7 @@
 #include <random>
 #include <map>
 #include <tuple>
+#include <filesystem>
 
 using namespace processing;
 using namespace std;
@@ -48,6 +51,34 @@ BENCHMARK_CAPTURE(BM_CompositeCalculations, 700x567, "eagle_700x567.png", "eagle
 BENCHMARK_CAPTURE(BM_CompositeCalculations, 900x729, "eagle_900x729.png", "eagle_900x729.png", "beach_2500x1667.png", "result_900x729.png" )->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(BM_CompositeCalculations, 1200x973, "eagle_1200x972.png", "eagle_1200x973.png", "beach_2500x1667.png", "result_1200x973.png" )->Unit(benchmark::kMillisecond);
 
+template <class ...Args>
+static void BM_BrightenBlend(benchmark::State& state, Args&&... args) {
 
+    auto args_tuple = make_tuple(move(args)...);
+    std::string folder = get<0>(args_tuple);
+    BrightenStacker b;
+    vector<Mat> imagesToStack = vector<Mat>();
+    for (const auto & entry : filesystem::directory_iterator(folder))
+    {
+        Mat img = loadStdImage(entry.path().c_str());
+        imagesToStack.push_back(img);
+    } 
+
+    Mat total_image;
+
+    for (auto _ : state)
+    {
+        for(int i = 0; i < imagesToStack.size(); i++)
+        {
+            b.AddToStack(imagesToStack[i]);
+        }
+        
+        total_image = b.GetCurrentBlend();
+    }
+
+    imwrite("./src/benchmarks/benchmark-results/star_trails.png", total_image);
+}
+
+BENCHMARK_CAPTURE(BM_BrightenBlend, StarTrails, "./src/blending/tests/long_exposure_data/90Photos_2Seconds_Trails")->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();

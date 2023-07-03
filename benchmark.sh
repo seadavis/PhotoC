@@ -1,1 +1,1 @@
-./bin/benchmarks --benchmark_filter=BM_CompositeCalculations/500x405
+./bin/benchmarks --benchmark_filter=BM_BrightenBlend
