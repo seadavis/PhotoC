@@ -10,14 +10,14 @@ class BrightenStacker
 
     public:
         BrightenStacker();
-        void AddToStack(Mat img);
+        void AddToStack(Mat& img);
         Mat GetCurrentBlend();
 
     private:
-        vector<vector<vector<Vec4b>>> stack;
         int width;
         int height;
+        Mat currentBlend;
         int Index(int x, int y);
-        void init(Mat);
+        void init(Mat&);
 
 };

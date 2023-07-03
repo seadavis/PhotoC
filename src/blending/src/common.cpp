@@ -2,7 +2,12 @@
 
 double pixel_brightness(Vec4b& v)
 {
-    return sqrt(pow(v[0], 2) + pow(v[1], 2) + pow(v[2], 2));
+    return pixel_brightness(v[0], v[1], v[2]);
+}
+
+double pixel_brightness(uchar r, uchar g, uchar b)
+{
+     return sqrt(pow(r, 2) + pow(g, 2) + pow(b, 2));
 }
 
 void in_place_sort(vector<PixelBrightnessMeasure>& original) {

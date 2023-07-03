@@ -24,4 +24,6 @@ struct less_than_key
 
 double pixel_brightness(Vec4b& v);
 
+double pixel_brightness(uchar r, uchar g, uchar b);
+
 void in_place_sort(vector<PixelBrightnessMeasure>& original);
