@@ -18,9 +18,21 @@ class BrightenStacker
     private:
         int width;
         int height;
+
+
         Mat currentBlend;
         intensity_array currentIntensities;
         int Index(int x, int y);
         void init(Mat&);
+
+        /* Start and end indices for each thread that works during a stack*/
+        int startIndex1;
+        int endIndex1;
+
+        int startIndex2;
+        int endIndex2;
+
+        int startIndex3;
+        int endIndex3;
 
 };
