@@ -1,4 +1,5 @@
 #include "MeanStacker.h"
+#include "common.h"
 
 MeanStacker::MeanStacker()
 {
@@ -9,6 +10,23 @@ void MeanStacker::AddToStack(Mat img)
 {
     Mat copy;
     img.copyTo(copy);
+    
+    if(stack.size() > 0)
+    {
+        auto imgSize = img.size();
+        auto initSize = stack[0].size();
+
+        if(imgSize.height != initSize.height || imgSize.width != initSize.width)
+        {
+            throw StackResizedException(initSize.height, initSize.width, imgSize.width, imgSize.height);
+        }
+
+        if(img.type() != stack[0].type())
+        {
+            throw TypeMismatchException();
+        }
+    }
+
     stack.push_back(img);
 }
 

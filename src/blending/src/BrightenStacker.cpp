@@ -40,8 +40,7 @@ void BrightenStacker::init(Mat& img)
 {
     width = img.size().width;
     height = img.size().height;
-    currentBlend = Mat(img.size(), img.type());
-    currentBlend.setTo(Scalar(0, 0, 0));
+    currentBlend = img.clone();
     currentIntensities = vector<vector<double>>(height, vector<double>(width));
     fillIntensities(&currentIntensities, currentBlend, 0, height - 1);
 
@@ -65,16 +64,28 @@ void BrightenStacker::AddToStack(Mat& img)
     {
         init(img);
     }
+    else
+    {
+        if(img.size().height != height || img.size().width != width)
+        {
+            throw StackResizedException(height, width, img.size().width, img.size().height);
+        }
 
-    auto incomingIntensities = vector<vector<double>>(height, vector<double>(width));
+        if(img.type() != currentBlend.type())
+        {
+            throw TypeMismatchException();
+        }
 
-    auto t1 = async(compareIntensities, &currentBlend, &img, &currentIntensities, &incomingIntensities, startIndex1, endIndex1);
-    auto t2 = async(compareIntensities, &currentBlend, &img, &currentIntensities, &incomingIntensities, startIndex2, endIndex2);
-    auto t3 = async(compareIntensities, &currentBlend, &img, &currentIntensities, &incomingIntensities, startIndex3, endIndex3);
+        auto incomingIntensities = vector<vector<double>>(height, vector<double>(width));
 
-    t1.wait();
-    t2.wait();
-    t3.wait();
+        auto t1 = async(compareIntensities, &currentBlend, &img, &currentIntensities, &incomingIntensities, startIndex1, endIndex1);
+        auto t2 = async(compareIntensities, &currentBlend, &img, &currentIntensities, &incomingIntensities, startIndex2, endIndex2);
+        auto t3 = async(compareIntensities, &currentBlend, &img, &currentIntensities, &incomingIntensities, startIndex3, endIndex3);
+
+        t1.wait();
+        t2.wait();
+        t3.wait();
+    }
 }
 
 Mat BrightenStacker::GetCurrentBlend()

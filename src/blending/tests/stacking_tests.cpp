@@ -2,6 +2,7 @@
 #include "MeanStacker.h"
 #include "BrightenStacker.h"
 #include "common_tests.h"
+#include "common.h"
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <string_view>
@@ -59,4 +60,68 @@ TEST_P(LongExposureData, BrightenExposure){
   auto targetPath = string(LongExposureTargetDirectory) + args + "_brighten.png";
 
   ASSERT_TRUE(compareImages(targetPath, resultPath, total_image));
+}
+
+TEST(LongExposureExceptions, ResizedImageBrighten)
+{
+
+  auto initialPhoto = string(LongExposureDirectory) + "exception_photos/initial_photo.png";
+  auto resizedPhoto = string(LongExposureDirectory) + "exception_photos/photo_resized.png";
+
+  BrightenStacker b;
+
+  Mat imgInit = loadStdImage(initialPhoto);
+  Mat imgResized = loadStdImage(resizedPhoto);
+
+  b.AddToStack(imgInit);
+  
+  EXPECT_THROW({b.AddToStack(imgResized);}, StackResizedException);
+
+}
+
+TEST(LongExposureExceptions, ReformattedImageBrighten)
+{
+  auto initialPhoto = string(LongExposureDirectory) + "exception_photos/initial_photo.png";
+
+  BrightenStacker b;
+
+  Mat imgInit = loadStdImage(initialPhoto);
+  Mat imgReformatted = loadStdImage(initialPhoto);
+  imgReformatted.convertTo(imgReformatted, CV_16SC2);
+
+  b.AddToStack(imgInit);
+  
+  EXPECT_THROW({b.AddToStack(imgReformatted);}, TypeMismatchException);
+}
+
+TEST(LongExposureExceptions, ResizedImageAvg)
+{
+
+  auto initialPhoto = string(LongExposureDirectory) + "exception_photos/initial_photo.png";
+  auto resizedPhoto = string(LongExposureDirectory) + "exception_photos/photo_resized.png";
+
+  MeanStacker m;
+
+  Mat imgInit = loadStdImage(initialPhoto);
+  Mat imgResized = loadStdImage(resizedPhoto);
+
+  m.AddToStack(imgInit);
+  
+  EXPECT_THROW({m.AddToStack(imgResized);}, StackResizedException);
+
+}
+
+TEST(LongExposureExceptions, ReformattedImageAvg)
+{
+  auto initialPhoto = string(LongExposureDirectory) + "exception_photos/initial_photo.png";
+
+  MeanStacker m;
+
+  Mat imgInit = loadStdImage(initialPhoto);
+  Mat imgReformatted = loadStdImage(initialPhoto);
+  imgReformatted.convertTo(imgReformatted, CV_16SC2);
+
+  m.AddToStack(imgInit);
+  
+  EXPECT_THROW({m.AddToStack(imgReformatted);}, TypeMismatchException);
 }
