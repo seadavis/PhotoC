@@ -59,6 +59,7 @@ class CanvasWidget : public QWidget, public IReceiveImages
       void handleMousePressOnImage(int x, int y);
       void handleMouseReleaseOnImage(int x, int y);
       void handleLiveViewButton();
+      void handleLongExposureButton();
 
     private:
         unique_ptr<CanvasManager> canvasManager;

@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QCoreApplication>
 #include "canvaswidget.h"
+#include "LongExposureConfig.h"
 
 constexpr double SIZE_FACTOR = 0.65;
 
@@ -142,6 +143,12 @@ void CanvasWidget::showErrorMessage(const exception& ex)
     msg->showMessage(QString(what));
 }
 
+void CanvasWidget::handleLongExposureButton()
+{
+    auto *window = new LongExposureConfig;
+    window->show();
+}
+
 void CanvasWidget::handleLiveViewButton()
 {
     try
@@ -214,6 +221,7 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 
     connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);
     connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
+    connect(longExposureButton, &QPushButton::released, this, &CanvasWidget::handleLongExposureButton);
     connect(connectButton, &QPushButton::released, this, &CanvasWidget::handleConnectButton);
     connect(canvasViewer, &ImageViewer::mouseMoved, this, &CanvasWidget::handleMouseMoveOnImage);
     connect(canvasViewer, &ImageViewer::mousePressed, this, &CanvasWidget::handleMousePressOnImage);
