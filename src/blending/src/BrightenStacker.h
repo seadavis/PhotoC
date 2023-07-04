@@ -5,6 +5,8 @@
 using namespace cv;
 using namespace std;
 
+typedef vector<vector<double>> intensity_array;
+
 class BrightenStacker
 {
 
@@ -17,6 +19,7 @@ class BrightenStacker
         int width;
         int height;
         Mat currentBlend;
+        intensity_array currentIntensities;
         int Index(int x, int y);
         void init(Mat&);
 
