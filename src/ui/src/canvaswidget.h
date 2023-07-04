@@ -72,6 +72,7 @@ class CanvasWidget : public QWidget, public IReceiveImages
         QPushButton* snapButton;  
         QPushButton* connectButton; 
         QPushButton* liveViewButton;
+        QPushButton* longExposureButton;
         ICamera *camera;
         int canvasWidth;
         int canvasHeight;

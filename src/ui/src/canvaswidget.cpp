@@ -132,6 +132,7 @@ void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
 {   
     connectButton->setEnabled(!isConnecting);
     liveViewButton->setEnabled(!isConnecting);
+    longExposureButton->setEnabled(!isConnecting);
 }
 
 void CanvasWidget::showErrorMessage(const exception& ex)
@@ -188,9 +189,16 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     snapButton = new QPushButton("Snap!");
     connectButton = new QPushButton("Connect");
     liveViewButton = new QPushButton("Live View");
+    longExposureButton = new QPushButton("Long Exposure");
+
+    snapButton->setEnabled(false);
+    liveViewButton->setEnabled(false);
+    longExposureButton->setEnabled(false);
+
     buttonLayout->addWidget(snapButton);
     buttonLayout->addWidget(connectButton);
     buttonLayout->addWidget(liveViewButton);
+    buttonLayout->addWidget(longExposureButton);
 
     canvasViewer->setFixedSize(0, 0);
     canvasGrid->addWidget(backLabel, 0, 0);
@@ -201,8 +209,7 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
     renderer = unique_ptr<QTRenderer>(new QTRenderer(canvasViewer));
     canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), renderer.get()));
-    snapButton->setEnabled(false);
-    liveViewButton->setEnabled(false);
+
     isInLiveView = false;
 
     connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);
