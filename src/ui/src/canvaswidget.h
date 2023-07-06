@@ -10,6 +10,7 @@
 #include "ImageViewer.h"
 #include "canvasmanager.h"
 #include "camera.h"
+#include "LongExposureConfig.h"
 
 using namespace cv;
 using namespace std;
@@ -60,6 +61,8 @@ class CanvasWidget : public QWidget, public IReceiveImages
       void handleMouseReleaseOnImage(int x, int y);
       void handleLiveViewButton();
       void handleLongExposureButton();
+      void handleLongExposureReject();
+      void handleLongExposureAccept();
 
     private:
         unique_ptr<CanvasManager> canvasManager;
@@ -69,6 +72,7 @@ class CanvasWidget : public QWidget, public IReceiveImages
         QHBoxLayout* buttonLayout;
         QGridLayout* canvasGrid;
         ImageViewer* canvasViewer;
+        LongExposureConfig* longExposureWindow;
         QLabel* backLabel;
         QPushButton* snapButton;  
         QPushButton* connectButton; 

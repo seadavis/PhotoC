@@ -8,6 +8,7 @@
 #include <thread>
 #include <atomic>
 #include <optional>
+#pragma once
 
 using namespace cv;
 using namespace std;
@@ -43,7 +44,7 @@ struct LongExposure
 	*/
 	TimeLength Length;
 
-	LongExposure(TimeLength interval, TimeLength length) : Interval(Interval), Length(length){};
+	LongExposure(TimeLength interval, TimeLength length) : Interval(interval), Length(length){};
 
 };
 

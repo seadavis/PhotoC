@@ -12,7 +12,7 @@
 #include <QMessageBox>
 #include <QCoreApplication>
 #include "canvaswidget.h"
-#include "LongExposureConfig.h"
+
 
 constexpr double SIZE_FACTOR = 0.65;
 
@@ -145,8 +145,20 @@ void CanvasWidget::showErrorMessage(const exception& ex)
 
 void CanvasWidget::handleLongExposureButton()
 {
-    auto *window = new LongExposureConfig;
-    window->show();
+    longExposureWindow->Reset();
+    longExposureWindow->show();
+}
+
+void CanvasWidget::handleLongExposureAccept()
+{
+    longExposureButton->setText("Stop long Exposure");
+    auto timeLength = longExposureWindow->GetLongExposure();
+    int test =30;
+}
+
+void CanvasWidget::handleLongExposureReject()
+{
+    int test = 32;
 }
 
 void CanvasWidget::handleLiveViewButton()
@@ -219,6 +231,10 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 
     isInLiveView = false;
 
+    longExposureWindow = new LongExposureConfig;
+
+    connect(longExposureWindow, &LongExposureConfig::accepted, this, &CanvasWidget::handleLongExposureAccept);
+    connect(longExposureWindow, &LongExposureConfig::rejected, this, &CanvasWidget::handleLongExposureReject);
     connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);
     connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
     connect(longExposureButton, &QPushButton::released, this, &CanvasWidget::handleLongExposureButton);
