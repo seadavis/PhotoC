@@ -56,12 +56,15 @@ add_executable(
   unit_tests
   ./processing/tests/canvas_tests.cpp
   ./blending/tests/stacking_tests.cpp
+  ./camera/tests/parsing_tests.cpp
 )
+
 target_link_libraries(
   unit_tests
   processing 
   common 
   common_tests
+  camera
   blending 
   GTest::gtest_main 
   ${OpenCV_LIBS}
@@ -70,6 +73,7 @@ target_link_libraries(
 target_include_directories(unit_tests PUBLIC
                           "${PROJECT_SOURCE_DIR}/processing/src/"
                           "${PROJECT_SOURCE_DIR}/blending/src/"
+                          "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/tests/src/"
 )
 

@@ -10,9 +10,11 @@
 #include <pthread.h>
 #include "camera.h"
 
-
 #ifndef LIBGPHOTO2_SAMPLES_H
 #define LIBGPHOTO2_SAMPLES_H
+
+using namespace cv;
+using namespace std;
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,8 +59,35 @@ capture_to_memory(Camera *camera,
 
 static GPContext* create_context(void);
 
-using namespace cv;
-using namespace std;
+
+optional<TimeLength> ParseTimeLength(string str)
+{
+	const string delimiter = ":";
+	size_t pos = 0;
+	vector<string> tokens;
+	while ((pos = str.find(delimiter)) != std::string::npos) {
+		tokens.push_back(str.substr(0, pos));
+		str = str.substr(pos + delimiter.length());
+	}
+
+	if(str.length() > 0)
+	{
+		tokens.push_back(str);
+	}
+
+	if(tokens.size() >= 3)
+	{
+		int hours = stoi(tokens[0]);
+		int minutes = stoi(tokens[1]);
+		int seconds = stoi(tokens[2]);
+
+		return TimeLength(hours, minutes, seconds);
+	}
+	else
+	{
+		return {};
+	}
+}
 
 RemoteCamera::RemoteCamera()
 {

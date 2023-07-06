@@ -7,10 +7,56 @@
 #include <functional>
 #include <thread>
 #include <atomic>
+#include <optional>
 
 using namespace cv;
 using namespace std;
 
+struct TimeLength
+{
+	int hours;
+	int minutes;
+	int seconds;
+
+	TimeLength(int hours, int minutes, int seconds) : hours(hours), minutes(minutes), seconds(seconds){};
+
+
+};
+
+
+inline bool operator==(const TimeLength& lhs, const TimeLength& rhs)
+{
+    return lhs.hours == rhs.hours && lhs.minutes == rhs.minutes && lhs.seconds == rhs.seconds;
+}
+
+struct LongExposure
+{
+
+	/**
+	 * Specifies the interval in which long
+	 * expsosures are taken
+	*/
+	TimeLength Interval;
+
+	/**
+	 * Specifies how long the interval should last.
+	*/
+	TimeLength Length;
+
+	LongExposure(TimeLength interval, TimeLength length) : Interval(Interval), Length(length){};
+
+};
+
+inline bool operator==(const LongExposure& lhs, const LongExposure& rhs)
+{
+    return lhs.Interval == rhs.Interval && lhs.Length == rhs.Length;
+}
+
+/**
+	 * Decomposes a time length from a string.
+	 * Expected format is HH:mm:ss
+	*/
+optional<TimeLength> ParseTimeLength(string str);
  
 class CameraOperationException : public runtime_error {
     public:
@@ -101,3 +147,5 @@ class RemoteCamera : public ICamera
         void ViewThreadWorker();
 
 };
+
+
