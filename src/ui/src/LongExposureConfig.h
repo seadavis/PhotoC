@@ -1,6 +1,5 @@
-#include <QWidget>
-#include <QVBoxLayout>
-#include <QLabel>
+#include <QPushButton>
+#include "TimeEdit.h"
 
 class LongExposureConfig : public QWidget
 {
@@ -9,7 +8,11 @@ class LongExposureConfig : public QWidget
 
     private:
 
-        QLabel *helloWorld;
-        QVBoxLayout *verticalLayout;
+        TimeEdit* intervalEdit;
+        TimeEdit* lengthEdit;
+        QVBoxLayout* mainLayout;
 
+        QHBoxLayout* buttonLayout;
+        QPushButton* okButton;
+        QPushButton* cancelButton;
 };
