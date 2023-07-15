@@ -1,6 +1,8 @@
 #include <QPushButton>
 #include <QDialog>
+#include <QComboBox>
 #include "TimeEdit.h"
+#include "LongExposureStructures.h"
 #pragma once
 
 class LongExposureConfig : public QDialog
@@ -10,7 +12,7 @@ class LongExposureConfig : public QDialog
     public:
         LongExposureConfig();
         void Reset();
-        LongExposure GetLongExposure();
+        LongExposureDefinition GetLongExposure();
 
     private slots:
         void handleOKButton();
@@ -21,7 +23,7 @@ class LongExposureConfig : public QDialog
         TimeEdit* intervalEdit;
         TimeEdit* lengthEdit;
         QVBoxLayout* mainLayout;
-
+        QComboBox* methodSelection;
         QHBoxLayout* buttonLayout;
         QPushButton* okButton;
         QPushButton* cancelButton;

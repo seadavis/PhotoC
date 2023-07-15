@@ -13,6 +13,7 @@
 using namespace cv;
 using namespace std;
 
+
 struct TimeLength
 {
 	int hours;
@@ -20,8 +21,6 @@ struct TimeLength
 	int seconds;
 
 	TimeLength(int hours, int minutes, int seconds) : hours(hours), minutes(minutes), seconds(seconds){};
-
-
 };
 
 
@@ -30,7 +29,7 @@ inline bool operator==(const TimeLength& lhs, const TimeLength& rhs)
     return lhs.hours == rhs.hours && lhs.minutes == rhs.minutes && lhs.seconds == rhs.seconds;
 }
 
-struct LongExposure
+struct LongExposureShots
 {
 
 	/**
@@ -44,11 +43,11 @@ struct LongExposure
 	*/
 	TimeLength Length;
 
-	LongExposure(TimeLength interval, TimeLength length) : Interval(interval), Length(length){};
+	LongExposureShots(TimeLength interval, TimeLength length) : Interval(interval), Length(length){};
 
 };
 
-inline bool operator==(const LongExposure& lhs, const LongExposure& rhs)
+inline bool operator==(const LongExposureShots& lhs, const LongExposureShots& rhs)
 {
     return lhs.Interval == rhs.Interval && lhs.Length == rhs.Length;
 }

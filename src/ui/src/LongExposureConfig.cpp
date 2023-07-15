@@ -10,14 +10,19 @@ LongExposureConfig::LongExposureConfig()
     mainLayout->addWidget(intervalEdit);
     mainLayout->addWidget(lengthEdit);
 
+    methodSelection = new QComboBox;
+    methodSelection->addItem("Average", (int)LongExposureBlendingMethod::Average);
+    methodSelection->addItem("Brighten", (int)LongExposureBlendingMethod::Brighten);
+
+    mainLayout->addWidget(methodSelection);
     buttonLayout = new QHBoxLayout;
     okButton = new QPushButton("OK");
     cancelButton = new QPushButton("Cancel");
 
+
     buttonLayout->addWidget(cancelButton);
     buttonLayout->addWidget(okButton);
     mainLayout->addLayout(buttonLayout);
-
     buttonLayout->setAlignment(Qt::AlignRight);
     this->setModal(true);
     this->setLayout(mainLayout);
@@ -42,9 +47,11 @@ void LongExposureConfig::handleCancelButton()
     reject();
 }
 
-LongExposure LongExposureConfig::GetLongExposure()
+LongExposureDefinition LongExposureConfig::GetLongExposure()
 {
 
-    return LongExposure(intervalEdit->GetTimeLength(), lengthEdit->GetTimeLength());
+    auto shots = LongExposureShots(intervalEdit->GetTimeLength(), lengthEdit->GetTimeLength());
+    auto method = (LongExposureBlendingMethod)methodSelection->currentData().toInt();
+    return LongExposureDefinition(shots, method);
 
 }
