@@ -1,19 +1,19 @@
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>
 #include <vector>
-
+#include "common.h"
 using namespace cv;
 using namespace std;
 
 typedef vector<vector<double>> intensity_array;
 
-class BrightenStacker
+class BrightenStacker : public IStackImages
 {
 
     public:
         BrightenStacker();
-        void AddToStack(Mat& img);
-        Mat GetCurrentBlend();
+        void AddToStack(Mat& img) override; 
+        Mat GetCurrentBlend() override;
 
     private:
         int width;

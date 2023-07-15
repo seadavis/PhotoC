@@ -1,8 +1,17 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
+#pragma once
 
 using namespace cv;
 using namespace std;
+
+class IStackImages
+{
+    public:
+        virtual void AddToStack(Mat& img) = 0;
+        virtual Mat GetCurrentBlend() = 0;
+};
+
 
 struct PixelBrightnessMeasure
 {

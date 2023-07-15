@@ -1,12 +1,11 @@
 #include "MeanStacker.h"
-#include "common.h"
 
 MeanStacker::MeanStacker()
 {
 
 }
 
-void MeanStacker::AddToStack(Mat img)
+void MeanStacker::AddToStack(Mat& img)
 {
     Mat copy;
     img.copyTo(copy);

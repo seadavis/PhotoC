@@ -1,18 +1,19 @@
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include "common.h"
 
 using namespace cv;
 using namespace std;
 
 
-class MeanStacker
+class MeanStacker : public IStackImages
 {
 
     public:
         MeanStacker();
-        void AddToStack(Mat img);
-        Mat GetCurrentBlend();
+        void AddToStack(Mat& img) override;
+        Mat GetCurrentBlend() override;
 
     private:
         vector<Mat> stack;
