@@ -1,4 +1,4 @@
-#include "common.h"
+#include "blending_common.h"
 
 double pixel_brightness(Vec4b& v)
 {

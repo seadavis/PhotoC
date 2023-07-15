@@ -152,8 +152,9 @@ void CanvasWidget::handleLongExposureButton()
 void CanvasWidget::handleLongExposureAccept()
 {
     longExposureButton->setText("Stop long Exposure");
-    auto timeLength = longExposureWindow->GetLongExposure();
-    int test =30;
+    auto longExposureDef = longExposureWindow->GetLongExposure();
+    auto stacker = factory.CreateStacker(longExposureDef);
+    int test = 30;
 }
 
 void CanvasWidget::handleLongExposureReject()

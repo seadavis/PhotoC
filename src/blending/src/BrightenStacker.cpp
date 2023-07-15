@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <future>
 #include <cmath>
-#include "common.h"
+
 
 /**
  * Compares current against incoming. And where incoming 

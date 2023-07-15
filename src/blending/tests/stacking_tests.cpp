@@ -2,7 +2,7 @@
 #include "MeanStacker.h"
 #include "BrightenStacker.h"
 #include "common_tests.h"
-#include "common.h"
+#include "blending_common.h"
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <string_view>
