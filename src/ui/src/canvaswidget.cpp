@@ -145,16 +145,25 @@ void CanvasWidget::showErrorMessage(const exception& ex)
 
 void CanvasWidget::handleLongExposureButton()
 {
-    longExposureWindow->Reset();
-    longExposureWindow->show();
+    if(isInLongExposure)
+    {
+        this->camera->StopLongExposure();
+        isInLongExposure = false;
+    }
+    else
+    {
+        longExposureWindow->Reset();
+        longExposureWindow->show();
+    }
 }
 
 void CanvasWidget::handleLongExposureAccept()
 {
     longExposureButton->setText("Stop long Exposure");
     auto longExposureDef = longExposureWindow->GetLongExposure();
-    auto stacker = factory.CreateStacker(longExposureDef);
-    int test = 30;
+    stacker = factory.CreateStacker(longExposureDef);
+    this->camera->StartLongExposure(longExposureDef.shots);
+    isInLongExposure = true;
 }
 
 void CanvasWidget::handleLongExposureReject()
@@ -188,7 +197,16 @@ void CanvasWidget::handleLiveViewButton()
 
 void CanvasWidget::Receive(Mat img)
 {
-    canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
+    if(isInLongExposure)
+    {
+        stacker->AddToStack(img);
+        Mat blend = stacker->GetCurrentBlend();
+        canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(blend));
+    }
+    else
+    {
+        canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
+    }
 }
 
 

@@ -12,6 +12,7 @@
 
 using namespace cv;
 using namespace std;
+using namespace std::chrono;
 
 
 struct TimeLength
@@ -21,6 +22,19 @@ struct TimeLength
 	int seconds;
 
 	TimeLength(int hours, int minutes, int seconds) : hours(hours), minutes(minutes), seconds(seconds){};
+
+    TimeLength() : hours(0), minutes(0), seconds(0){};
+
+    milliseconds ToMilliseconds()
+    {
+        chrono::hours h(hours);
+        chrono::minutes m(minutes);
+        chrono::seconds s(seconds);
+
+        return  chrono::duration_cast<chrono::milliseconds>(h) + 
+                chrono::duration_cast<chrono::milliseconds>(m) + 
+                chrono::duration_cast<chrono::milliseconds>(s);
+    }
 };
 
 
@@ -42,6 +56,8 @@ struct LongExposureShots
 	 * Specifies how long the interval should last.
 	*/
 	TimeLength Length;
+
+    LongExposureShots(){};
 
 	LongExposureShots(TimeLength interval, TimeLength length) : Interval(interval), Length(length){};
 
@@ -104,10 +120,15 @@ class ICamera
 
         virtual void StopLiveView() = 0;
 
+        virtual void StartLongExposure(LongExposureShots shots) = 0;
+
+        virtual void StopLongExposure() = 0;
+
         void SetReceiver(IReceiveImages* receiver)
         {
             this->receiver = receiver;
         }
+
 
     protected:
         IReceiveImages* receiver;
@@ -117,14 +138,23 @@ class ICamera
 class FakeCamera : public ICamera
 {
     public:
-        FakeCamera(string pic_path);
+        FakeCamera(string picPath, string longExposurePath);
 		int connect() override;
 		Mat snap_picture() override;
         void StartLiveView() override;
         void StopLiveView() override;
+        virtual void StartLongExposure(LongExposureShots shots) override;
+        virtual void StopLongExposure() override;
+        ~FakeCamera();
 
     private:
-        string pic_path;
+        string picPath;
+        string longExposureFolderPath;
+        thread workerThread;
+        atomic<bool> isLongExposureThreadOpen;
+        atomic<bool> isLongExposureInProgress;
+        LongExposureShots currentShot;
+        void LongExposureThreadWorker();
 };
 
 class RemoteCamera : public ICamera
@@ -135,7 +165,10 @@ class RemoteCamera : public ICamera
 		Mat snap_picture() override;
         void StartLiveView() override;
         void StopLiveView() override;
-
+        void StartLongExposure(LongExposureShots shots) override
+        {};
+        void StopLongExposure() override
+        {};
         ~RemoteCamera();
 
     private:
@@ -144,6 +177,7 @@ class RemoteCamera : public ICamera
         GPContext *context;
         thread workerThread;
         atomic<bool> isLiveViewThreadOpen;
+        LongExposureShots currentShot;
         void ViewThreadWorker();
 
 };

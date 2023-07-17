@@ -83,7 +83,9 @@ class CanvasWidget : public QWidget, public IReceiveImages
         string maskPath;
         string originalPath;
         bool isInLiveView;
+        bool isInLongExposure;
         StackerFactory factory;
+        shared_ptr<IStackImages> stacker;
 
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;

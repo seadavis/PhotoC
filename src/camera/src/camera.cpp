@@ -8,13 +8,13 @@
 #include <iostream>
 #include <memory>
 #include <pthread.h>
+#include <filesystem>
+#include <algorithm>
+#include "common_tests.h"
 #include "camera.h"
 
 #ifndef LIBGPHOTO2_SAMPLES_H
 #define LIBGPHOTO2_SAMPLES_H
-
-using namespace cv;
-using namespace std;
 
 #ifdef __cplusplus
 extern "C" {
@@ -179,14 +179,18 @@ RemoteCamera::~RemoteCamera()
 	gp_camera_exit(camera, context);
 }
 
-FakeCamera::FakeCamera(string file_path)
+FakeCamera::FakeCamera(string filePath, string folderPath)
 {
-	this->pic_path = file_path;
+	this->picPath = filePath;
+	this->longExposureFolderPath = folderPath;
+	this->isLongExposureThreadOpen = true;
+	this->isLongExposureInProgress = false;
+	workerThread = thread(&FakeCamera::LongExposureThreadWorker,this);
 }
 
 Mat FakeCamera::snap_picture()
 {
-	Mat m = imread(pic_path);
+	Mat m = imread(picPath);
 	Mat img;
     cvtColor(m, img, CV_BGR2BGRA);
 	return img;
@@ -207,6 +211,68 @@ void FakeCamera::StopLiveView()
 	
 }
 
+void FakeCamera::StartLongExposure(LongExposureShots shots)
+{
+	isLongExposureInProgress = true;
+	this->currentShot = shots;
+
+}
+
+void FakeCamera::StopLongExposure()
+{
+	isLongExposureInProgress = false;
+}
+
+
+void FakeCamera::LongExposureThreadWorker()
+{
+	int picturesTaken = 0;
+	 
+	vector<string> pictures;
+
+	for (const auto & entry : filesystem::directory_iterator(longExposureFolderPath))
+  	{
+		pictures.push_back(entry.path().c_str());
+  	}	   
+
+	sort(pictures.begin(), pictures.end());
+
+	time_point<system_clock> start;
+
+	while(isLongExposureThreadOpen)
+	{
+		while(isLongExposureInProgress)
+		{
+			if(picturesTaken == 0)
+				start = high_resolution_clock::now();
+
+			auto now = high_resolution_clock::now();
+
+			if(duration_cast<chrono::milliseconds>(now - start) < currentShot.Length.ToMilliseconds())
+			{
+				auto currentPicture = pictures[picturesTaken%pictures.size()];
+				cout << "Image Path: " << currentPicture << "\n";
+				Mat img = common::tests::loadStdImage(currentPicture);
+				this->receiver->Receive(img);
+				this_thread::sleep_for(currentShot.Interval.ToMilliseconds());
+				picturesTaken++;
+			}
+			else
+			{
+				picturesTaken = 0;
+				isLongExposureInProgress = false;
+			}
+		}
+
+		this_thread::sleep_for(milliseconds(30));
+	}
+}
+
+FakeCamera::~FakeCamera()
+{
+	isLongExposureThreadOpen = false;
+	workerThread.join();
+}
 
 /* section reserved for C code specific to the camera */
 static int
