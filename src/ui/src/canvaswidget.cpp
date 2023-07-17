@@ -149,6 +149,7 @@ void CanvasWidget::handleLongExposureButton()
     {
         this->camera->StopLongExposure();
         isInLongExposure = false;
+        longExposureButton->setText("Start Long Exposure");
     }
     else
     {
@@ -227,7 +228,7 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     snapButton = new QPushButton("Snap!");
     connectButton = new QPushButton("Connect");
     liveViewButton = new QPushButton("Live View");
-    longExposureButton = new QPushButton("Long Exposure");
+    longExposureButton = new QPushButton("Start Long Exposure");
 
     snapButton->setEnabled(false);
     liveViewButton->setEnabled(false);
