@@ -42,6 +42,12 @@ void QTTransformImage::OnHit(ObjectType type)
     }
 }
 
+void StackedImageUpdate::Operate(CompositeCanvas& canvas)
+{
+    stacker->AddToStack(image);
+    canvas.setBackground(stacker->GetCurrentBlend());
+}
+
 void CanvasWidget::handleMouseMoveOnImage(int x, int y)
 {
 
@@ -167,11 +173,6 @@ void CanvasWidget::handleLongExposureAccept()
     isInLongExposure = true;
 }
 
-void CanvasWidget::handleLongExposureReject()
-{
-    int test = 32;
-}
-
 void CanvasWidget::handleLiveViewButton()
 {
     try
@@ -200,9 +201,7 @@ void CanvasWidget::Receive(Mat img)
 {
     if(isInLongExposure)
     {
-        stacker->AddToStack(img);
-        Mat blend = stacker->GetCurrentBlend();
-        canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(blend));
+        canvasManager->QueueOperation(make_shared<StackedImageUpdate>(img, stacker));
     }
     else
     {
@@ -254,7 +253,6 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     longExposureWindow = new LongExposureConfig;
 
     connect(longExposureWindow, &LongExposureConfig::accepted, this, &CanvasWidget::handleLongExposureAccept);
-    connect(longExposureWindow, &LongExposureConfig::rejected, this, &CanvasWidget::handleLongExposureReject);
     connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);
     connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
     connect(longExposureButton, &QPushButton::released, this, &CanvasWidget::handleLongExposureButton);

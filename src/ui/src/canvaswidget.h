@@ -38,6 +38,22 @@ class QTTransformImage : public TransformImage
     QWidget* widget;
 };
 
+class StackedImageUpdate : public ICanvasOperator
+{
+
+  public:
+      StackedImageUpdate(Mat image, shared_ptr<IStackImages> stacker) :
+          image(image), stacker(stacker)
+      {};
+      
+      void Operate(CompositeCanvas& canvas) override;
+  
+  private:
+    Mat image;
+    shared_ptr<IStackImages> stacker;
+
+};
+
 class CanvasWidget : public QWidget, public IReceiveImages
 {
     public:
@@ -60,7 +76,6 @@ class CanvasWidget : public QWidget, public IReceiveImages
       void handleMouseReleaseOnImage(int x, int y);
       void handleLiveViewButton();
       void handleLongExposureButton();
-      void handleLongExposureReject();
       void handleLongExposureAccept();
 
     private:
