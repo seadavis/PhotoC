@@ -167,10 +167,11 @@ void CanvasWidget::handleLongExposureButton()
 void CanvasWidget::handleLongExposureAccept()
 {
     longExposureButton->setText("Stop long Exposure");
+    isInLongExposure = true;
     auto longExposureDef = longExposureWindow->GetLongExposure();
     stacker = factory.CreateStacker(longExposureDef);
     this->camera->StartLongExposure(longExposureDef.shots);
-    isInLongExposure = true;
+
 }
 
 void CanvasWidget::handleLiveViewButton()
@@ -249,6 +250,7 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), renderer.get()));
 
     isInLiveView = false;
+    isInLongExposure = false;
 
     longExposureWindow = new LongExposureConfig;
 

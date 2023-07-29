@@ -165,10 +165,8 @@ class RemoteCamera : public ICamera
 		Mat snap_picture() override;
         void StartLiveView() override;
         void StopLiveView() override;
-        void StartLongExposure(LongExposureShots shots) override
-        {};
-        void StopLongExposure() override
-        {};
+        void StartLongExposure(LongExposureShots shots) override;
+        void StopLongExposure() override;
         ~RemoteCamera();
 
     private:
@@ -177,9 +175,10 @@ class RemoteCamera : public ICamera
         GPContext *context;
         thread workerThread;
         atomic<bool> isLiveViewThreadOpen;
+        atomic<bool> isLongExposureThreadOpen;
         LongExposureShots currentShot;
         void ViewThreadWorker();
-
+        void LongExposureThreadWorker();
 };
 
 

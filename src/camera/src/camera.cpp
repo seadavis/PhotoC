@@ -28,6 +28,7 @@ int canon_enable_capture (Camera *camera, int onoff, GPContext *context);
 extern int camera_auto_focus (Camera *list, GPContext *context, int onoff);
 extern int camera_manual_focus (Camera *list, int tgt, GPContext *context);
 
+
 #if !defined (O_BINARY)
 	/*To have portable binary open() on *nix and on Windows */
 	#define O_BINARY 0
@@ -41,7 +42,11 @@ extern int camera_manual_focus (Camera *list, int tgt, GPContext *context);
 
 static int camera_eosviewfinder (Camera *list, GPContext *context, int onoff);
 
+static int camera_bulb(Camera *camera, GPContext *context, int onoff);
+
 static void errordumper(GPLogLevel level, const char *domain, const char *str, void *data);
+
+static int camera_toggle_config(Camera *camera, GPContext *context, int onoff, string setting);
 
 static void
 capture_preview_to_memory(Camera *camera, 
@@ -156,6 +161,68 @@ void RemoteCamera::StopLiveView()
 	}
 }
 
+void RemoteCamera::StartLongExposure(LongExposureShots shots)
+{
+	isLongExposureThreadOpen = true;
+	currentShot = shots;
+	workerThread = thread(&RemoteCamera::LongExposureThreadWorker,this);
+}
+
+void RemoteCamera::StopLongExposure()
+{
+	isLongExposureThreadOpen = false;
+	workerThread.join();
+}
+
+void RemoteCamera::LongExposureThreadWorker()
+{
+	auto start = high_resolution_clock::now();
+	auto now = high_resolution_clock::now();
+	int pictures = 0;
+
+	while(isLongExposureThreadOpen && 
+			duration_cast<chrono::milliseconds>(now - start) < currentShot.Length.ToMilliseconds())
+	{
+		
+		int status = camera_bulb(camera, context, 1);
+		this_thread::sleep_for(currentShot.Interval.ToMilliseconds());
+		status = camera_bulb(camera, context, 0);
+
+		CameraEventType event;
+		void *data = NULL;
+		int test = 0;
+
+
+		/* This is equivalent to emptying out the queue*/
+		while(event != GP_EVENT_FILE_ADDED)
+		{
+			gp_camera_wait_for_event(camera,1000, &event, &data, context);
+		}
+
+		char* buffer;
+		unsigned long bufferSize = 0;
+		CameraFilePath* path = (CameraFilePath*)data;
+		CameraFile* addedFile;
+
+		gp_file_new(&addedFile);
+		gp_camera_file_get(camera, path->folder, path->name, GP_FILE_TYPE_NORMAL, addedFile, context);
+		gp_file_get_data_and_size(addedFile,(const char**)&buffer,&bufferSize);
+		auto m =  imdecode(Mat(1, bufferSize, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
+		Mat img;
+		cvtColor(m, img, CV_BGR2BGRA);
+		auto clonedImage = img.clone();
+		imwrite("/home/sdavis/Test/img_" + to_string(pictures) + ".jpg", clonedImage);
+		this->receiver->Receive(img);
+		gp_camera_file_delete(camera, path->folder, path->name, context);
+		gp_file_free(addedFile);
+		free(data);
+		event = GP_EVENT_UNKNOWN;
+		pictures++;
+	}
+
+	isLongExposureThreadOpen = false;
+}
+
 void RemoteCamera::ViewThreadWorker()
 {
 	while(isLiveViewThreadOpen)
@@ -163,12 +230,16 @@ void RemoteCamera::ViewThreadWorker()
 		char* buffer;
 		unsigned long buffer_size = 0;
 		capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
-		auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
-		Mat img;
-		cvtColor(m, img, CV_BGR2BGRA);
-		auto clonedImage = img.clone();
-		delete buffer;
-		receiver->Receive(img);
+		if(buffer_size > 0)
+		{
+			auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
+			Mat img;
+			cvtColor(m, img, CV_BGR2BGRA);
+			auto clonedImage = img.clone();
+			delete buffer;
+			receiver->Receive(img);
+
+		}
 
 		this_thread::sleep_for (chrono::milliseconds(17));
 	}
@@ -320,7 +391,21 @@ static GPContext* create_context() {
 }
 
 static int
-camera_eosviewfinder(Camera *camera, GPContext *context, int onoff) {
+camera_bulb(Camera *camera, GPContext *context, int onoff)
+{
+	return camera_toggle_config(camera, context, onoff, "bulb");
+}
+
+static int
+camera_eosviewfinder(Camera *camera, GPContext *context, int onoff) 
+{
+	return camera_toggle_config(camera, context, onoff, "LiveViewMovieMode");
+}
+
+
+static int
+camera_toggle_config(Camera *camera, GPContext *context, int onoff, string setting)
+{
 	CameraWidget		*widget = NULL, *child = NULL;
 	int			ret,val;
 
@@ -330,7 +415,7 @@ camera_eosviewfinder(Camera *camera, GPContext *context, int onoff) {
 		return ret;
 	}
 
-	ret = _lookup_widget (widget, "LiveViewMovieMode", &child);
+	ret = _lookup_widget (widget, setting.c_str(), &child);
 	if (ret < GP_OK) {
 		fprintf (stderr, "lookup 'LiveViewMode' failed: %d\n", ret);
 		goto out;
@@ -359,7 +444,6 @@ out:
 	gp_widget_free (widget);
 	return ret;
 }
-
 
 static void errordumper(GPLogLevel level, const char *domain, const char *str,
                  void *data) {
