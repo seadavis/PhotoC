@@ -64,6 +64,12 @@ capture_to_memory(Camera *camera,
 
 static GPContext* create_context(void);
 
+static bool all_characters_digits(const string& s)
+{
+	return std::count_if(s.begin(), s.end(), 
+						[](unsigned char c){ return isdigit(c); }) 
+						== s.length();
+}
 
 optional<TimeLength> ParseTimeLength(string str)
 {
@@ -82,8 +88,19 @@ optional<TimeLength> ParseTimeLength(string str)
 
 	if(tokens.size() >= 3)
 	{
+		if(!all_characters_digits(tokens[0]) || tokens[0].length() > 2 || tokens[0].length() == 0)
+			return {};
+
 		int hours = stoi(tokens[0]);
+
+		if(!all_characters_digits(tokens[1]) || tokens[1].length() > 2 || tokens[1].length() == 0)
+			return {};
+
 		int minutes = stoi(tokens[1]);
+
+		if(!all_characters_digits(tokens[2]) || tokens[2].length() > 2 || tokens[2].length() == 0)
+			return {};
+
 		int seconds = stoi(tokens[2]);
 
 		return TimeLength(hours, minutes, seconds);
