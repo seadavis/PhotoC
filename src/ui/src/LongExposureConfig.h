@@ -13,13 +13,14 @@ class LongExposureConfig : public QDialog
         LongExposureConfig();
         void Reset();
         LongExposureDefinition GetLongExposure();
+        void HideTime();
+        void ShowTime();
 
     private slots:
         void handleOKButton();
         void handleCancelButton();
 
     private:
-
         TimeEdit* intervalEdit;
         TimeEdit* lengthEdit;
         QVBoxLayout* mainLayout;
@@ -27,4 +28,5 @@ class LongExposureConfig : public QDialog
         QHBoxLayout* buttonLayout;
         QPushButton* okButton;
         QPushButton* cancelButton;
+        bool timeIsHidden;
 };

@@ -35,6 +35,21 @@ void LongExposureConfig::Reset()
 {
     intervalEdit->Reset();
     lengthEdit->Reset();
+    ShowTime();
+}
+
+void LongExposureConfig::HideTime()
+{
+    intervalEdit->setHidden(true);
+    lengthEdit->setHidden(true);
+    timeIsHidden = true;
+}
+
+void LongExposureConfig::ShowTime()
+{
+    intervalEdit->setHidden(false);
+    lengthEdit->setHidden(false);
+    timeIsHidden = false;
 }
 
 void LongExposureConfig::handleOKButton()
@@ -49,8 +64,10 @@ void LongExposureConfig::handleCancelButton()
 
 LongExposureDefinition LongExposureConfig::GetLongExposure()
 {
-
-    auto shots = LongExposureShots(intervalEdit->GetTimeLength(), lengthEdit->GetTimeLength());
+    LongExposureShots shots;
+    if(!timeIsHidden)
+        shots = LongExposureShots(intervalEdit->GetTimeLength(), lengthEdit->GetTimeLength());
+    
     auto method = (LongExposureBlendingMethod)methodSelection->currentData().toInt();
     return LongExposureDefinition(shots, method);
 

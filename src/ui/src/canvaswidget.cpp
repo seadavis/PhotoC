@@ -153,15 +153,26 @@ void CanvasWidget::handleLongExposureButton()
 {
     if(isInLongExposure)
     {
-        this->camera->StopLongExposure();
+        if(!isInLiveView)
+            this->camera->StopLongExposure();
+            
         isInLongExposure = false;
         longExposureButton->setText("Start Long Exposure");
     }
     else
     {
-        longExposureWindow->Reset();
-        longExposureWindow->show();
+        showLongExposureConfig(isInLiveView);
     }
+   
+}
+
+void CanvasWidget::showLongExposureConfig(bool isIndefinite)
+{
+    longExposureWindow->Reset();
+    if(isIndefinite)
+        longExposureWindow->HideTime();
+    
+    longExposureWindow->show();
 }
 
 void CanvasWidget::handleLongExposureAccept()
@@ -170,7 +181,9 @@ void CanvasWidget::handleLongExposureAccept()
     isInLongExposure = true;
     auto longExposureDef = longExposureWindow->GetLongExposure();
     stacker = factory.CreateStacker(longExposureDef);
-    this->camera->StartLongExposure(longExposureDef.shots);
+
+    if(!isInLiveView)
+        this->camera->StartLongExposure(longExposureDef.shots);
 
 }
 

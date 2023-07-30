@@ -482,8 +482,6 @@ static void capture_preview_to_memory(Camera *camera, GPContext *context, const 
 
 	printf("Capturing Preview.\n");
 
-    camera_eosviewfinder(camera, context, 1);
-
     retval = gp_file_new(&file);
     retval = gp_file_set_name(file, "preview.jpg");
    

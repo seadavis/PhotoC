@@ -510,7 +510,6 @@ void CompositeCanvas::setBackground(Mat backgrnd)
 {
    auto sizedBackground = size_to_fit(backgrnd, width, height);
    backgroundImage = unique_ptr<Mat>(new Mat(sizedBackground));
-   initPlacement();
 }
 
 void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImagePath)

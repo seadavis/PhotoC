@@ -45,7 +45,7 @@ class StackedImageUpdate : public ICanvasOperator
       StackedImageUpdate(Mat image, shared_ptr<IStackImages> stacker) :
           image(image), stacker(stacker)
       {};
-      
+
       void Operate(CompositeCanvas& canvas) override;
   
   private:
@@ -110,5 +110,6 @@ class CanvasWidget : public QWidget, public IReceiveImages
         void sendCompositeUpdate();
         void cameraConnectingStatusChanged(bool isConnecting);
         void render();
+        void showLongExposureConfig(bool isInDefinite);
 
 };
