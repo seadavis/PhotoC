@@ -178,7 +178,6 @@ void RemoteCamera::LongExposureThreadWorker()
 {
 	auto start = high_resolution_clock::now();
 	auto now = high_resolution_clock::now();
-	int pictures = 0;
 
 	while(isLongExposureThreadOpen && 
 			duration_cast<chrono::milliseconds>(now - start) < currentShot.Length.ToMilliseconds())
@@ -207,17 +206,19 @@ void RemoteCamera::LongExposureThreadWorker()
 		gp_file_new(&addedFile);
 		gp_camera_file_get(camera, path->folder, path->name, GP_FILE_TYPE_NORMAL, addedFile, context);
 		gp_file_get_data_and_size(addedFile,(const char**)&buffer,&bufferSize);
-		auto m =  imdecode(Mat(1, bufferSize, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
-		Mat img;
-		cvtColor(m, img, CV_BGR2BGRA);
-		auto clonedImage = img.clone();
-		imwrite("/home/sdavis/Test/img_" + to_string(pictures) + ".jpg", clonedImage);
-		this->receiver->Receive(img);
-		gp_camera_file_delete(camera, path->folder, path->name, context);
-		gp_file_free(addedFile);
-		free(data);
-		event = GP_EVENT_UNKNOWN;
-		pictures++;
+		if(bufferSize > 0)
+		{
+			auto m =  imdecode(Mat(1, bufferSize, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
+			Mat img;
+			cvtColor(m, img, CV_BGR2BGRA);
+			auto clonedImage = img.clone();
+			this->receiver->Receive(img);
+			gp_camera_file_delete(camera, path->folder, path->name, context);
+			gp_file_free(addedFile);
+			free(data);
+			event = GP_EVENT_UNKNOWN;
+		}
+
 	}
 
 	isLongExposureThreadOpen = false;
