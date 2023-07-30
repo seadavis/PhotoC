@@ -64,10 +64,7 @@ class CanvasWidget : public QWidget, public IReceiveImages
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
-
-    public slots:
-        
-
+      
     private slots:
       void handleSnapButton();
       void handleConnectButton();     
