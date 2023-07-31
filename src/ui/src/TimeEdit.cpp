@@ -45,7 +45,7 @@ TimeEdit::TimeEdit(QString label)
 
 void TimeEdit::Reset()
 {
-    edit->setText("hh:mm:ss");
+    edit->setText("hours:minutes:seconds");
 }
 
 void TimeEdit::handleTextChanged(const QString& text)
