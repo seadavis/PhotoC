@@ -19,6 +19,8 @@ class LongExposureConfig : public QDialog
     private slots:
         void handleOKButton();
         void handleCancelButton();
+        void handleIntervalIsValid(bool isValid);
+        void handleLengthIsValid(bool isValid);
 
     private:
         TimeEdit* intervalEdit;
@@ -29,4 +31,8 @@ class LongExposureConfig : public QDialog
         QPushButton* okButton;
         QPushButton* cancelButton;
         bool timeIsHidden;
+        bool lengthIsValid;
+        bool intervalIsValid;
+
+        void setOkButtonState();
 };

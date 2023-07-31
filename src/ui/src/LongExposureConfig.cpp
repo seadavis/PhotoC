@@ -19,16 +19,18 @@ LongExposureConfig::LongExposureConfig()
     okButton = new QPushButton("OK");
     cancelButton = new QPushButton("Cancel");
 
-
     buttonLayout->addWidget(cancelButton);
     buttonLayout->addWidget(okButton);
     mainLayout->addLayout(buttonLayout);
     buttonLayout->setAlignment(Qt::AlignRight);
     this->setModal(true);
     this->setLayout(mainLayout);
+    this->okButton->setEnabled(false);
 
     connect(okButton, &QPushButton::released, this, &LongExposureConfig::handleOKButton);
     connect(cancelButton, &QPushButton::released, this, &LongExposureConfig::handleCancelButton);
+    connect(intervalEdit, &TimeEdit::timeEditIsValidChanged, this, &LongExposureConfig::handleIntervalIsValid);
+    connect(lengthEdit, &TimeEdit::timeEditIsValidChanged, this, &LongExposureConfig::handleLengthIsValid);
 }
 
 void LongExposureConfig::Reset()
@@ -60,6 +62,23 @@ void LongExposureConfig::handleOKButton()
 void LongExposureConfig::handleCancelButton()
 {
     reject();
+}
+
+void LongExposureConfig::handleIntervalIsValid(bool isValid)
+{
+    intervalIsValid = isValid;
+    setOkButtonState();
+}
+
+void LongExposureConfig::handleLengthIsValid(bool isValid)
+{
+    lengthIsValid = isValid;
+    setOkButtonState();
+}
+
+void LongExposureConfig::setOkButtonState()
+{
+    this->okButton->setEnabled(lengthIsValid && intervalIsValid);
 }
 
 LongExposureDefinition LongExposureConfig::GetLongExposure()

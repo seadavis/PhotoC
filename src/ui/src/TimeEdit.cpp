@@ -55,11 +55,13 @@ void TimeEdit::handleTextChanged(const QString& text)
     {
         errorImage->setHidden(false);
         errorMessage->setHidden(false);
+        emit timeEditIsValidChanged(false);
     }
     else
     {
         errorImage->setHidden(true);
         errorMessage->setHidden(true);
+        emit timeEditIsValidChanged(true);
     }
 }   
 
