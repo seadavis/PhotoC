@@ -14,9 +14,18 @@ class TimeEdit : public QWidget
 
         TimeLength GetTimeLength();
 
+    private slots:
+        void handleTextChanged(const QString &text);
+
     private:
 
-        QHBoxLayout *layout;
+        QVBoxLayout *rootLayout;
+        QHBoxLayout *lineEditLayout;
+        QHBoxLayout *errorMessageLayout;
         QLabel *label;
         QLineEdit* edit;
+        QLabel* errorImage;
+        QLabel* errorMessage;
+
+
 };

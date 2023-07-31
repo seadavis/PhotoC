@@ -6,5 +6,4 @@ LongExposureDetails::LongExposureDetails()
     helloWorld = new QLabel("Long Exposure");
     verticalLayout->addWidget(helloWorld);
     this->setLayout(verticalLayout);
-    
 }
