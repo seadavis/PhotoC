@@ -11,6 +11,8 @@
 #include "canvasmanager.h"
 #include "LongExposureConfig.h"
 
+#pragma once
+
 using namespace cv;
 using namespace std;
 using namespace processing;
@@ -54,13 +56,19 @@ class StackedImageUpdate : public ICanvasOperator
 
 };
 
-class CanvasWidget : public QWidget, public IReceiveImages
+class CanvasWidget : public QWidget, public IReceiveImages, public IReceiveErrorMessages
 {
+    Q_OBJECT
+
     public:
       CanvasWidget(QWidget *parent, ICamera* camera);
       void setMaskPath(string path);
       void setOriginalPath(string path);
       void Receive(Mat m);
+      void Receive(string error);
+
+    public slots:
+      void showErrorMessage(QString error);
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
@@ -74,7 +82,7 @@ class CanvasWidget : public QWidget, public IReceiveImages
       void handleLiveViewButton();
       void handleLongExposureButton();
       void handleLongExposureAccept();
-
+      
     private:
         shared_ptr<CanvasManager> canvasManager;
         shared_ptr<CompositeCanvas> canvas;

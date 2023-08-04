@@ -48,7 +48,7 @@ static void errordumper(GPLogLevel level, const char *domain, const char *str, v
 
 static int camera_toggle_config(Camera *camera, GPContext *context, int onoff, string setting);
 
-static void
+static int
 capture_preview_to_memory(Camera *camera, 
                             GPContext *context, 
                             const char **ptr, 
@@ -157,25 +157,37 @@ Mat RemoteCamera::snap_picture()
 
 void RemoteCamera::StartLiveView()
 {
-	isLiveViewThreadOpen = true;
-	int status = camera_eosviewfinder(camera, context, 1);
-	if(status < GP_OK)
+	if(!isLiveViewThreadOpen)
+	{
+		isLiveViewThreadOpen = true;
+		int status = camera_eosviewfinder(camera, context, 1);
+		if(status < GP_OK)
+		{
+			throw CameraOperationException("start live view");
+		}
+		workerThread = thread(&RemoteCamera::ViewThreadWorker,this);
+	}
+	else
 	{
 		throw CameraOperationException("start live view");
 	}
-	workerThread = thread(&RemoteCamera::ViewThreadWorker,this);
+
 }
 
 void RemoteCamera::StopLiveView()
 {
-	isLiveViewThreadOpen = false;
-	workerThread.join();
-	int status = camera_eosviewfinder(camera, context, 0);
-
-	if(status < GP_OK)
+	if(isLiveViewThreadOpen)
 	{
-		throw CameraOperationException("stop live view");
+		isLiveViewThreadOpen = false;
+		workerThread.join();
+		int status = camera_eosviewfinder(camera, context, 0);
+
+		if(status < GP_OK)
+		{
+			throw CameraOperationException("stop live view");
+		}
 	}
+
 }
 
 void RemoteCamera::StartLongExposure(LongExposureShots shots)
@@ -229,7 +241,7 @@ void RemoteCamera::LongExposureThreadWorker()
 			Mat img;
 			cvtColor(m, img, CV_BGR2BGRA);
 			auto clonedImage = img.clone();
-			this->receiver->Receive(img);
+			imageReceiver->Receive(img);
 			gp_camera_file_delete(camera, path->folder, path->name, context);
 			gp_file_free(addedFile);
 			free(data);
@@ -247,7 +259,14 @@ void RemoteCamera::ViewThreadWorker()
 	{
 		char* buffer;
 		unsigned long buffer_size = 0;
-		capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
+		int retVal = capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
+
+		if(retVal < 0)
+		{
+			this->errorMessageReceiver->Receive("Could not capture preview to memory. Check camera settings, or restart camera.");
+			break;
+		}
+
 		if(buffer_size > 0)
 		{
 			auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
@@ -255,12 +274,13 @@ void RemoteCamera::ViewThreadWorker()
 			cvtColor(m, img, CV_BGR2BGRA);
 			auto clonedImage = img.clone();
 			delete buffer;
-			receiver->Receive(img);
-
+			imageReceiver->Receive(img);
 		}
 
 		this_thread::sleep_for (chrono::milliseconds(17));
 	}
+
+	isLiveViewThreadOpen = false;
 }
 
 RemoteCamera::~RemoteCamera()
@@ -342,7 +362,7 @@ void FakeCamera::LongExposureThreadWorker()
 				auto currentPicture = pictures[picturesTaken%pictures.size()];
 				cout << "Image Path: " << currentPicture << "\n";
 				Mat img = common::tests::loadStdImage(currentPicture);
-				this->receiver->Receive(img);
+				imageReceiver->Receive(img);
 				this_thread::sleep_for(currentShot.Interval.ToMilliseconds());
 				picturesTaken++;
 			}
@@ -492,7 +512,7 @@ static void capture_to_memory(Camera *camera, GPContext *context, CameraFilePath
 	/*gp_file_free(file); */
 }
 
-static void capture_preview_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned long int *size) {
+static int capture_preview_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned long int *size) {
 	int retval;
 	CameraFile *file;
 	CameraFilePath camera_file_path;
@@ -500,9 +520,26 @@ static void capture_preview_to_memory(Camera *camera, GPContext *context, const 
 	printf("Capturing Preview.\n");
 
     retval = gp_file_new(&file);
+
+	if(retval < GP_OK)
+	{
+		return retval;
+	}
+
     retval = gp_file_set_name(file, "preview.jpg");
+
+	if(retval < GP_OK)
+	{
+		return retval;
+	}
    
 	retval = gp_camera_capture_preview(camera, file, context);
 
-	gp_file_get_data_and_size (file, ptr, size);
+	if(retval < GP_OK)
+	{
+		return retval;
+	}
+
+	retval = gp_file_get_data_and_size (file, ptr, size);
+	return retval;
 }

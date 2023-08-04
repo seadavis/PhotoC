@@ -92,6 +92,11 @@ class CameraConnectionException : public runtime_error {
 
 };
 
+class IReceiveErrorMessages
+{
+    public:
+        virtual void Receive(string error) = 0;
+};
 
 class IReceiveImages
 {
@@ -124,14 +129,16 @@ class ICamera
 
         virtual void StopLongExposure() = 0;
 
-        void SetReceiver(IReceiveImages* receiver)
+        void SetReceiver(IReceiveImages* imageReceiver, IReceiveErrorMessages* errorMessageReceiver)
         {
-            this->receiver = receiver;
+            this->imageReceiver = imageReceiver;
+            this->errorMessageReceiver = errorMessageReceiver;
         }
 
 
     protected:
-        IReceiveImages* receiver;
+        IReceiveImages* imageReceiver;
+        IReceiveErrorMessages* errorMessageReceiver;
 };
 
 

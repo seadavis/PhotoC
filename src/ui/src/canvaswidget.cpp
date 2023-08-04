@@ -117,7 +117,7 @@ void CanvasWidget::handleConnectButton()
         cameraConnectingStatusChanged(true);
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         camera->connect();
-        camera->SetReceiver(this);
+        camera->SetReceiver(this, this);
         auto msg = new QMessageBox(this);
         msg->setWindowTitle("Success!");
         msg->setText("Successfully connected camera");
@@ -144,9 +144,26 @@ void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
 
 void CanvasWidget::showErrorMessage(const exception& ex)
 {
+    auto qstring = QString(ex.what());
+    showErrorMessage(qstring);
+}
+
+void CanvasWidget::showErrorMessage(QString err)
+{
     auto msg = new QErrorMessage(this);
-    auto what = ex.what();
-    msg->showMessage(QString(what));
+    msg->showMessage(err);
+}
+
+void CanvasWidget::Receive(string error)
+{
+    auto qstring = QString(error.c_str());
+    isInLiveView = false;
+    isInLongExposure = false;
+
+    longExposureButton->setText("Start Long Exposure");
+    liveViewButton->setText("Start Live View");
+
+    QMetaObject::invokeMethod(this, "showErrorMessage", Qt::AutoConnection, Q_ARG(QString, qstring));
 }
 
 void CanvasWidget::handleLongExposureButton()
