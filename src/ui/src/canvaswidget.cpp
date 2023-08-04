@@ -258,9 +258,9 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     verticalLayout->addLayout(canvasGrid);
     verticalLayout->addLayout(buttonLayout);
     buttonLayout->setAlignment(Qt::AlignCenter);
-    canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
-    renderer = unique_ptr<QTRenderer>(new QTRenderer(canvasViewer));
-    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), renderer.get()));
+    canvas = shared_ptr<CompositeCanvas>(new CompositeCanvas());
+    renderer = shared_ptr<QTRenderer>(new QTRenderer(canvasViewer));
+    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas, renderer));
 
     isInLiveView = false;
     isInLongExposure = false;

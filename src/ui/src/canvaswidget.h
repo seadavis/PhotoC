@@ -64,7 +64,7 @@ class CanvasWidget : public QWidget, public IReceiveImages
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
-      
+
     private slots:
       void handleSnapButton();
       void handleConnectButton();     
@@ -76,9 +76,9 @@ class CanvasWidget : public QWidget, public IReceiveImages
       void handleLongExposureAccept();
 
     private:
-        unique_ptr<CanvasManager> canvasManager;
-        unique_ptr<CompositeCanvas> canvas;
-        unique_ptr<QTRenderer> renderer;
+        shared_ptr<CanvasManager> canvasManager;
+        shared_ptr<CompositeCanvas> canvas;
+        shared_ptr<QTRenderer> renderer;
         QVBoxLayout* verticalLayout;
         QHBoxLayout* buttonLayout;
         QGridLayout* canvasGrid;

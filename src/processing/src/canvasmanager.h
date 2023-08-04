@@ -130,14 +130,14 @@ namespace processing{
     {
 
         public:
-            CanvasManager(CompositeCanvas* canvas, IRenderImages* renderer);
+            CanvasManager(shared_ptr<CompositeCanvas> canvas, shared_ptr<IRenderImages> renderer);
             void QueueOperation(shared_ptr<ICanvasOperator> op);
             ~CanvasManager();           
 
         private:
             //variables
-            CompositeCanvas* canvas;
-            IRenderImages* renderer;
+            shared_ptr<CompositeCanvas> canvas;
+            shared_ptr<IRenderImages> renderer;
             mutex queueMutex;
             queue<shared_ptr<ICanvasOperator>> operationQueue;
             thread worker_thread;
