@@ -113,15 +113,23 @@ optional<TimeLength> ParseTimeLength(string str)
 
 RemoteCamera::RemoteCamera()
 {
-	context = create_context();
-	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
-	gp_camera_new(&camera); 
+
 	isLiveViewThreadOpen = false;
 }
 
 int RemoteCamera::connect()
 {
-	int retval = gp_camera_init(camera, context);
+		
+	context = create_context();
+	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
+	int retval = gp_camera_new(&camera); 
+
+	if(retval != GP_OK)
+	{
+		throw CameraConnectionException();
+	}
+
+	retval = gp_camera_init(camera, context);
 
 	if(retval == GP_ERROR_IO_USB_CLAIM)
 	{
@@ -201,6 +209,7 @@ void RemoteCamera::StopLongExposure()
 {
 	isLongExposureThreadOpen = false;
 	workerThread.join();
+	camera_bulb(camera, context, 0);
 }
 
 void RemoteCamera::LongExposureThreadWorker()
@@ -213,18 +222,38 @@ void RemoteCamera::LongExposureThreadWorker()
 	{
 		
 		int status = camera_bulb(camera, context, 1);
+	
+		if(status < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to turn on bulb mode");
+			break;
+		}
+
+		bulbState = 1;
+
 		this_thread::sleep_for(currentShot.Interval.ToMilliseconds());
 		status = camera_bulb(camera, context, 0);
+		if(status < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to turn off bulb mode");
+			break;
+		}
+
+		bulbState = 0;
 
 		CameraEventType event;
 		void *data = NULL;
 		int test = 0;
 
-
 		/* This is equivalent to emptying out the queue*/
 		while(event != GP_EVENT_FILE_ADDED)
 		{
-			gp_camera_wait_for_event(camera,1000, &event, &data, context);
+			status = gp_camera_wait_for_event(camera,1000, &event, &data, context);
+			if(status < GP_OK)
+			{
+				errorMessageReceiver->Receive("Failed to wait for file added event");
+				break;
+			}
 		}
 
 		char* buffer;
@@ -232,9 +261,30 @@ void RemoteCamera::LongExposureThreadWorker()
 		CameraFilePath* path = (CameraFilePath*)data;
 		CameraFile* addedFile;
 
-		gp_file_new(&addedFile);
-		gp_camera_file_get(camera, path->folder, path->name, GP_FILE_TYPE_NORMAL, addedFile, context);
-		gp_file_get_data_and_size(addedFile,(const char**)&buffer,&bufferSize);
+		int retVal = gp_file_new(&addedFile);
+
+		if(retVal < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to initialize in memory file");
+			break;
+		}
+
+		retVal = gp_camera_file_get(camera, path->folder, path->name, GP_FILE_TYPE_NORMAL, addedFile, context);
+
+		if(retVal < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to get file Folder: " + string(path->folder) + ", Name: " + path->name);
+			break;
+		}
+
+		retVal = gp_file_get_data_and_size(addedFile,(const char**)&buffer,&bufferSize);
+
+		if(retVal < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to get file. Size Returned: " + bufferSize);
+			break;
+		}
+
 		if(bufferSize > 0)
 		{
 			auto m =  imdecode(Mat(1, bufferSize, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
@@ -242,6 +292,7 @@ void RemoteCamera::LongExposureThreadWorker()
 			cvtColor(m, img, CV_BGR2BGRA);
 			auto clonedImage = img.clone();
 			imageReceiver->Receive(img);
+			
 			gp_camera_file_delete(camera, path->folder, path->name, context);
 			gp_file_free(addedFile);
 			free(data);
