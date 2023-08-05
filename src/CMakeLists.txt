@@ -49,11 +49,9 @@ target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/ui/src/"
-
                           "${PROJECT_SOURCE_DIR}/common/src/"
                           "${PROJECT_SOURCE_DIR}/blending/src/"
                           "${PROJECT_SOURCE_DIR}/io/src/"
-
                           )
 
 enable_testing()
@@ -81,13 +79,9 @@ target_include_directories(unit_tests PUBLIC
                           "${PROJECT_SOURCE_DIR}/processing/src/"
                           "${PROJECT_SOURCE_DIR}/blending/src/"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
-                          "${PROJECT_SOURCE_DIR}/tests/src/"
-
-
-target_include_directories(unit_tests PUBLIC
-                          "${PROJECT_SOURCE_DIR}/processing/src/" 
                           "${PROJECT_SOURCE_DIR}/io/src/"
-)
+                          "${PROJECT_SOURCE_DIR}/tests/src/")
+
 
 include(GoogleTest)
 gtest_discover_tests(unit_tests)

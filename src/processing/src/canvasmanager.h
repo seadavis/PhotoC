@@ -5,8 +5,6 @@
 #include <queue>
 #include <atomic>
 
-typedef std::chrono::_V2::system_clock::time_point time_point;
-
 using namespace std;
 
 namespace processing{
@@ -144,21 +142,20 @@ namespace processing{
     {
 
         public:
-            CanvasManager(shared_ptr<CompositeCanvas> canvas, shared_ptr<IRenderImages> renderer);
+            CanvasManager(shared_ptr<CompositeCanvas> canvas, IRenderImages* renderer);
             void QueueOperation(shared_ptr<ICanvasOperator> op);
             ~CanvasManager();           
 
         private:
             //variables
             shared_ptr<CompositeCanvas> canvas;
-            shared_ptr<IRenderImages> renderer;
+            IRenderImages* renderer;
             mutex queueMutex;
             queue<shared_ptr<ICanvasOperator>> operationQueue;
             thread worker_thread;
             atomic<bool> isKilled;
             mutex renderingTimeMutex;
             bool isRendering;
-            time_point renderingStartTime;
 
             //methods
             shared_ptr<ICanvasOperator> DeQueueNextOperation();

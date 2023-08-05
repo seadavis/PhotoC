@@ -49,7 +49,7 @@ void Resize::Operate(CompositeCanvas& compositeCanvas)
     compositeCanvas.setSize(width, height);
 }
 
-CanvasManager::CanvasManager(shared_ptr<CompositeCanvas> canvas, shared_ptr<IRenderImages> renderer)
+CanvasManager::CanvasManager(shared_ptr<CompositeCanvas> canvas, IRenderImages* renderer)
 {
     isKilled = false;
     isRendering = false;

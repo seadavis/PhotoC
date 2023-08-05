@@ -95,7 +95,7 @@ void CanvasWidget::handleSnapButton()
     }
     catch(const exception &ex)
     {
-        showErrorMessage(this, ex);
+        showErrorMessage(ex);
     }
 }
 
@@ -214,7 +214,7 @@ void CanvasWidget::handleLiveViewButton()
     }
     catch(const exception &ex)
     {
-       showErrorMessage(this, ex);
+       showErrorMessage(ex);
     }
 }
 
@@ -361,11 +361,10 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     buttonLayout->setAlignment(Qt::AlignCenter);
 
     canvas = shared_ptr<CompositeCanvas>(new CompositeCanvas());
-    renderer = shared_ptr<QTRenderer>(new QTRenderer(canvasViewer));
     isInLiveView = false;
     isInLongExposure = false;
     longExposureWindow = new LongExposureConfig;
-    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), this));
+    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas, this));
     snapButton->setEnabled(false);
     liveViewButton->setEnabled(false);
     isInLiveView = false;

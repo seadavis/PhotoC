@@ -62,21 +62,17 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IReceiveError
       void setMaskPath(string path);
       void setOriginalPath(string path);
       void Receive(Mat m);
-
       void Receive(string error);
+      ~CanvasWidget();
 
     public slots:
       void showErrorMessage(QString error);
       void RenderImage(Mat &m);
       void RenderStarted();
       void RenderStopped();
-      Mat getLastRenderedImage();
-
-      ~CanvasWidget();
-      
-    public slots:
       void displayLoadingWindow();
       void hideLoadingWindow();
+      Mat getLastRenderedImage();
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
@@ -94,7 +90,6 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IReceiveError
     private:
         shared_ptr<CanvasManager> canvasManager;
         shared_ptr<CompositeCanvas> canvas;
-        shared_ptr<QTRenderer> renderer;
         QVBoxLayout* verticalLayout;
         QHBoxLayout* buttonLayout;
         QGridLayout* canvasGrid;
@@ -124,6 +119,7 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IReceiveError
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;
         
+        void showErrorMessage(const exception& ex);
         void displayLiveView(Mat m);
         void sendCompositeUpdate();
         void cameraConnectingStatusChanged(bool isConnecting);
