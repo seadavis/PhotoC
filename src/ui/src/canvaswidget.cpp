@@ -232,7 +232,16 @@ void CanvasWidget::Receive(Mat img)
 {
     if(isInLongExposure)
     {
-        canvasManager->QueueOperation(make_shared<StackedImageUpdate>(img, stacker));
+        if(img.size().empty())
+        {
+            isInLongExposure = false;
+            longExposureButton->setText("Start Long Exposure");
+        }
+        else
+        {
+            canvasManager->QueueOperation(make_shared<StackedImageUpdate>(img, stacker));
+        }
+        
     }
     else
     {

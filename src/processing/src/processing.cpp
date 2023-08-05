@@ -110,7 +110,7 @@ static inline VectorXf form_target_slns_for_channel(Mat* mask_image,
                                                         Solver* solver,
                                                         int channel_number)
 {
-    auto size = source_image->size();
+    auto size = mask_image->size();
     int h = target_image->size().height;
     int w = target_image->size().width;
 
@@ -167,9 +167,9 @@ static void write_slns_to_img(Mat *outputImg,
                             unsigned int my, 
                             int solutionChannel)
 {
-    for(int y = 0; y < src->rows; y++)
+    for(int y = 0; y < mask->rows; y++)
     {
-        for(int x = 0; x < src->cols; x++)
+        for(int x = 0; x < mask->cols; x++)
         {
            
             if(is_mask_pixel(*mask, x, y))
@@ -247,9 +247,9 @@ static Mat naive_composite(Mat mask, Mat src, Mat tgt,  unsigned int mx, unsigne
     Mat output_img = tgt.clone();
     
     // put the solved channels into the output matrix
-    for(int y = 0; y < src.rows; y++)
+    for(int y = 0; y < mask.rows; y++)
     {
-        for(int x = 0; x < src.cols; x++)
+        for(int x = 0; x < mask.cols; x++)
         {
             if(is_mask_pixel(mask, x, y))
             {

@@ -299,7 +299,11 @@ void RemoteCamera::LongExposureThreadWorker()
 			event = GP_EVENT_UNKNOWN;
 		}
 
+		now = high_resolution_clock::now();
 	}
+
+	Mat img;
+	imageReceiver->Receive(img);
 
 	isLongExposureThreadOpen = false;
 }
