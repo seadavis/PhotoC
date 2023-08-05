@@ -120,8 +120,7 @@ void CanvasWidget::handleConnectButton()
         cameraConnectingStatusChanged(false);
         auto msg = new QErrorMessage(this);	
         auto what = ex.what();
-        msg->showMessage(QString(what));
-        snapButton->setEnabled(false);		
+        msg->showMessage(QString(what));	
     }
 }
 
