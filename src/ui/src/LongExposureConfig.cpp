@@ -45,6 +45,9 @@ void LongExposureConfig::HideTime()
     intervalEdit->setHidden(true);
     lengthEdit->setHidden(true);
     timeIsHidden = true;
+    intervalIsValid = true;
+    lengthIsValid = true;
+    setOkButtonState();
 }
 
 void LongExposureConfig::ShowTime()

@@ -10,6 +10,7 @@
 #include <QCursor>
 #include <QCoreApplication>
 #include "canvaswidget.h"
+#include "utilities.h"
 
 
 constexpr double SIZE_FACTOR = 0.65;

@@ -171,6 +171,7 @@ void RemoteCamera::StartLiveView()
 		int status = camera_eosviewfinder(camera, context, 1);
 		if(status < GP_OK)
 		{
+			isLiveViewThreadOpen = false;
 			throw CameraOperationException("start live view");
 		}
 		workerThread = thread(&RemoteCamera::ViewThreadWorker,this);
@@ -315,14 +316,7 @@ void RemoteCamera::ViewThreadWorker()
 		char* buffer;
 		unsigned long buffer_size = 0;
 
-		int retVal = capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
-
-		if(retVal < 0)
-		{
-			this->errorMessageReceiver->Receive("Could not capture preview to memory. Check camera settings, or restart camera.");
-			break;
-		}
-
+		capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
 		if(buffer_size > 0)
 		{
 			auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
