@@ -270,26 +270,6 @@ static Mat naive_composite(Mat mask, Mat src, Mat tgt,  unsigned int mx, unsigne
     return output_img;
 }
 
-static Mat size_to_fit(Mat src, int width, int height)
-{
-    Mat sized_src;
-    if(src.size().width <= width && src.size().height <= height)
-    {
-        sized_src = src;
-    }
-    else if(src.size().width > width || src.size().height >=height)
-    {
-        auto width_factor = (float)width/(float)src.size().width;
-        auto height_factor = (float)height/(float)src.size().height;
-        auto greatest_factor = width_factor < height_factor ? width_factor : height_factor;
-        auto new_width = greatest_factor*src.size().width;
-        auto new_height = greatest_factor*src.size().height;
-
-        resize(src, sized_src, Size(new_width, new_height), INTER_AREA);
-    }
-
-    return sized_src;
-}
 
 static Mat fill_in_canvas(Mat src, int width, int height)
 {
@@ -406,14 +386,8 @@ void CompositeCanvas::scaleSelected(int dx, int dy)
 {
     if(objectSelected == ObjectType::SizeCircle)
     {
-        int sign = 1;
-
-        if((dx < 0 && dy == 0) || (dy < 0 && dx == 0) || (dx < 0 && dy < 0))
-            sign = -1;
-        
-        auto deltaPixels = sign*sqrt(pow(dx, 2) + pow(dy, 2));
-        auto deltaHeight = maskHeight + deltaPixels;
-        auto deltaWidth = maskWidth + deltaPixels;
+        auto deltaHeight = maskHeight + dy;
+        auto deltaWidth = maskWidth + dx;
         
         int maxHeight;
         int maxWidth;
@@ -464,8 +438,8 @@ void CompositeCanvas::translateSelected(int dx, int dy)
         if(mx_prime < 1)
             mx = 5;
 
-        else if(backgroundImage != nullptr && mx_prime + originalMaskImage->size().width >= backgroundImage->size().width)
-            mx =  backgroundImage->size().width - originalMaskImage->size().width - 5;
+        else if(backgroundImage != nullptr && mx_prime + resizedMask->size().width >= backgroundImage->size().width)
+            mx =  backgroundImage->size().width - resizedMask->size().width - 5;
 
         else
             mx = mx_prime;
@@ -473,8 +447,8 @@ void CompositeCanvas::translateSelected(int dx, int dy)
         if(my_prime < 1)
             my = 5;
 
-        else if(backgroundImage != nullptr && my_prime + originalMaskImage->size().height >= backgroundImage->size().height)
-            my = backgroundImage->size().height - originalMaskImage->size().height - 5;
+        else if(backgroundImage != nullptr && my_prime + resizedMask->size().height >= backgroundImage->size().height)
+            my = backgroundImage->size().height - resizedMask->size().height - 5;
         
         else
             my = my_prime;
@@ -486,8 +460,7 @@ Mat CompositeCanvas::loadImage(string imagePath)
     Mat img = imread(imagePath, CV_LOAD_IMAGE_UNCHANGED);
     Mat tgt;
     cvtColor(img, tgt, CV_BGR2BGRA);
-    auto sizedTgt = size_to_fit(tgt, width, height);
-    return sizedTgt;
+    return tgt;
 }
 
 CompositeCanvas::CompositeCanvas()
@@ -508,7 +481,8 @@ void CompositeCanvas::setSize(int width, int height)
 
 void CompositeCanvas::setBackground(Mat backgrnd)
 {
-   auto sizedBackground = size_to_fit(backgrnd, width, height);
+   Mat sizedBackground;
+   resize(backgrnd, sizedBackground, Size(width, height), 0.0, 0.0, INTER_LINEAR);
    backgroundImage = unique_ptr<Mat>(new Mat(sizedBackground));
 }
 
@@ -584,9 +558,12 @@ void CompositeCanvas::tap(Point p)
         {
             setSupportingStructuresForComposites();
         }
-    
     }
-    
+}
+
+ObjectType CompositeCanvas::getCurrentlySelected()
+{
+    return objectSelected;
 }
 
 void CompositeCanvas::releaseObject()

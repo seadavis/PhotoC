@@ -314,6 +314,7 @@ void RemoteCamera::ViewThreadWorker()
 	{
 		char* buffer;
 		unsigned long buffer_size = 0;
+
 		int retVal = capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
 
 		if(retVal < 0)

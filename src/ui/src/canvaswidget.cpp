@@ -8,27 +8,16 @@
 #include <string>
 #include <sstream>
 #include <QCursor>
-#include <QErrorMessage>
-#include <QMessageBox>
 #include <QCoreApplication>
 #include "canvaswidget.h"
 
 
 constexpr double SIZE_FACTOR = 0.65;
-
-QTRenderer::QTRenderer(ImageViewer* viewer)
-{
-    this->viewer = viewer;
-}
-
-void QTRenderer::RenderImage(Mat& m)
-{
-    viewer->setImage(m);
-}
+constexpr auto RenderMonitorSleepMS = chrono::milliseconds(500);
 
 void QTTransformImage::OnHit(ObjectType type)
 {
-     if(type == ObjectType::Image)
+    if(type == ObjectType::Image)
     {
         widget->setCursor(QCursor(Qt::CursorShape::SizeAllCursor));
     }
@@ -106,7 +95,7 @@ void CanvasWidget::handleSnapButton()
     }
     catch(const exception &ex)
     {
-        showErrorMessage(ex);
+        showErrorMessage(this, ex);
     }
 }
 
@@ -141,6 +130,7 @@ void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
     liveViewButton->setEnabled(!isConnecting);
     longExposureButton->setEnabled(!isConnecting);
 }
+
 
 void CanvasWidget::showErrorMessage(const exception& ex)
 {
@@ -224,7 +214,7 @@ void CanvasWidget::handleLiveViewButton()
     }
     catch(const exception &ex)
     {
-       showErrorMessage(ex);
+       showErrorMessage(this, ex);
     }
 }
 
@@ -249,6 +239,91 @@ void CanvasWidget::Receive(Mat img)
     }
 }
 
+void CanvasWidget::RenderImage(Mat& img)
+{
+    {
+        lock_guard<mutex> lk(copyRenderMutex);
+        img.copyTo(lastRenderedImage);
+    }
+
+    canvasViewer->setImage(img);
+}
+
+Mat CanvasWidget::getLastRenderedImage()
+{
+    Mat copy;
+
+    {
+        lock_guard<mutex> lk(copyRenderMutex);
+        lastRenderedImage.copyTo(copy);
+    }
+
+    return copy;
+}
+
+void CanvasWidget::RenderStarted()
+{
+    lock_guard<mutex> lk(renderNumberMutex);
+    currentRenderNumber = currentRenderNumber + 1;
+}
+
+void CanvasWidget::RenderStopped()
+{
+    QMetaObject::invokeMethod(this,"hideLoadingWindow", Qt::AutoConnection );
+}
+
+void CanvasWidget::displayLoadingWindow()
+{
+    if(!msgBoxDisplayed)
+    {
+        longRenderMessageBox->exec();
+        msgBoxDisplayed = true;
+    }
+}
+
+void CanvasWidget::hideLoadingWindow()
+{
+    if(msgBoxDisplayed)
+    {
+        longRenderMessageBox->done(0);
+        msgBoxDisplayed = false;
+    }
+}
+
+void CanvasWidget::renderTimeMonitor()
+{
+    while(!isKilled)
+    {
+        ulong lastSeenRenderNumber;
+
+        {
+            lock_guard<mutex> lk(renderNumberMutex);
+            lastSeenRenderNumber = this->currentRenderNumber;
+        }
+
+        //cout << "Current Render Number Pre Sleep: " << lastSeenRenderNumber << "\n";
+        std::this_thread::sleep_for(RenderMonitorSleepMS);
+        //cout << "Current Render Number Post Sleep: " << lastSeenRenderNumber << "\n";
+
+        bool hasRenderNumberChanged = false;
+
+        {
+            lock_guard<mutex> lk(renderNumberMutex);
+            hasRenderNumberChanged = lastSeenRenderNumber != this->currentRenderNumber;
+        }
+
+        if(!hasRenderNumberChanged)
+        {
+            QMetaObject::invokeMethod(this,"displayLoadingWindow", Qt::AutoConnection );
+        }
+    }
+}
+
+CanvasWidget::~CanvasWidget()
+{
+    isKilled = true;
+    renderTimeMonitorThread.join();
+}
 
 CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
 {
@@ -284,14 +359,23 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     verticalLayout->addLayout(canvasGrid);
     verticalLayout->addLayout(buttonLayout);
     buttonLayout->setAlignment(Qt::AlignCenter);
+
     canvas = shared_ptr<CompositeCanvas>(new CompositeCanvas());
     renderer = shared_ptr<QTRenderer>(new QTRenderer(canvasViewer));
-    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas, renderer));
-
     isInLiveView = false;
     isInLongExposure = false;
-
     longExposureWindow = new LongExposureConfig;
+    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), this));
+    snapButton->setEnabled(false);
+    liveViewButton->setEnabled(false);
+    isInLiveView = false;
+    msgBoxDisplayed = false;
+    isKilled = false;
+    currentRenderNumber = 0;
+    renderTimeMonitorThread = std::thread(&CanvasWidget::renderTimeMonitor, this);
+    longRenderMessageBox = new QMessageBox(QMessageBox::Icon::Critical, 
+                                            "Loading", 
+                                            "Xposed is taking a long time to render. Please wait until rendering operation is complete");
 
     connect(longExposureWindow, &LongExposureConfig::accepted, this, &CanvasWidget::handleLongExposureAccept);
     connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);

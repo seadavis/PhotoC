@@ -10,12 +10,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
 set(RESOURCE_FILES ./ui/src/app_resources.qrc)
 set(BENCHMARK_ENABLE_LIBPFM ON)
 
-
 find_package( Qt5Core REQUIRED )
 find_package( Qt5Widgets REQUIRED )
 find_package( Qt5Gui REQUIRED )
 find_package(OpenCV REQUIRED )
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(benchmark REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -34,6 +33,8 @@ add_subdirectory(./common/src)
 add_subdirectory(./processing/src)
 add_subdirectory(./blending/src)
 add_subdirectory(./tests/src)
+add_subdirectory(./io/src)
+
 
 set(SOURCES main.cpp)
 qt5_add_resources(SOURCES ./ui/src/app_resources.qrc)
@@ -41,14 +42,18 @@ add_executable(field_of_view
     ${SOURCES}
 )
 
-target_link_libraries(field_of_view PUBLIC common blending processing camera ui Qt5::Widgets ${OpenCV_LIBS})
+
+target_link_libraries(field_of_view PUBLIC common blending processing camera ui io Qt5::Widgets ${OpenCV_LIBS})
 
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/ui/src/"
+
                           "${PROJECT_SOURCE_DIR}/common/src/"
                           "${PROJECT_SOURCE_DIR}/blending/src/"
+                          "${PROJECT_SOURCE_DIR}/io/src/"
+
                           )
 
 enable_testing()
@@ -57,10 +62,12 @@ add_executable(
   ./processing/tests/canvas_tests.cpp
   ./blending/tests/stacking_tests.cpp
   ./camera/tests/parsing_tests.cpp
+  ./io/tests/filetests.cpp
 )
 
 target_link_libraries(
   unit_tests
+  io
   processing 
   common 
   common_tests
@@ -75,6 +82,11 @@ target_include_directories(unit_tests PUBLIC
                           "${PROJECT_SOURCE_DIR}/blending/src/"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/tests/src/"
+
+
+target_include_directories(unit_tests PUBLIC
+                          "${PROJECT_SOURCE_DIR}/processing/src/" 
+                          "${PROJECT_SOURCE_DIR}/io/src/"
 )
 
 include(GoogleTest)

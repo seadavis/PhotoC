@@ -199,6 +199,11 @@ namespace processing{
             void releaseObject();
 
             /**
+             * Gets the object type that is currently selected
+            */
+            ObjectType getCurrentlySelected();
+
+            /**
              * 
              * Gives the current representation 
              * of the image

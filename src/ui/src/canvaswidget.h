@@ -6,26 +6,22 @@
 #include <memory>
 #include <vector>
 #include <QMouseEvent>
+#include <QMessageBox>
 #include <functional>
+#include <atomic>
+#include <thread>
+#include <mutex>
 #include "ImageViewer.h"
 #include "canvasmanager.h"
 #include "LongExposureConfig.h"
+#include "camera.h"
+#include "utilities.h"
 
 #pragma once
 
 using namespace cv;
 using namespace std;
 using namespace processing;
-
-class QTRenderer : public IRenderImages
-{
-    public:
-      QTRenderer(ImageViewer* viewer);
-      void RenderImage(Mat& m) override;
-
-    private:
-      ImageViewer* viewer;
-};
 
 class QTTransformImage : public TransformImage
 {
@@ -39,6 +35,7 @@ class QTTransformImage : public TransformImage
   private:
     QWidget* widget;
 };
+
 
 class StackedImageUpdate : public ICanvasOperator
 {
@@ -56,7 +53,7 @@ class StackedImageUpdate : public ICanvasOperator
 
 };
 
-class CanvasWidget : public QWidget, public IReceiveImages, public IReceiveErrorMessages
+class CanvasWidget : public QWidget, public IReceiveImages, public IReceiveErrorMessages, public IRenderImages
 {
     Q_OBJECT
 
@@ -65,10 +62,21 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IReceiveError
       void setMaskPath(string path);
       void setOriginalPath(string path);
       void Receive(Mat m);
+
       void Receive(string error);
 
     public slots:
       void showErrorMessage(QString error);
+      void RenderImage(Mat &m);
+      void RenderStarted();
+      void RenderStopped();
+      Mat getLastRenderedImage();
+
+      ~CanvasWidget();
+      
+    public slots:
+      void displayLoadingWindow();
+      void hideLoadingWindow();
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
@@ -106,14 +114,21 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IReceiveError
         bool isInLongExposure;
         StackerFactory factory;
         shared_ptr<IStackImages> stacker;
-
+        QMessageBox* longRenderMessageBox;
+        atomic<bool> msgBoxDisplayed;
+        atomic<bool> isKilled;
+        ulong currentRenderNumber;
+        mutex renderNumberMutex;
+        mutex copyRenderMutex;
+        Mat lastRenderedImage;
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;
-
-        void showErrorMessage(const exception& ex);
+        
         void displayLiveView(Mat m);
         void sendCompositeUpdate();
         void cameraConnectingStatusChanged(bool isConnecting);
+        void renderTimeMonitor();
+        std::thread renderTimeMonitorThread;
         void render();
         void showLongExposureConfig(bool isInDefinite);
 

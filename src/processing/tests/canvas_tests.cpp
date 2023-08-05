@@ -43,6 +43,8 @@ class TestRenderer : public IRenderImages{
       imgSet = false;
     };
     void RenderImage(Mat& m) override;
+    void RenderStarted(){};
+    void RenderStopped(){};
     Mat WaitUntilImageAvailable();
     Mat outputImage;
 
@@ -184,34 +186,32 @@ INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
                         ));
 
 
+TEST(CompositeCanvas, IllegalComposite){	
 
-TEST(CompositeCanvas, IllegalComposite){
 
   Mat backgroundImage = loadStdImage("./src/processing/tests/target_images/library.png");
-
   auto mask = "./src/processing/tests/masks/balloon.png";
   auto original = "./src/processing/tests/original_source_images/balloon.png";
+  auto canvas = CompositeCanvas();	 
+  canvas.setSize(50, 50);	  
+  canvas.setBackground(backgroundImage);	  
+  canvas.setComposite(mask, original);	 
 
-  auto canvas = CompositeCanvas();
-  canvas.setSize(150, 150);
-  canvas.setBackground(backgroundImage);
-  canvas.setComposite(mask, original);
-
-  try
-  {
-    Mat result = canvas.currentImg();
-    FAIL();
-  }
-  catch(BackgroundResizedException ex)
-  {
-    SUCCEED();
-  }
-  catch(exception exception)
-  {
-    FAIL();
-  }
-
+  try	
+  {	
+    Mat result = canvas.currentImg();	
+    FAIL();	
+  }	
+  catch(BackgroundResizedException ex)	
+  {	
+    SUCCEED();	
+  }	
+  catch(exception exception)	
+  {	
+    FAIL();	
+  }	
 }
+
 
 
 TEST(CompositeCanvas, OnlyCompositesSet)
@@ -346,6 +346,37 @@ TEST_P(TranslationData, ValidTranslations) {
   ASSERT_TRUE(compareImages("./src/processing/tests/target_translations/" + fileName, 
                               "./src/processing/tests/test_translations/" + fileName,
                               result));
+}
+
+TEST(TranslationTests, TranslationTooFarRight) {
+
+  auto backgroundImagePath = "./src/processing/tests/target_images/beach.png";
+  auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+
+  auto mask = "./src/processing/tests/masks/eagle.png";
+  auto original = "./src/processing/tests/original_source_images/eagle.png";
+
+  auto canvas = CompositeCanvas();
+  auto testRenderer = TestRenderer();
+  auto canvasManager = CanvasManager(&canvas, &testRenderer);
+
+  canvasManager.QueueOperation(make_shared<Resize>(1446, 880));
+  canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
+  canvasManager.QueueOperation(make_shared<CompositeImageUpdate>(original, mask));
+  canvasManager.QueueOperation(make_shared<TapImage>(Point(745, 385)));
+  canvasManager.QueueOperation(make_shared<TapImage>(Point(604, 344)));
+  canvasManager.QueueOperation(make_shared<TransformImage>(Point(604, 344), 183,180));
+  canvasManager.QueueOperation(make_shared<TapImage>(Point(745, 385)));
+  canvasManager.QueueOperation(make_shared<TransformImage>(Point(745, 385), 1152, 432));
+
+  Mat result = testRenderer.WaitUntilImageAvailable();
+
+  auto fileName =  string("test_too_far_right.png");
+
+  imwrite( "./src/processing/tests/test_translations/" + fileName, result);
+  Mat expectedMat = imread("./src/processing/tests/target_translations/" + fileName);
+  bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
+  ASSERT_TRUE(equal);
 }
 
 TEST_P(ScalingImage, ScaleTests){

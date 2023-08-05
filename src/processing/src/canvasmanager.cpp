@@ -2,6 +2,8 @@
 
 using namespace processing;
 
+constexpr auto TimePerFrame = chrono::milliseconds(16);
+
 void BackgroundImageUpdate::Operate(CompositeCanvas& compositeCanvas)
 {
     compositeCanvas.setBackground(backgroundImage);
@@ -25,11 +27,13 @@ void TransformImage::Operate(CompositeCanvas& compositeCanvas)
     const auto objectType = compositeCanvas.hit(focalPoint);
     OnHit(objectType);
 
-    if(objectType == ObjectType::SizeCircle)
+    const auto currentlySelected = compositeCanvas.getCurrentlySelected();
+
+    if(currentlySelected == ObjectType::SizeCircle)
     {
         compositeCanvas.scaleSelected(dx, dy);
     }
-    else if(objectType == ObjectType::Image)
+    else if(currentlySelected == ObjectType::Image)
     {
         compositeCanvas.translateSelected(dx, dy);
     }
@@ -47,6 +51,8 @@ void Resize::Operate(CompositeCanvas& compositeCanvas)
 
 CanvasManager::CanvasManager(shared_ptr<CompositeCanvas> canvas, shared_ptr<IRenderImages> renderer)
 {
+    isKilled = false;
+    isRendering = false;
     this->renderer = renderer;
     this->canvas = canvas;
     isKilled = false;
@@ -91,19 +97,23 @@ void CanvasManager::QueueWorker()
         {
             auto start = chrono::high_resolution_clock::now();
             shared_ptr<ICanvasOperator> op;
+
+            this->renderer->RenderStarted();
             while((op = DeQueueNextOperation()) != nullptr)
             {
                 op->Operate(*canvas);
             }
-            auto img = canvas->currentImg();
 
+            auto img = canvas->currentImg();
             if(img.size().area() > 0)
             {
                 this->renderer->RenderImage(img);
             }
+
+            this->renderer->RenderStopped();
             auto finish = chrono::high_resolution_clock::now();
             auto milliseconds = chrono::duration_cast<std::chrono::milliseconds>(finish-start);
-            auto remaining = chrono::milliseconds(16) - milliseconds;
+            auto remaining = chrono::milliseconds(TimePerFrame) - milliseconds;
 
             if(remaining.count() > 0)
                 this_thread::sleep_for(remaining);
