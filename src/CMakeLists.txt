@@ -29,8 +29,12 @@ FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(./camera/src)
 add_subdirectory(./ui/src)
+add_subdirectory(./common/src)
 add_subdirectory(./processing/src)
+add_subdirectory(./blending/src)
+add_subdirectory(./tests/src)
 add_subdirectory(./io/src)
+
 
 set(SOURCES main.cpp)
 qt5_add_resources(SOURCES ./ui/src/app_resources.qrc)
@@ -38,11 +42,15 @@ add_executable(field_of_view
     ${SOURCES}
 )
 
-target_link_libraries(field_of_view PUBLIC processing camera ui io Qt5::Widgets ${OpenCV_LIBS})
+
+target_link_libraries(field_of_view PUBLIC common blending processing camera ui io Qt5::Widgets ${OpenCV_LIBS})
+
 target_include_directories(field_of_view PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/ui/src/"
+                          "${PROJECT_SOURCE_DIR}/common/src/"
+                          "${PROJECT_SOURCE_DIR}/blending/src/"
                           "${PROJECT_SOURCE_DIR}/io/src/"
                           )
 
@@ -50,32 +58,49 @@ enable_testing()
 add_executable(
   unit_tests
   ./processing/tests/canvas_tests.cpp
+  ./blending/tests/stacking_tests.cpp
+  ./camera/tests/parsing_tests.cpp
   ./io/tests/filetests.cpp
 )
+
 target_link_libraries(
   unit_tests
-  io 
+  io
   processing 
-  GTest::gtest_main ${OpenCV_LIBS}
+  common 
+  common_tests
+  camera
+  blending 
+  GTest::gtest_main 
+  ${OpenCV_LIBS}
 )
 
 target_include_directories(unit_tests PUBLIC
-                          "${PROJECT_SOURCE_DIR}/processing/src/" 
+                          "${PROJECT_SOURCE_DIR}/processing/src/"
+                          "${PROJECT_SOURCE_DIR}/blending/src/"
+                          "${PROJECT_SOURCE_DIR}/camera/src/"
                           "${PROJECT_SOURCE_DIR}/io/src/"
-)
+                          "${PROJECT_SOURCE_DIR}/tests/src/")
+
 
 include(GoogleTest)
 gtest_discover_tests(unit_tests)
 
 add_executable(
   benchmarks
-  ./processing/tests/benchmarks/blending_benchmarks.cpp
+  ./benchmarks/blending_benchmarks.cpp
 )
 target_link_libraries(
   benchmarks
-  processing benchmark::benchmark ${OpenCV_LIBS}
+  processing 
+  common_tests 
+  blending
+  benchmark::benchmark 
+  ${OpenCV_LIBS}
 )
-target_include_directories(benchmarks PUBLIC
+target_include_directories(benchmarks PUBLIC 
+                          "${PROJECT_SOURCE_DIR}/tests/src/"
+                          "${PROJECT_SOURCE_DIR}/blending/src/"
                           "${PROJECT_SOURCE_DIR}/processing/src/"
 )
 

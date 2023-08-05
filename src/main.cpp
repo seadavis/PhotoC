@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     if(argc > 1)
     {   
         
-        camera = new FakeCamera(string(argv[1]));
+        camera = new FakeCamera(string(argv[1]), string(argv[2]));
     }
     else
     {

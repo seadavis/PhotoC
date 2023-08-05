@@ -10,6 +10,8 @@
 #include <QCursor>
 #include <QCoreApplication>
 #include "canvaswidget.h"
+#include "utilities.h"
+
 
 constexpr double SIZE_FACTOR = 0.65;
 constexpr auto RenderMonitorSleepMS = chrono::milliseconds(500);
@@ -28,6 +30,12 @@ void QTTransformImage::OnHit(ObjectType type)
     {
         widget->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
     }
+}
+
+void StackedImageUpdate::Operate(CompositeCanvas& canvas)
+{
+    stacker->AddToStack(image);
+    canvas.setBackground(stacker->GetCurrentBlend());
 }
 
 void CanvasWidget::handleMouseMoveOnImage(int x, int y)
@@ -88,7 +96,7 @@ void CanvasWidget::handleSnapButton()
     }
     catch(const exception &ex)
     {
-        showErrorMessage(this, ex);
+        showErrorMessage(ex);
     }
 }
 
@@ -99,7 +107,7 @@ void CanvasWidget::handleConnectButton()
         cameraConnectingStatusChanged(true);
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         camera->connect();
-        camera->SetReceiver(this);
+        camera->SetReceiver(this, this);
         auto msg = new QMessageBox(this);
         msg->setWindowTitle("Success!");
         msg->setText("Successfully connected camera");
@@ -121,6 +129,70 @@ void CanvasWidget::cameraConnectingStatusChanged(bool isConnecting)
 {   
     connectButton->setEnabled(!isConnecting);
     liveViewButton->setEnabled(!isConnecting);
+    longExposureButton->setEnabled(!isConnecting);
+}
+
+
+void CanvasWidget::showErrorMessage(const exception& ex)
+{
+    auto qstring = QString(ex.what());
+    showErrorMessage(qstring);
+}
+
+void CanvasWidget::showErrorMessage(QString err)
+{
+    auto msg = new QErrorMessage(this);
+    msg->showMessage(err);
+}
+
+void CanvasWidget::Receive(string error)
+{
+    auto qstring = QString(error.c_str());
+    isInLiveView = false;
+    isInLongExposure = false;
+
+    longExposureButton->setText("Start Long Exposure");
+    liveViewButton->setText("Start Live View");
+
+    QMetaObject::invokeMethod(this, "showErrorMessage", Qt::AutoConnection, Q_ARG(QString, qstring));
+}
+
+void CanvasWidget::handleLongExposureButton()
+{
+    if(isInLongExposure)
+    {
+        if(!isInLiveView)
+            this->camera->StopLongExposure();
+            
+        isInLongExposure = false;
+        longExposureButton->setText("Start Long Exposure");
+    }
+    else
+    {
+        showLongExposureConfig(isInLiveView);
+    }
+   
+}
+
+void CanvasWidget::showLongExposureConfig(bool isIndefinite)
+{
+    longExposureWindow->Reset();
+    if(isIndefinite)
+        longExposureWindow->HideTime();
+    
+    longExposureWindow->show();
+}
+
+void CanvasWidget::handleLongExposureAccept()
+{
+    longExposureButton->setText("Stop long Exposure");
+    isInLongExposure = true;
+    auto longExposureDef = longExposureWindow->GetLongExposure();
+    stacker = factory.CreateStacker(longExposureDef);
+
+    if(!isInLiveView)
+        this->camera->StartLongExposure(longExposureDef.shots);
+
 }
 
 void CanvasWidget::handleLiveViewButton()
@@ -143,13 +215,29 @@ void CanvasWidget::handleLiveViewButton()
     }
     catch(const exception &ex)
     {
-       showErrorMessage(this, ex);
+       showErrorMessage(ex);
     }
 }
 
 void CanvasWidget::Receive(Mat img)
 {
-    canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
+    if(isInLongExposure)
+    {
+        if(img.size().empty())
+        {
+            isInLongExposure = false;
+            longExposureButton->setText("Start Long Exposure");
+        }
+        else
+        {
+            canvasManager->QueueOperation(make_shared<StackedImageUpdate>(img, stacker));
+        }
+        
+    }
+    else
+    {
+        canvasManager->QueueOperation(make_shared<BackgroundImageUpdate>(img));
+    }
 }
 
 void CanvasWidget::RenderImage(Mat& img)
@@ -255,9 +343,16 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     snapButton = new QPushButton("Snap!");
     connectButton = new QPushButton("Connect");
     liveViewButton = new QPushButton("Live View");
+    longExposureButton = new QPushButton("Start Long Exposure");
+
+    snapButton->setEnabled(false);
+    liveViewButton->setEnabled(false);
+    longExposureButton->setEnabled(false);
+
     buttonLayout->addWidget(snapButton);
     buttonLayout->addWidget(connectButton);
     buttonLayout->addWidget(liveViewButton);
+    buttonLayout->addWidget(longExposureButton);
 
     canvasViewer->setFixedSize(0, 0);
     canvasGrid->addWidget(backLabel, 0, 0);
@@ -265,8 +360,12 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
     verticalLayout->addLayout(canvasGrid);
     verticalLayout->addLayout(buttonLayout);
     buttonLayout->setAlignment(Qt::AlignCenter);
-    canvas = unique_ptr<CompositeCanvas>(new CompositeCanvas());
-    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas.get(), this));
+
+    canvas = shared_ptr<CompositeCanvas>(new CompositeCanvas());
+    isInLiveView = false;
+    isInLongExposure = false;
+    longExposureWindow = new LongExposureConfig;
+    canvasManager = unique_ptr<CanvasManager>(new CanvasManager(canvas, this));
     snapButton->setEnabled(false);
     liveViewButton->setEnabled(false);
     isInLiveView = false;
@@ -278,8 +377,10 @@ CanvasWidget::CanvasWidget(QWidget *parent, ICamera* camera) : QWidget(parent)
                                             "Loading", 
                                             "Xposed is taking a long time to render. Please wait until rendering operation is complete");
 
+    connect(longExposureWindow, &LongExposureConfig::accepted, this, &CanvasWidget::handleLongExposureAccept);
     connect(liveViewButton, &QPushButton::released, this, &CanvasWidget::handleLiveViewButton);
     connect(snapButton, &QPushButton::released, this, &CanvasWidget::handleSnapButton);
+    connect(longExposureButton, &QPushButton::released, this, &CanvasWidget::handleLongExposureButton);
     connect(connectButton, &QPushButton::released, this, &CanvasWidget::handleConnectButton);
     connect(canvasViewer, &ImageViewer::mouseMoved, this, &CanvasWidget::handleMouseMoveOnImage);
     connect(canvasViewer, &ImageViewer::mousePressed, this, &CanvasWidget::handleMousePressOnImage);

@@ -7,6 +7,7 @@
 
 using namespace std;
 using namespace processing;
+using namespace common::normalization;
 
 constexpr int Radius = 5;
 constexpr int AbsMaxHeight = 450;
@@ -109,7 +110,7 @@ static inline VectorXf form_target_slns_for_channel(Mat* mask_image,
                                                         Solver* solver,
                                                         int channel_number)
 {
-    auto size = source_image->size();
+    auto size = mask_image->size();
     int h = target_image->size().height;
     int w = target_image->size().width;
 
@@ -123,31 +124,31 @@ static inline VectorXf form_target_slns_for_channel(Mat* mask_image,
             if(is_mask_pixel(*mask_image, x, y))
             {
                 
-                float pixel =  get_matrix_channel(*source_image,  x, y, channel_number);
+                float pixel =  get_normalized_matrix_channel(*source_image,  x, y, channel_number);
             
                 float grad = 
-                    pixel -  get_matrix_channel(*source_image,  x, y-1, channel_number) + 
-                    pixel -  get_matrix_channel(*source_image,  x-1, y, channel_number) + 
-                    pixel -  get_matrix_channel(*source_image,  x, y+1, channel_number) + 
-                    pixel - get_matrix_channel(*source_image,  x + 1, y, channel_number);
+                    pixel -  get_normalized_matrix_channel(*source_image,  x, y-1, channel_number) + 
+                    pixel -  get_normalized_matrix_channel(*source_image,  x-1, y, channel_number) + 
+                    pixel -  get_normalized_matrix_channel(*source_image,  x, y+1, channel_number) + 
+                    pixel - get_normalized_matrix_channel(*source_image,  x + 1, y, channel_number);
 
                 b[row] = grad;
 
                 if(!is_mask_pixel(*mask_image, x, y - 1)){
-                    b[row] += get_matrix_channel(*target_image,  x + mx, y + my - 1, channel_number);
+                    b[row] += get_normalized_matrix_channel(*target_image,  x + mx, y + my - 1, channel_number);
                 }
 
                 if(!is_mask_pixel(*mask_image, x - 1, y)){
                     
-                    b[row] += get_matrix_channel(*target_image, x - 1 + mx, y + my, channel_number);
+                    b[row] += get_normalized_matrix_channel(*target_image, x - 1 + mx, y + my, channel_number);
                 }
 
                 if(!is_mask_pixel(*mask_image, x, y + 1)){                     
-                    b[row] +=  get_matrix_channel(*target_image, x + mx, y + 1 + my, channel_number);
+                    b[row] +=  get_normalized_matrix_channel(*target_image, x + mx, y + 1 + my, channel_number);
                 }
 
                 if(!is_mask_pixel(*mask_image, x + 1, y )){
-                    b[row] += get_matrix_channel(*target_image, x + mx +1, y + my, channel_number);
+                    b[row] += get_normalized_matrix_channel(*target_image, x + mx +1, y + my, channel_number);
                 }
                 row++;
             }
@@ -166,9 +167,9 @@ static void write_slns_to_img(Mat *outputImg,
                             unsigned int my, 
                             int solutionChannel)
 {
-    for(int y = 0; y < src->rows; y++)
+    for(int y = 0; y < mask->rows; y++)
     {
-        for(int x = 0; x < src->cols; x++)
+        for(int x = 0; x < mask->cols; x++)
         {
            
             if(is_mask_pixel(*mask, x, y))
@@ -246,9 +247,9 @@ static Mat naive_composite(Mat mask, Mat src, Mat tgt,  unsigned int mx, unsigne
     Mat output_img = tgt.clone();
     
     // put the solved channels into the output matrix
-    for(int y = 0; y < src.rows; y++)
+    for(int y = 0; y < mask.rows; y++)
     {
-        for(int x = 0; x < src.cols; x++)
+        for(int x = 0; x < mask.cols; x++)
         {
             if(is_mask_pixel(mask, x, y))
             {
@@ -483,7 +484,6 @@ void CompositeCanvas::setBackground(Mat backgrnd)
    Mat sizedBackground;
    resize(backgrnd, sizedBackground, Size(width, height), 0.0, 0.0, INTER_LINEAR);
    backgroundImage = unique_ptr<Mat>(new Mat(sizedBackground));
-   initPlacement();
 }
 
 void CompositeCanvas::setComposite(const string& maskImgPath, const string& originalImagePath)

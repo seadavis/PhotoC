@@ -13,6 +13,7 @@
 #include <mutex>
 #include "ImageViewer.h"
 #include "canvasmanager.h"
+#include "LongExposureConfig.h"
 #include "camera.h"
 #include "utilities.h"
 
@@ -35,7 +36,24 @@ class QTTransformImage : public TransformImage
     QWidget* widget;
 };
 
-class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
+
+class StackedImageUpdate : public ICanvasOperator
+{
+
+  public:
+      StackedImageUpdate(Mat image, shared_ptr<IStackImages> stacker) :
+          image(image), stacker(stacker)
+      {};
+
+      void Operate(CompositeCanvas& canvas) override;
+  
+  private:
+    Mat image;
+    shared_ptr<IStackImages> stacker;
+
+};
+
+class CanvasWidget : public QWidget, public IReceiveImages, public IReceiveErrorMessages, public IRenderImages
 {
     Q_OBJECT
 
@@ -44,16 +62,17 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
       void setMaskPath(string path);
       void setOriginalPath(string path);
       void Receive(Mat m);
-      void RenderImage(Mat &m);
-      void RenderStarted();
-      void RenderStopped();
-      Mat getLastRenderedImage();
-
+      void Receive(string error);
       ~CanvasWidget();
 
     public slots:
+      void showErrorMessage(QString error);
+      void RenderImage(Mat &m);
+      void RenderStarted();
+      void RenderStopped();
       void displayLoadingWindow();
       void hideLoadingWindow();
+      Mat getLastRenderedImage();
 
     protected:
       virtual void resizeEvent(QResizeEvent* resizeEvent) override;
@@ -65,24 +84,31 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
       void handleMousePressOnImage(int x, int y);
       void handleMouseReleaseOnImage(int x, int y);
       void handleLiveViewButton();
-
+      void handleLongExposureButton();
+      void handleLongExposureAccept();
+      
     private:
-        unique_ptr<CanvasManager> canvasManager;
-        unique_ptr<CompositeCanvas> canvas;
+        shared_ptr<CanvasManager> canvasManager;
+        shared_ptr<CompositeCanvas> canvas;
         QVBoxLayout* verticalLayout;
         QHBoxLayout* buttonLayout;
         QGridLayout* canvasGrid;
         ImageViewer* canvasViewer;
+        LongExposureConfig* longExposureWindow;
         QLabel* backLabel;
         QPushButton* snapButton;  
         QPushButton* connectButton; 
         QPushButton* liveViewButton;
+        QPushButton* longExposureButton;
         ICamera *camera;
         int canvasWidth;
         int canvasHeight;
         string maskPath;
         string originalPath;
         bool isInLiveView;
+        bool isInLongExposure;
+        StackerFactory factory;
+        shared_ptr<IStackImages> stacker;
         QMessageBox* longRenderMessageBox;
         atomic<bool> msgBoxDisplayed;
         atomic<bool> isKilled;
@@ -90,15 +116,16 @@ class CanvasWidget : public QWidget, public IReceiveImages, public IRenderImages
         mutex renderNumberMutex;
         mutex copyRenderMutex;
         Mat lastRenderedImage;
-
         int prev_mouse_x = -1;
         int prev_mouse_y = -1;
         
+        void showErrorMessage(const exception& ex);
         void displayLiveView(Mat m);
         void sendCompositeUpdate();
         void cameraConnectingStatusChanged(bool isConnecting);
         void renderTimeMonitor();
         std::thread renderTimeMonitorThread;
         void render();
+        void showLongExposureConfig(bool isInDefinite);
 
 };

@@ -8,8 +8,10 @@
 #include <iostream>
 #include <memory>
 #include <pthread.h>
+#include <filesystem>
+#include <algorithm>
+#include "common_tests.h"
 #include "camera.h"
-
 
 #ifndef LIBGPHOTO2_SAMPLES_H
 #define LIBGPHOTO2_SAMPLES_H
@@ -26,6 +28,7 @@ int canon_enable_capture (Camera *camera, int onoff, GPContext *context);
 extern int camera_auto_focus (Camera *list, GPContext *context, int onoff);
 extern int camera_manual_focus (Camera *list, int tgt, GPContext *context);
 
+
 #if !defined (O_BINARY)
 	/*To have portable binary open() on *nix and on Windows */
 	#define O_BINARY 0
@@ -39,9 +42,13 @@ extern int camera_manual_focus (Camera *list, int tgt, GPContext *context);
 
 static int camera_eosviewfinder (Camera *list, GPContext *context, int onoff);
 
+static int camera_bulb(Camera *camera, GPContext *context, int onoff);
+
 static void errordumper(GPLogLevel level, const char *domain, const char *str, void *data);
 
-static void
+static int camera_toggle_config(Camera *camera, GPContext *context, int onoff, string setting);
+
+static int
 capture_preview_to_memory(Camera *camera, 
                             GPContext *context, 
                             const char **ptr, 
@@ -57,20 +64,72 @@ capture_to_memory(Camera *camera,
 
 static GPContext* create_context(void);
 
-using namespace cv;
-using namespace std;
+static bool all_characters_digits(const string& s)
+{
+	return std::count_if(s.begin(), s.end(), 
+						[](unsigned char c){ return isdigit(c); }) 
+						== s.length();
+}
+
+optional<TimeLength> ParseTimeLength(string str)
+{
+	const string delimiter = ":";
+	size_t pos = 0;
+	vector<string> tokens;
+	while ((pos = str.find(delimiter)) != std::string::npos) {
+		tokens.push_back(str.substr(0, pos));
+		str = str.substr(pos + delimiter.length());
+	}
+
+	if(str.length() > 0)
+	{
+		tokens.push_back(str);
+	}
+
+	if(tokens.size() >= 3)
+	{
+		if(!all_characters_digits(tokens[0]) || tokens[0].length() > 2 || tokens[0].length() == 0)
+			return {};
+
+		int hours = stoi(tokens[0]);
+
+		if(!all_characters_digits(tokens[1]) || tokens[1].length() > 2 || tokens[1].length() == 0)
+			return {};
+
+		int minutes = stoi(tokens[1]);
+
+		if(!all_characters_digits(tokens[2]) || tokens[2].length() > 2 || tokens[2].length() == 0)
+			return {};
+
+		int seconds = stoi(tokens[2]);
+
+		return TimeLength(hours, minutes, seconds);
+	}
+	else
+	{
+		return {};
+	}
+}
 
 RemoteCamera::RemoteCamera()
 {
-	context = create_context();
-	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
-	gp_camera_new(&camera); 
+
 	isLiveViewThreadOpen = false;
 }
 
 int RemoteCamera::connect()
 {
-	int retval = gp_camera_init(camera, context);
+		
+	context = create_context();
+	gp_log_add_func(GP_LOG_ERROR, errordumper, NULL);
+	int retval = gp_camera_new(&camera); 
+
+	if(retval != GP_OK)
+	{
+		throw CameraConnectionException();
+	}
+
+	retval = gp_camera_init(camera, context);
 
 	if(retval == GP_ERROR_IO_USB_CLAIM)
 	{
@@ -106,25 +165,148 @@ Mat RemoteCamera::snap_picture()
 
 void RemoteCamera::StartLiveView()
 {
-	isLiveViewThreadOpen = true;
-	int status = camera_eosviewfinder(camera, context, 1);
-	if(status < GP_OK)
+	if(!isLiveViewThreadOpen)
+	{
+		isLiveViewThreadOpen = true;
+		int status = camera_eosviewfinder(camera, context, 1);
+		if(status < GP_OK)
+		{
+			isLiveViewThreadOpen = false;
+			throw CameraOperationException("start live view");
+		}
+		workerThread = thread(&RemoteCamera::ViewThreadWorker,this);
+	}
+	else
 	{
 		throw CameraOperationException("start live view");
 	}
-	workerThread = thread(&RemoteCamera::ViewThreadWorker,this);
+
 }
 
 void RemoteCamera::StopLiveView()
 {
-	isLiveViewThreadOpen = false;
-	workerThread.join();
-	int status = camera_eosviewfinder(camera, context, 0);
-
-	if(status < GP_OK)
+	if(isLiveViewThreadOpen)
 	{
-		throw CameraOperationException("stop live view");
+		isLiveViewThreadOpen = false;
+		workerThread.join();
+		int status = camera_eosviewfinder(camera, context, 0);
+
+		if(status < GP_OK)
+		{
+			throw CameraOperationException("stop live view");
+		}
 	}
+
+}
+
+void RemoteCamera::StartLongExposure(LongExposureShots shots)
+{
+	isLongExposureThreadOpen = true;
+	currentShot = shots;
+	workerThread = thread(&RemoteCamera::LongExposureThreadWorker,this);
+}
+
+void RemoteCamera::StopLongExposure()
+{
+	isLongExposureThreadOpen = false;
+	workerThread.join();
+	camera_bulb(camera, context, 0);
+}
+
+void RemoteCamera::LongExposureThreadWorker()
+{
+	auto start = high_resolution_clock::now();
+	auto now = high_resolution_clock::now();
+
+	while(isLongExposureThreadOpen && 
+			duration_cast<chrono::milliseconds>(now - start) < currentShot.Length.ToMilliseconds())
+	{
+		
+		int status = camera_bulb(camera, context, 1);
+	
+		if(status < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to turn on bulb mode");
+			break;
+		}
+
+		bulbState = 1;
+
+		this_thread::sleep_for(currentShot.Interval.ToMilliseconds());
+		status = camera_bulb(camera, context, 0);
+		if(status < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to turn off bulb mode");
+			break;
+		}
+
+		bulbState = 0;
+
+		CameraEventType event;
+		void *data = NULL;
+		int test = 0;
+
+		/* This is equivalent to emptying out the queue*/
+		while(event != GP_EVENT_FILE_ADDED)
+		{
+			status = gp_camera_wait_for_event(camera,1000, &event, &data, context);
+			if(status < GP_OK)
+			{
+				errorMessageReceiver->Receive("Failed to wait for file added event");
+				break;
+			}
+		}
+
+		char* buffer;
+		unsigned long bufferSize = 0;
+		CameraFilePath* path = (CameraFilePath*)data;
+		CameraFile* addedFile;
+
+		int retVal = gp_file_new(&addedFile);
+
+		if(retVal < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to initialize in memory file");
+			break;
+		}
+
+		retVal = gp_camera_file_get(camera, path->folder, path->name, GP_FILE_TYPE_NORMAL, addedFile, context);
+
+		if(retVal < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to get file Folder: " + string(path->folder) + ", Name: " + path->name);
+			break;
+		}
+
+		retVal = gp_file_get_data_and_size(addedFile,(const char**)&buffer,&bufferSize);
+
+		if(retVal < GP_OK)
+		{
+			errorMessageReceiver->Receive("Failed to get file. Size Returned: " + bufferSize);
+			break;
+		}
+
+		if(bufferSize > 0)
+		{
+			auto m =  imdecode(Mat(1, bufferSize, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
+			Mat img;
+			cvtColor(m, img, CV_BGR2BGRA);
+			auto clonedImage = img.clone();
+			imageReceiver->Receive(img);
+			
+			gp_camera_file_delete(camera, path->folder, path->name, context);
+			gp_file_free(addedFile);
+			free(data);
+			event = GP_EVENT_UNKNOWN;
+		}
+
+		now = high_resolution_clock::now();
+	}
+
+	Mat img;
+	imageReceiver->Receive(img);
+
+	isLongExposureThreadOpen = false;
 }
 
 void RemoteCamera::ViewThreadWorker()
@@ -133,8 +315,8 @@ void RemoteCamera::ViewThreadWorker()
 	{
 		char* buffer;
 		unsigned long buffer_size = 0;
-		capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
 
+		capture_preview_to_memory(camera, context, (const char**)&buffer, &buffer_size);
 		if(buffer_size > 0)
 		{
 			auto m =  imdecode(Mat(1, buffer_size, CV_8UC1, buffer), CV_LOAD_IMAGE_UNCHANGED);
@@ -142,11 +324,13 @@ void RemoteCamera::ViewThreadWorker()
 			cvtColor(m, img, CV_BGR2BGRA);
 			auto clonedImage = img.clone();
 			delete buffer;
-			receiver->Receive(img);
+			imageReceiver->Receive(img);
 		}
 
 		this_thread::sleep_for (chrono::milliseconds(17));
 	}
+
+	isLiveViewThreadOpen = false;
 }
 
 RemoteCamera::~RemoteCamera()
@@ -154,14 +338,18 @@ RemoteCamera::~RemoteCamera()
 	gp_camera_exit(camera, context);
 }
 
-FakeCamera::FakeCamera(string file_path)
+FakeCamera::FakeCamera(string filePath, string folderPath)
 {
-	this->pic_path = file_path;
+	this->picPath = filePath;
+	this->longExposureFolderPath = folderPath;
+	this->isLongExposureThreadOpen = true;
+	this->isLongExposureInProgress = false;
+	workerThread = thread(&FakeCamera::LongExposureThreadWorker,this);
 }
 
 Mat FakeCamera::snap_picture()
 {
-	Mat m = imread(pic_path);
+	Mat m = imread(picPath);
 	Mat img;
     cvtColor(m, img, CV_BGR2BGRA);
 	return img;
@@ -182,6 +370,68 @@ void FakeCamera::StopLiveView()
 	
 }
 
+void FakeCamera::StartLongExposure(LongExposureShots shots)
+{
+	isLongExposureInProgress = true;
+	this->currentShot = shots;
+
+}
+
+void FakeCamera::StopLongExposure()
+{
+	isLongExposureInProgress = false;
+}
+
+
+void FakeCamera::LongExposureThreadWorker()
+{
+	int picturesTaken = 0;
+	 
+	vector<string> pictures;
+
+	for (const auto & entry : filesystem::directory_iterator(longExposureFolderPath))
+  	{
+		pictures.push_back(entry.path().c_str());
+  	}	   
+
+	sort(pictures.begin(), pictures.end());
+
+	time_point<system_clock> start;
+
+	while(isLongExposureThreadOpen)
+	{
+		while(isLongExposureInProgress)
+		{
+			if(picturesTaken == 0)
+				start = high_resolution_clock::now();
+
+			auto now = high_resolution_clock::now();
+
+			if(duration_cast<chrono::milliseconds>(now - start) < currentShot.Length.ToMilliseconds())
+			{
+				auto currentPicture = pictures[picturesTaken%pictures.size()];
+				cout << "Image Path: " << currentPicture << "\n";
+				Mat img = common::tests::loadStdImage(currentPicture);
+				imageReceiver->Receive(img);
+				this_thread::sleep_for(currentShot.Interval.ToMilliseconds());
+				picturesTaken++;
+			}
+			else
+			{
+				picturesTaken = 0;
+				isLongExposureInProgress = false;
+			}
+		}
+
+		this_thread::sleep_for(milliseconds(30));
+	}
+}
+
+FakeCamera::~FakeCamera()
+{
+	isLongExposureThreadOpen = false;
+	workerThread.join();
+}
 
 /* section reserved for C code specific to the camera */
 static int
@@ -229,7 +479,21 @@ static GPContext* create_context() {
 }
 
 static int
-camera_eosviewfinder(Camera *camera, GPContext *context, int onoff) {
+camera_bulb(Camera *camera, GPContext *context, int onoff)
+{
+	return camera_toggle_config(camera, context, onoff, "bulb");
+}
+
+static int
+camera_eosviewfinder(Camera *camera, GPContext *context, int onoff) 
+{
+	return camera_toggle_config(camera, context, onoff, "LiveViewMovieMode");
+}
+
+
+static int
+camera_toggle_config(Camera *camera, GPContext *context, int onoff, string setting)
+{
 	CameraWidget		*widget = NULL, *child = NULL;
 	int			ret,val;
 
@@ -239,7 +503,7 @@ camera_eosviewfinder(Camera *camera, GPContext *context, int onoff) {
 		return ret;
 	}
 
-	ret = _lookup_widget (widget, "LiveViewMovieMode", &child);
+	ret = _lookup_widget (widget, setting.c_str(), &child);
 	if (ret < GP_OK) {
 		fprintf (stderr, "lookup 'LiveViewMode' failed: %d\n", ret);
 		goto out;
@@ -268,7 +532,6 @@ out:
 	gp_widget_free (widget);
 	return ret;
 }
-
 
 static void errordumper(GPLogLevel level, const char *domain, const char *str,
                  void *data) {
@@ -299,19 +562,34 @@ static void capture_to_memory(Camera *camera, GPContext *context, CameraFilePath
 	/*gp_file_free(file); */
 }
 
-static void capture_preview_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned long int *size) {
+static int capture_preview_to_memory(Camera *camera, GPContext *context, const char **ptr, unsigned long int *size) {
 	int retval;
 	CameraFile *file;
 	CameraFilePath camera_file_path;
 
 	printf("Capturing Preview.\n");
 
-    camera_eosviewfinder(camera, context, 1);
-
     retval = gp_file_new(&file);
+
+	if(retval < GP_OK)
+	{
+		return retval;
+	}
+
     retval = gp_file_set_name(file, "preview.jpg");
+
+	if(retval < GP_OK)
+	{
+		return retval;
+	}
    
 	retval = gp_camera_capture_preview(camera, file, context);
 
-	gp_file_get_data_and_size (file, ptr, size);
+	if(retval < GP_OK)
+	{
+		return retval;
+	}
+
+	retval = gp_file_get_data_and_size (file, ptr, size);
+	return retval;
 }

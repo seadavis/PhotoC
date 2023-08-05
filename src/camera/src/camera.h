@@ -7,10 +7,72 @@
 #include <functional>
 #include <thread>
 #include <atomic>
+#include <optional>
+#pragma once
 
 using namespace cv;
 using namespace std;
+using namespace std::chrono;
 
+
+struct TimeLength
+{
+	int hours;
+	int minutes;
+	int seconds;
+
+	TimeLength(int hours, int minutes, int seconds) : hours(hours), minutes(minutes), seconds(seconds){};
+
+    TimeLength() : hours(0), minutes(0), seconds(0){};
+
+    milliseconds ToMilliseconds()
+    {
+        chrono::hours h(hours);
+        chrono::minutes m(minutes);
+        chrono::seconds s(seconds);
+
+        return  chrono::duration_cast<chrono::milliseconds>(h) + 
+                chrono::duration_cast<chrono::milliseconds>(m) + 
+                chrono::duration_cast<chrono::milliseconds>(s);
+    }
+};
+
+
+inline bool operator==(const TimeLength& lhs, const TimeLength& rhs)
+{
+    return lhs.hours == rhs.hours && lhs.minutes == rhs.minutes && lhs.seconds == rhs.seconds;
+}
+
+struct LongExposureShots
+{
+
+	/**
+	 * Specifies the interval in which long
+	 * expsosures are taken
+	*/
+	TimeLength Interval;
+
+	/**
+	 * Specifies how long the interval should last.
+	*/
+	TimeLength Length;
+
+    LongExposureShots(){};
+
+	LongExposureShots(TimeLength interval, TimeLength length) : Interval(interval), Length(length){};
+
+};
+
+inline bool operator==(const LongExposureShots& lhs, const LongExposureShots& rhs)
+{
+    return lhs.Interval == rhs.Interval && lhs.Length == rhs.Length;
+}
+
+/**
+	 * Decomposes a time length from a string.
+	 * Expected format is HH:mm:ss
+	*/
+optional<TimeLength> ParseTimeLength(string str);
  
 class CameraOperationException : public runtime_error {
     public:
@@ -30,6 +92,11 @@ class CameraConnectionException : public runtime_error {
 
 };
 
+class IReceiveErrorMessages
+{
+    public:
+        virtual void Receive(string error) = 0;
+};
 
 class IReceiveImages
 {
@@ -58,27 +125,43 @@ class ICamera
 
         virtual void StopLiveView() = 0;
 
-        void SetReceiver(IReceiveImages* receiver)
+        virtual void StartLongExposure(LongExposureShots shots) = 0;
+
+        virtual void StopLongExposure() = 0;
+
+        void SetReceiver(IReceiveImages* imageReceiver, IReceiveErrorMessages* errorMessageReceiver)
         {
-            this->receiver = receiver;
+            this->imageReceiver = imageReceiver;
+            this->errorMessageReceiver = errorMessageReceiver;
         }
 
+
     protected:
-        IReceiveImages* receiver;
+        IReceiveImages* imageReceiver;
+        IReceiveErrorMessages* errorMessageReceiver;
 };
 
 
 class FakeCamera : public ICamera
 {
     public:
-        FakeCamera(string pic_path);
+        FakeCamera(string picPath, string longExposurePath);
 		int connect() override;
 		Mat snap_picture() override;
         void StartLiveView() override;
         void StopLiveView() override;
+        virtual void StartLongExposure(LongExposureShots shots) override;
+        virtual void StopLongExposure() override;
+        ~FakeCamera();
 
     private:
-        string pic_path;
+        string picPath;
+        string longExposureFolderPath;
+        thread workerThread;
+        atomic<bool> isLongExposureThreadOpen;
+        atomic<bool> isLongExposureInProgress;
+        LongExposureShots currentShot;
+        void LongExposureThreadWorker();
 };
 
 class RemoteCamera : public ICamera
@@ -89,7 +172,8 @@ class RemoteCamera : public ICamera
 		Mat snap_picture() override;
         void StartLiveView() override;
         void StopLiveView() override;
-
+        void StartLongExposure(LongExposureShots shots) override;
+        void StopLongExposure() override;
         ~RemoteCamera();
 
     private:
@@ -98,6 +182,11 @@ class RemoteCamera : public ICamera
         GPContext *context;
         thread workerThread;
         atomic<bool> isLiveViewThreadOpen;
+        atomic<bool> isLongExposureThreadOpen;
+        LongExposureShots currentShot;
+        int bulbState = 0;
         void ViewThreadWorker();
-
+        void LongExposureThreadWorker();
 };
+
+

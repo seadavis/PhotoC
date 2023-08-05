@@ -1,0 +1,1 @@
+add_library(common_tests common_tests.cpp)

@@ -1,13 +1,16 @@
 #include <gtest/gtest.h>
 #include "canvasmanager.h"
+#include "common_tests.h"
 #include <iostream>
 #include <opencv2/core.hpp>
 #include <string_view>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
+#include <filesystem>
 
 using namespace std;
 using namespace processing;
+using namespace common::tests;
 
 class Composites :
     public testing::TestWithParam<tuple<string, string, int, int>> {
@@ -80,10 +83,6 @@ void TestRenderer::RenderImage(Mat& m)
 }
 
 constexpr string_view ProcessingDirectory = "./src/processing/tests/";
-
-Mat loadBackgroundImage(string path);
-
-
 
 INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
                           ScalingImage,
@@ -189,8 +188,9 @@ INSTANTIATE_TEST_SUITE_P(CompositeCanvas,
 
 TEST(CompositeCanvas, IllegalComposite){	
 
-  Mat backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/library.png");
-  auto mask = "./src/processing/tests/masks/balloon.png";	 
+
+  Mat backgroundImage = loadStdImage("./src/processing/tests/target_images/library.png");
+  auto mask = "./src/processing/tests/masks/balloon.png";
   auto original = "./src/processing/tests/original_source_images/balloon.png";
   auto canvas = CompositeCanvas();	 
   canvas.setSize(50, 50);	  
@@ -216,7 +216,7 @@ TEST(CompositeCanvas, IllegalComposite){
 
 TEST(CompositeCanvas, OnlyCompositesSet)
 {
-    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/liberty.png");
+    auto backgroundImage = loadStdImage("./src/processing/tests/target_images/liberty.png");
     auto canvas = CompositeCanvas();
     canvas.setSize(800, 450);
     canvas.setComposite("./src/processing/tests/masks/moon.png", "./src/processing/tests/original_source_images/moon.png");
@@ -228,7 +228,7 @@ TEST(CompositeCanvas, OnlyCompositesSet)
 
 TEST(CompositeCanvas, OnlyBackgroundSet)
 {
-    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/liberty.png");
+    auto backgroundImage = loadStdImage("./src/processing/tests/target_images/liberty.png");
     auto canvas = CompositeCanvas();
     canvas.setSize(800, 450);
     canvas.setBackground(backgroundImage);
@@ -238,19 +238,18 @@ TEST(CompositeCanvas, OnlyBackgroundSet)
     imwrite("./src/processing/tests/target_missing_images/only_background_set.png", result);
 }
 
-
 TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
 {
     auto args = GetParam();
     Point p1 = get<0>(args);
     Point p2 = get<1>(args);
-    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/gothenburg.png");
+    auto backgroundImage = loadStdImage("./src/processing/tests/target_images/gothenburg.png");
     auto maskPath = "./src/processing/tests/masks/kitten.png";
     auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
   
-    auto canvas = CompositeCanvas();
+    auto canvas = make_shared<CompositeCanvas>();
     auto renderer = TestRenderer();
-    auto canvasManager = CanvasManager(&canvas, &renderer);
+    auto canvasManager = CanvasManager(canvas, &renderer);
 
     canvasManager.QueueOperation(make_shared<Resize>(1300, 1300));
     canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
@@ -260,53 +259,52 @@ TEST_P(BoundingRectangleHitDataConsecutivePoints, MultiStepTests)
 
     Mat result = renderer.WaitUntilImageAvailable();
     auto outImage = "double_tap_" + to_string(p1.x) + "_" + to_string(p1.y) + ".png";
-    imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
-    Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
-    bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
-    ASSERT_TRUE(equal);
+
+    ASSERT_TRUE(compareImages("./src/processing/tests/target_hit_data/" + outImage, 
+                              "./src/processing/tests/test_hit_data/" + outImage,
+                              result));
 }
 
 TEST_P(BoundingRectangleHitData, SingleStepTests)
 {
     auto args = GetParam();
     auto p = get<0>(args);
-    auto backgroundImage = loadBackgroundImage("./src/processing/tests/target_images/gothenburg.png");
+    auto backgroundImage = loadStdImage("./src/processing/tests/target_images/gothenburg.png");
     auto maskPath = "./src/processing/tests/masks/kitten.png";
     auto originalPath = "./src/processing/tests/original_source_images/kitten.png";
        
-
-    auto canvas = CompositeCanvas();
-    canvas.setSize(1300, 1300);
+    auto canvas = make_shared<CompositeCanvas>();
+    canvas->setSize(1300, 1300);
 
     bool set_back = get<1>(args);
     bool set_comp = get<2>(args);
 
     if(set_back)
-      canvas.setBackground(backgroundImage);
+      canvas->setBackground(backgroundImage);
 
     if(set_comp)
-      canvas.setComposite(maskPath, originalPath);
+      canvas->setComposite(maskPath, originalPath);
   
     auto hit = TestTransformer(p);
     auto tap = TapImage(p);
+
     auto testRenderer = TestRenderer();
-    auto canvasManager = CanvasManager(&canvas, &testRenderer);
+    auto canvasManager = CanvasManager(canvas, &testRenderer);
     canvasManager.QueueOperation(make_shared<TestTransformer>(p));
     canvasManager.QueueOperation(make_shared<TapImage>(p));
 
     Mat result = testRenderer.WaitUntilImageAvailable();
 
     auto outImage = "single_tap_" + to_string(p.x) + "_" + to_string(p.y) + "_" + to_string(set_back) + "_" + to_string(set_comp) + ".png";
-    imwrite("./src/processing/tests/test_hit_data/" + outImage, result);
-    Mat expectedImg = imread("./src/processing/tests/target_hit_data/" + outImage, CV_LOAD_IMAGE_UNCHANGED);
-    bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
-    ASSERT_TRUE(equal);
+    ASSERT_TRUE(compareImages("./src/processing/tests/target_hit_data/" + outImage, 
+                              "./src/processing/tests/test_hit_data/" + outImage,
+                              result));
 }
 
 TEST_P(CompositeMissingOneImage, MissingOrMismatching)
 {
     auto args = GetParam();
-    auto backgroundImage = loadBackgroundImage(get<0>(args));
+    auto backgroundImage = loadStdImage(get<0>(args));
     auto maskPath = get<1>(args);
     auto originalPath = get<2>(args);
   
@@ -317,25 +315,23 @@ TEST_P(CompositeMissingOneImage, MissingOrMismatching)
 
     Mat result = canvas.currentImg();
 
-    imwrite("./src/processing/tests/test_missing_images/" + get<5>(args), result);
-    Mat expectedImg = imread("./src/processing/tests/target_missing_images/" + get<5>(args), CV_LOAD_IMAGE_UNCHANGED);
-    bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedImg.begin<uchar>());
-    ASSERT_TRUE(equal);
+    ASSERT_TRUE(compareImages("./src/processing/tests/target_missing_images/" + get<5>(args), 
+                              "./src/processing/tests/test_missing_images/" + get<5>(args),
+                              result));
 }
-
 
 TEST_P(TranslationData, ValidTranslations) {
 
   auto args = GetParam();
   auto backgroundImagePath = "./src/processing/tests/target_images/" + get<1>(args) + ".png";
-  auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+  auto backgroundImage = loadStdImage(backgroundImagePath);
 
   auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
 
-  auto canvas = CompositeCanvas();
   auto testRenderer = TestRenderer();
-  auto canvasManager = CanvasManager(&canvas, &testRenderer);
+  auto canvas = make_shared<CompositeCanvas>();
+  auto canvasManager = CanvasManager(canvas, &testRenderer);
 
   canvasManager.QueueOperation(make_shared<Resize>(get<2>(args), get<3>(args)));
   canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
@@ -347,23 +343,22 @@ TEST_P(TranslationData, ValidTranslations) {
 
   auto fileName =  get<0>(args) + "_" + get<1>(args) + "_" + to_string(get<5>(args)) + "_" + to_string(get<6>(args)) + ".png";
 
-  imwrite( "./src/processing/tests/test_translations/" + fileName, result);
-  Mat expectedMat = imread("./src/processing/tests/target_translations/" + fileName);
-  bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);
+  ASSERT_TRUE(compareImages("./src/processing/tests/target_translations/" + fileName, 
+                              "./src/processing/tests/test_translations/" + fileName,
+                              result));
 }
 
 TEST(TranslationTests, TranslationTooFarRight) {
 
   auto backgroundImagePath = "./src/processing/tests/target_images/beach.png";
-  auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+  auto backgroundImage = loadStdImage(backgroundImagePath);
 
   auto mask = "./src/processing/tests/masks/eagle.png";
   auto original = "./src/processing/tests/original_source_images/eagle.png";
 
-  auto canvas = CompositeCanvas();
+  auto canvas = make_shared<CompositeCanvas>();
   auto testRenderer = TestRenderer();
-  auto canvasManager = CanvasManager(&canvas, &testRenderer);
+  auto canvasManager = CanvasManager(canvas, &testRenderer);
 
   canvasManager.QueueOperation(make_shared<Resize>(1446, 880));
   canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
@@ -388,14 +383,14 @@ TEST_P(ScalingImage, ScaleTests){
   
   auto args = GetParam();
   auto backgroundImagePath = "./src/processing/tests/target_images/" + get<1>(args) + ".png";
-  auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+  auto backgroundImage = loadStdImage(backgroundImagePath);
 
   auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
 
-  auto canvas = CompositeCanvas();
   auto testRenderer = TestRenderer();
-  auto canvasManager = CanvasManager(&canvas, &testRenderer);
+  auto canvas = make_shared<CompositeCanvas>();
+  auto canvasManager = CanvasManager(canvas, &testRenderer);
   
   Point tapPoint_1 = get<2>(args);
   Point movePoint_1 = get<3>(args);
@@ -415,25 +410,24 @@ TEST_P(ScalingImage, ScaleTests){
 
   auto fileName =  get<6>(args);
 
-  imwrite( "./src/processing/tests/test_scaling/" + fileName, result);
-  Mat expectedMat = imread("./src/processing/tests/target_scaling/" + fileName);
-  bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);
+  ASSERT_TRUE(compareImages("./src/processing/tests/target_scaling/" + fileName, 
+                            "./src/processing/tests/test_scaling/" + fileName,
+                            result));
 }
 
 TEST_P(Composites, BasicComposite) {
 
   auto args = GetParam();
   auto backgroundImagePath = "./src/processing/tests/target_images/" + get<1>(args) + ".png";
-  auto backgroundImage = loadBackgroundImage(backgroundImagePath);
+  auto backgroundImage = loadStdImage(backgroundImagePath);
 
   auto mask = "./src/processing/tests/masks/" + get<0>(args) + ".png";
   auto original = "./src/processing/tests/original_source_images/" + get<0>(args) + ".png";
   auto targetFileName =  get<0>(args) + "_" + get<1>(args) + "_" + to_string(get<2>(args)) + "_" + to_string(get<3>(args)) + ".png";
 
-  auto canvas = CompositeCanvas();
   auto renderer = TestRenderer();
-  auto canvasManager = CanvasManager(&canvas, &renderer);
+  auto canvas = make_shared<CompositeCanvas>();
+  auto canvasManager = CanvasManager(canvas, &renderer);
 
   canvasManager.QueueOperation(make_shared<Resize>(get<2>(args), get<3>(args)));
   canvasManager.QueueOperation(make_shared<BackgroundImageUpdate>(backgroundImage));
@@ -441,17 +435,7 @@ TEST_P(Composites, BasicComposite) {
   
   Mat result = renderer.WaitUntilImageAvailable();
 
-  imwrite( "./src/processing/tests/test_composites/" + targetFileName, result);
-  Mat expectedMat = imread("./src/processing/tests/target_composites/" + targetFileName);
-  bool const equal = std::equal(result.begin<uchar>(), result.end<uchar>(), expectedMat.begin<uchar>());
-  ASSERT_TRUE(equal);
-}
-
-Mat loadBackgroundImage(string path)
-{
-  auto backgroundImageRGB = imread(path, CV_LOAD_IMAGE_UNCHANGED);
-
-  Mat backgroundImage;
-  cvtColor(backgroundImageRGB, backgroundImage, CV_BGR2BGRA);
-  return backgroundImage;
+  ASSERT_TRUE(compareImages("./src/processing/tests/target_composites/" + targetFileName, 
+                            "./src/processing/tests/test_composites/" + targetFileName,
+                            result));
 }

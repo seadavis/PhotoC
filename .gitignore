@@ -1,5 +1,5 @@
 bin/
 build/
-src/processing/tests/test_*/*
+**/test_*/*
 *.data.*
 *.data

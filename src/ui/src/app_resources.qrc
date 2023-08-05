@@ -3,6 +3,7 @@
     <file alias="check_mark.png">resources/images/check_mark.png</file>
     <file alias="folder_icon.jpg">resources/images/folder_icon.jpg</file>
     <file alias="error_icon.png">resources/images/error_icon.png</file>
+    <file alias="error_icon_small.jpg">resources/images/error_icon_small.jpg</file>
     <file >resources/stylesheets/default.qss</file>
 </qresource>
 </RCC>
