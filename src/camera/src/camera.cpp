@@ -203,6 +203,12 @@ void RemoteCamera::StartLongExposure(LongExposureShots shots)
 {
 	isLongExposureThreadOpen = true;
 	currentShot = shots;
+
+	if(longExposureRanAtLeastOnce)
+		workerThread.join();
+	else
+		longExposureRanAtLeastOnce = true;
+		
 	workerThread = thread(&RemoteCamera::LongExposureThreadWorker,this);
 }
 
