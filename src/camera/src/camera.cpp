@@ -300,7 +300,6 @@ void RemoteCamera::LongExposureThreadWorker()
 			auto clonedImage = img.clone();
 			imageReceiver->Receive(img);
 			
-			gp_camera_file_delete(camera, path->folder, path->name, context);
 			gp_file_free(addedFile);
 			free(data);
 			event = GP_EVENT_UNKNOWN;
