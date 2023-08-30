@@ -183,7 +183,6 @@ class RemoteCamera : public ICamera
         thread workerThread;
         atomic<bool> isLiveViewThreadOpen;
         atomic<bool> isLongExposureThreadOpen;
-        atomic<bool> longExposureRanAtLeastOnce;
         LongExposureShots currentShot;
         int bulbState = 0;
         void ViewThreadWorker();
